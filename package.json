@@ -1,0 +1,51 @@
+{
+  "name": "komplayens-kadr",
+  "version": "7.0.0",
+  "description": "Kadastr agentligi va DKP uchun komplayens tizimi",
+  "main": "electron/main.js",
+  "author": "Komplayens Admin",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "uz.kadastr.komplayens",
+    "productName": "KOMPLAYENS-KADR",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KOPMLAYENS-KADR"
+    },
+    "portable": {
+      "artifactName": "KOMPLAYENS-KADR-Portable-${version}.exe"
+    }
+  }
+}
