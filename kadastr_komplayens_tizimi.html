@@ -1,0 +1,2541 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>«КОМПЛАЕНС-КАДР» — Кадастр агентлиги ва Давлат кадастрлари палатаси тизими v6.0 (Online + D:\ Baza)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-main: #eef2f6;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --border-col: #cbd5e1;
+    }
+
+    body.dark-mode {
+      --bg-main: #0b1120;
+      --bg-card: #1e293b;
+      --text-main: #f8fafc;
+      --border-col: #334155;
+      background-color: #0b1120 !important;
+      color: #f8fafc !important;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-size: 15px;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 1:1 Расмий ҳужжат ва экспорт таблица услуби */
+    .doc-serif {
+      font-family: 'Times New Roman', Times, serif;
+    }
+
+    .official-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Times New Roman', Times, serif;
+      background: #ffffff;
+      color: #000000;
+    }
+    .official-table th,
+    .official-table td {
+      border: 1.5px solid #000000 !important;
+      padding: 8px 10px;
+      vertical-align: middle;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .official-table thead th {
+      background-color: #e2efda !important;
+      font-weight: bold;
+      text-align: center;
+      color: #000000 !important;
+    }
+
+    body.dark-mode .dark-card {
+      background-color: #1e293b !important;
+      border-color: #334155 !important;
+      color: #f8fafc !important;
+    }
+    body.dark-mode .official-table {
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+    body.dark-mode .official-table td {
+      border-color: #64748b !important;
+    }
+    body.dark-mode .official-table thead th {
+      background-color: #064e3b !important;
+      color: #ecfdf5 !important;
+      border-color: #64748b !important;
+    }
+
+    /* А4 Маълумотнома оқ қоғози — узилиб қолмаслиги учун яхлит блок */
+    .a4-sheet {
+      width: 210mm;
+      min-height: 285mm;
+      height: auto !important;
+      margin: 0 auto;
+      background: #ffffff !important;
+      color: #000000 !important;
+      padding: 16mm 18mm 18mm 22mm;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.35);
+      border: 1px solid #cbd5e1;
+      box-sizing: border-box;
+      display: block !important;
+      overflow: visible !important;
+    }
+
+    .malumotnoma-text p {
+      text-indent: 1.25cm;
+      text-align: justify;
+      line-height: 1.48;
+      font-size: 14pt;
+      margin-bottom: 8pt;
+      color: #000000 !important;
+    }
+
+    @keyframes pulseDanger {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+      50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+    }
+    .sudlangan-alert-pulse {
+      animation: pulseDanger 1.8s infinite;
+    }
+
+    /* Принтерда фақат А4 Маълумотномани 1 бетда чиқариш */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 14mm 12mm 18mm;
+      }
+      body * {
+        visibility: hidden !important;
+      }
+      #docModal, #docModal * {
+        visibility: visible !important;
+      }
+      #docModal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .a4-sheet {
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- LOGIN MODAL -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 px-6 py-5 text-white border-b border-emerald-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center font-extrabold text-xl text-emerald-300">КК</div>
+          <div>
+            <span class="text-xs uppercase tracking-widest text-emerald-300 font-bold block">Кадастр агентлиги ва ДКП</span>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v6.0</h2>
+          </div>
+        </div>
+        <span class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">☁️ Supabase Online</span>
+      </div>
+      <div class="p-6 space-y-4 text-slate-800">
+        <div id="loginError" class="hidden p-3 rounded-lg bg-red-50 border border-red-300 text-red-700 text-sm font-bold">
+          Логин ёки парол нотўғри! Қайта текшириб киритинг.
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Фойдаланувчи логини</label>
+          <input id="loginUsername" type="text" value="admin" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Махфий парол</label>
+          <input id="loginPassword" type="password" value="Komplayens2026!" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+        </div>
+        <button id="btnLoginSubmit" class="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-base shadow-lg transition cursor-pointer">
+          Тизимга кириш
+        </button>
+
+        <div class="pt-3 border-t border-slate-200">
+          <p class="text-xs font-bold text-slate-500 uppercase mb-2">Тезкор кириш (4 та ролни синаб кўриш):</p>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button type="button" onclick="quickFillLogin('kadr_jizzax','Kadr2026!')" class="p-2 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-left font-bold text-blue-900 cursor-pointer">
+              1. Кадрлар (HR)<br><span class="font-normal text-slate-600">kadr_jizzax</span>
+            </button>
+            <button type="button" onclick="quickFillLogin('admin','Komplayens2026!')" class="p-2 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-left font-bold text-amber-900 cursor-pointer">
+              2. Админ (Сиз)<br><span class="font-normal text-slate-600">admin</span>
+            </button>
+            <button type="button" onclick="quickFillLogin('zaripov','Rahbar2026!')" class="p-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-left font-bold text-emerald-900 cursor-pointer">
+              3. Бўлим бошлиғи<br><span class="font-normal text-slate-600">zaripov (И.Зарипов)</span>
+            </button>
+            <button type="button" onclick="quickFillLogin('rahbariyat','Kuzatuv2026!')" class="p-2 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-left font-bold text-purple-900 cursor-pointer">
+              4. Раҳбар Кузатувчи<br><span class="font-normal text-slate-600">rahbariyat (Фақат тасдиқланган)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP HEADER BAR -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 no-print shadow-md">
+    <div class="w-full px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center font-extrabold text-emerald-300 text-base">КК</div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v6.0</span>
+            <span id="cloudSyncBadge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold">
+              ☁️ Онлайн База: Уланмоқда...
+            </span>
+            <span id="dDriveStatusBadge" class="text-xs bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded font-semibold">
+              💾 D:\ Komplayens_Kadr_Baza
+            </span>
+          </div>
+          <p class="text-xs text-slate-300">Кадастр агентлиги ва Давлат кадастрлари палатаси — Ягона комплаенс тизими</p>
+        </div>
+      </div>
+
+      <!-- 4 ТА РОЛ ТЕЗКОР АЛМАШТИРГИЧ -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+          <button id="roleBtnKadr" onclick="switchRole('kadr')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+            1. Кадрлар (HR)
+          </button>
+          <button id="roleBtnAdmin" onclick="switchRole('admin')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+            2. Админ (Комплаенс)
+          </button>
+          <button id="roleBtnRahbar" onclick="switchRole('rahbar')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+            3. Бўлим бошлиғи (И.Зарипов)
+          </button>
+          <button id="roleBtnKuzatuvchi" onclick="switchRole('kuzatuvchi')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+            4. 👁 Раҳбар Кузатувчи
+          </button>
+        </div>
+
+        <button onclick="pullFromSupabase(true)" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs font-bold text-white border border-emerald-500 cursor-pointer" title="Онлайн базадан янгилаш">
+          🔄 Синхронлаш
+        </button>
+
+        <button id="btnLangToggle" onclick="toggleAlphabet()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-300 border border-slate-700 cursor-pointer">
+          🔤 Кирилл / Lotin
+        </button>
+
+        <button id="btnThemeToggle" onclick="toggleDarkMode()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-700 cursor-pointer">
+          🌙 Тунги
+        </button>
+
+        <button onclick="openLoginModal()" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold cursor-pointer">
+          Чиқиш
+        </button>
+      </div>
+    </div>
+
+    <!-- ROLE BANNER & NAVIGATION TABS -->
+    <div class="bg-slate-800/95 border-t border-slate-700 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div id="roleBannerText" class="text-xs font-semibold text-emerald-300"></div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          📊 Статистика
+        </button>
+        <button id="tabBtnFototablitsa" onclick="switchTab('fototablitsa')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          🖼️ Фототаблица (Номзодлар)
+        </button>
+        <button id="tabBtnFormer" onclick="switchTab('former')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          👤 Собиқ ходимлар
+        </button>
+        <button id="tabBtnIts" onclick="switchTab('its')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          🔍 ИЦ (Судланганлик) Жадвали
+        </button>
+        <button id="tabBtnNegative" onclick="switchTab('negative')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          ⚠️ Судланганлар Реестри
+        </button>
+        <button id="tabBtnDatabase" onclick="switchTab('database')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          🗂️ Ҳудуд ва Йил/Ой Базаси
+        </button>
+        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
+          💾 Онлайн База ва Логин-Парол
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="w-full flex-1 px-4 py-4 space-y-4 no-print">
+
+    <!-- KPI CARDS -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-500 uppercase">Жами базада</span>
+        <div class="text-2xl font-extrabold text-slate-900 mt-0.5" id="kpiTotal">0</div>
+        <span class="text-xs text-slate-500">КА ва ДКП бўйича</span>
+      </div>
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-blue-200 shadow-sm">
+        <span class="text-xs font-bold text-blue-700 uppercase">Амалдаги номзодлар</span>
+        <div class="text-2xl font-extrabold text-blue-700 mt-0.5" id="kpiCurrent">0</div>
+        <span class="text-xs text-slate-500">Фототаблицада</span>
+      </div>
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-purple-200 shadow-sm">
+        <span class="text-xs font-bold text-purple-700 uppercase">Собиқ ходимлар</span>
+        <div class="text-2xl font-extrabold text-purple-700 mt-0.5" id="kpiFormer">0</div>
+        <span class="text-xs text-slate-500">Алоҳида ҳисобда</span>
+      </div>
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-amber-200 shadow-sm">
+        <span class="text-xs font-bold text-amber-700 uppercase">Ўрганиш жараёнида</span>
+        <div class="text-2xl font-extrabold text-amber-600 mt-0.5" id="kpiInProcess">0</div>
+        <span class="text-xs text-slate-500">Текширилмоқда</span>
+      </div>
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-emerald-200 shadow-sm">
+        <span class="text-xs font-bold text-emerald-700 uppercase">Тасдиқланди</span>
+        <div class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="kpiApproved">0</div>
+        <span class="text-xs text-slate-500">Ўрганиб чиқилди</span>
+      </div>
+      <div class="bg-white dark-card rounded-xl p-3.5 border border-red-300 shadow-sm">
+        <span class="text-xs font-bold text-red-700 uppercase">🚨 Судланганлар</span>
+        <div class="text-2xl font-extrabold text-red-600 mt-0.5" id="kpiSudlangan">0</div>
+        <span class="text-xs text-slate-500">Махсус реестрда</span>
+      </div>
+    </div>
+
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="viewDashboard" class="space-y-4 hidden">
+      <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-extrabold">Республика ҳудудлари ва 7 та раҳбарлик йўналиши ҳамда Собиқ ходимлар кесимида статистика</h2>
+            <p class="text-xs text-slate-500">Барча маълумотлар 1:1 рамкали жадвал шаклида Excel (.xls) форматига юклаб олинади</p>
+          </div>
+          <button onclick="exportDashboardExcel()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+            📥 Статистикани рамкали Excel (.xls) юклаб олиш
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="official-table" id="dashboardStatsTable">
+            <thead>
+              <tr>
+                <th style="width:45px;">Т/р</th>
+                <th>Ҳудуд номи</th>
+                <th>КА бошқарма раҳбарияти</th>
+                <th>ДКП бошқарма раҳбарияти</th>
+                <th>КА туман/ш. бўлими бошлиғи</th>
+                <th>ДКП туман/ш. филиали раҳбари</th>
+                <th>Комплаенс ходимлари</th>
+                <th style="background:#f3e8ff !important;">👤 Собиқ ходимлар</th>
+                <th>⏳ Ўрганиш жараёнида</th>
+                <th>✓ Ўрганиб чиқилди</th>
+                <th style="background:#fee2e2 !important;">🚨 Судланганлар</th>
+                <th>Жами</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. FOTOTABLITSA (CURRENT CANDIDATES) VIEW -->
+    <section id="viewFototablitsa" class="space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- LEFT FORM: ADD CANDIDATE -->
+        <div id="addCandidatePanel" class="lg:col-span-4 bg-white dark-card rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
+          <div class="border-b border-slate-200 pb-3 mb-3 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">Янги сўров киритиш</span>
+              <h3 class="text-base font-extrabold mt-1">Номзод ёки Собиқ ходим қўшиш</h3>
+            </div>
+          </div>
+
+          <form id="candidateForm" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold mb-1">1. Сўров тури *</label>
+                <select id="inpRecordType" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                  <option value="current">Амалдаги номзод (Фототаблица)</option>
+                  <option value="former">👤 Собиқ ходим (Текширув)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">2. Ҳудуд (14 та) *</label>
+                <select id="inpRegion" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">3. Мақсадли йўналиш (7 та тоифа) *</label>
+              <select id="inpCategory" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                <option value="КА туман (шаҳар) бўлими бошлиғи">1. КА ҳудудий туман (шаҳар) бўлими бошлиғи</option>
+                <option value="ДКП туман (шаҳар) филиали бошлиғи">2. ДКП ҳудудий туман (шаҳар) филиали раҳбари</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи">3. КА ҳудудий бошқармаси бошлиғи</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи ўринбосари">4. КА ҳудудий бошқармаси бошлиғи ўринбосари</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи">5. ДКП ҳудудий бошқармаси бошлиғи</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи ўринбосари">6. ДКП ҳудудий бошқармаси бошлиғи ўринбосари</option>
+                <option value="Комплаенс хизмати ходими">7. Коррупцияга қарши курашиш (комплаенс) ходими</option>
+                <option value="Собиқ ходимлар йўналиши">8. Собиқ ходимларни ўрганиш йўналиши</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div class="col-span-2">
+                <label class="block text-xs font-bold mb-1">4. Туман / шаҳар ёки бошқарма *</label>
+                <input id="inpDistrict" type="text" required placeholder="Масалан: Дўстлик тумани бўлими" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Тайинлов тури *</label>
+                <select id="inpAppointType" class="w-full px-2 py-2 rounded-lg border border-slate-300 text-xs font-bold text-red-700 bg-white">
+                  <option value="ишга олиш">(ишга олиш)</option>
+                  <option value="ротация">(ротация)</option>
+                  <option value=" захирага олиш">(захира)</option>
+                  <option value="собиқ ходим">(собиқ ходим)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div class="col-span-2">
+                <label class="block text-xs font-bold mb-1">5. ПИНФЛ (14 та рақам) *</label>
+                <input id="inpPinfl" type="text" maxlength="14" required placeholder="32601965390015" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Паспорт *</label>
+                <div class="flex gap-1">
+                  <input id="inpPassSeries" type="text" maxlength="2" required placeholder="AD" class="w-11 px-1.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold uppercase text-center text-slate-900" />
+                  <input id="inpPassNum" type="text" maxlength="7" required placeholder="9697422" class="w-full px-1.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold text-slate-900" />
+                </div>
+              </div>
+            </div>
+
+            <!-- PINFL DUPLICATE ALERT -->
+            <div id="pinflDuplicateBox" class="hidden p-2.5 rounded-lg bg-amber-50 border-2 border-amber-400 text-amber-950 text-xs"></div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">6. Ф.И.Ш. (Кириллда тўлиқ) *</label>
+              <input id="inpFio" type="text" required placeholder="Ходиев Адхам Дониёр ўғли" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-900" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold mb-1">7. Туғилган санаси *</label>
+                <input id="inpBirthDate" type="text" required placeholder="26.01.1996" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Туғилган жойи *</label>
+                <input id="inpBirthPlace" type="text" required placeholder="Жиззах вил., Фориш тум." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">8. Эгаллаб турган (ёки собиқ) лавозими *</label>
+              <textarea id="inpCurrentJob" rows="2" required placeholder="Давлат кадастрлари палатаси Жиззах вилояти бошқармаси бош мутахассиси" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold mb-1">Қайси санадан ишлайди *</label>
+                <input id="inpJobSince" type="text" required placeholder="15.01.2026 й." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">9. Фотосурат (3x4)</label>
+                <input id="inpPhotoFile" type="file" accept="image/*" class="w-full text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-200 file:text-slate-800 file:font-bold" />
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-md transition cursor-pointer">
+              ➕ Базага қўшиш ва Комплаенсга юбориш
+            </button>
+          </form>
+        </div>
+
+        <!-- RIGHT TABLE: OFFICIAL FOTOTABLITSA -->
+        <div id="fototablitsaContainer" class="lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-200">
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="text-xs font-extrabold">Ҳудуд кесими:</label>
+              <select id="fotoRegionFilter" onchange="renderAll()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+              <select id="fotoCategoryFilter" onchange="renderAll()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                <option value="ALL">Барча 7 та раҳбарлик йўналиши</option>
+                <option value="КА туман (шаҳар) бўлими бошлиғи">КА туман (шаҳар) бўлими бошлиғи</option>
+                <option value="ДКП туман (шаҳар) филиали бошлиғи">ДКП туман (шаҳар) филиали бошлиғи</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи">КА ҳудудий бошқармаси бошлиғи</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи ўринбосари">КА бошқарма бошлиғи ўринбосари</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи">ДКП ҳудудий бошқармаси бошлиғи</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи ўринбосари">ДКП бошқарма бошлиғи ўринбосари</option>
+                <option value="Комплаенс хизмати ходими">Комплаенс хизмати ходими</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="exportFototablitsaWord('current')" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow cursor-pointer">
+                📄 Фототаблицани Word (.doc) юклаш (1:1 Рамкали)
+              </button>
+              <button onclick="exportFototablitsaExcel('current')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+                📊 Excel (.xls) юклаш (1:1)
+              </button>
+            </div>
+          </div>
+
+          <div class="text-center doc-serif mb-3">
+            <p class="text-lg font-bold leading-snug">
+              <span class="text-red-600">Кадастр агентлиги ва Давлат кадастрлари Палатаси</span>
+              <span class="text-blue-950"> ҳудудий бошқармалари ҳамда туман (шаҳар) бўлими ва филиали раҳбарлиги вакант лавозимларига тавсия этилаётган номзодлар ҳақида</span>
+            </p>
+            <p class="text-lg font-bold text-blue-950 uppercase tracking-wide">МАЪЛУМОТ</p>
+            <p class="text-right text-sm italic font-bold text-blue-900" id="fotoCurrentDateLabel">15.10.2026 йил ҳолатига</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="official-table" id="mainFototablitsaTable">
+              <thead>
+                <tr>
+                  <th style="width:45px;">Т/р</th>
+                  <th style="width:115px;">Расм</th>
+                  <th style="width:230px;">Ф.И.Ш., туғилган йили ва жойи</th>
+                  <th style="width:250px;">Эгаллаб турган лавозими ва қайси санадан</th>
+                  <th style="width:250px;">Якуний натижа</th>
+                </tr>
+              </thead>
+              <tbody id="fototablitsaBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. FORMER EMPLOYEES VIEW -->
+    <section id="viewFormer" class="space-y-4 hidden">
+      <div class="bg-white dark-card rounded-2xl border border-purple-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-purple-100 text-purple-900">Алоҳида реестр ва статистика</span>
+            <h2 class="text-lg font-extrabold mt-1">👤 Собиқ ходимларни судланганлик ва комплаенс бўйича ўрганиш жадвали</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="formerRegionFilter" onchange="renderAll()" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+            <button onclick="exportFototablitsaWord('former')" class="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow cursor-pointer">
+              📄 Собиқ ходимлар жадвалини Word (.doc) юклаш (1:1)
+            </button>
+            <button onclick="exportFototablitsaExcel('former')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+              📊 Excel (.xls) юклаш (1:1)
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:45px;">Т/р</th>
+                <th style="width:115px;">Расм</th>
+                <th style="width:230px;">Ф.И.Ш., туғилган йили ва жойи, ПИНФЛ</th>
+                <th style="width:250px;">Илгари ишлаган (собиқ) лавозими ва даври</th>
+                <th style="width:250px;">Якуний натижа</th>
+              </tr>
+            </thead>
+            <tbody id="formerTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ИЦ (SUDLANGANLIK) TABLE VIEW -->
+    <section id="viewIts" class="space-y-4 hidden">
+      <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-amber-100 text-amber-900">Фақат Админ ва Раҳбарият учун (Кадрларга кўринмайди)</span>
+            <h2 class="text-lg font-extrabold mt-1">🔍 «ИЦ текшириш учун.xlsx» — Судланганликни текшириш ва модда киритиш ойнаси</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="itsFilterStatus" onchange="renderAll()" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча ходимлар (Номзод + Собиқ)</option>
+              <option value="UNCHECKED">Фақат ўрганилмаганлар (ИЦ га юбориладиган)</option>
+              <option value="SUDLANGAN">🚨 Судланганлиги чиққанлар</option>
+            </select>
+            <button onclick="exportItsExcel('UNCHECKED')" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow cursor-pointer">
+              📥 Ўрганилмаганларни биттада ИЦ Excel (.xls) юклаш
+            </button>
+            <button onclick="exportItsExcel('ALL')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+              📥 Тўлиқ ИЦ жадвалини рамкали Excel (.xls) юклаш
+            </button>
+            <button id="btnBulkSendClean" onclick="bulkSendCleanToBoss()" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow cursor-pointer">
+              ⚡ Тоза чиққанларни биттада раҳбарга юбориш
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:45px;">T/R</th>
+                <th>FIO</th>
+                <th style="width:125px;">Tug‘ilgan yili, oy va sana</th>
+                <th style="width:110px;">Pasport seriyasi</th>
+                <th style="width:125px;">Pasport raqami</th>
+                <th style="width:165px;">PINFL</th>
+                <th style="width:110px;">Тури / Ҳудуд</th>
+                <th style="width:310px;">ИЦ Судланганлик натижаси ва ЖК моддаси</th>
+                <th style="width:150px;">Амал</th>
+              </tr>
+            </thead>
+            <tbody id="itsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. NEGATIVE / SUDLANGANLAR REGISTRY VIEW -->
+    <section id="viewNegative" class="space-y-4 hidden">
+      <div class="bg-white dark-card rounded-2xl border-2 border-red-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-red-100 text-red-900">Махсус назорат реестри</span>
+            <h2 class="text-lg font-extrabold text-red-700 mt-1">⚠️ Судланганлиги ёки салбий ҳолати аниқланган номзодлар ва собиқ ходимлар реестри</h2>
+          </div>
+          <div id="negativeExportWrap">
+            <button onclick="exportNegativeExcel()" class="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow cursor-pointer">
+              📥 Судланганлар реестрини рамкали Excel (.xls) юклаб олиш (Фақат Админ)
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:45px;">Т/р</th>
+                <th>Ф.И.Ш. ва Туғилган санаси</th>
+                <th>Паспорт ва ПИНФЛ</th>
+                <th>Ҳудуд ва Йўналиш (Номзод / Собиқ)</th>
+                <th>Аниқланган Судланганлик моддаси / Салбий ҳолат</th>
+                <th>Якуний натижа</th>
+                <th>Ҳужжат</th>
+              </tr>
+            </thead>
+            <tbody id="negativeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. UNIFIED DATABASE VIEW -->
+    <section id="viewDatabase" class="space-y-4 hidden">
+      <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <h2 class="text-lg font-extrabold">🗂️ Ҳудуд, Лавозим тоифаси, Йил ва Ой кесимида Ягона Электрон База</h2>
+            <p class="text-xs text-slate-500">Барча тасдиқланган маълумотлар «Ўрганиб чиқилди» якуний натижаси билан сақланади</p>
+          </div>
+          <button onclick="exportDatabaseExcel()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+            📥 Реестрни рамкали Excel (.xls) юклаб олиш (1:1)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
+          <div>
+            <label class="block text-xs font-bold mb-1">1. Ҳудуд кесими</label>
+            <select id="dbRegionFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">2. Йўналиш / Тоифа</label>
+            <select id="dbCategoryFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча йўналишлар</option>
+              <option value="КА туман (шаҳар) бўлими бошлиғи">КА туман бўлими бошлиғи</option>
+              <option value="ДКП туман (шаҳар) филиали бошлиғи">ДКП туман филиали бошлиғи</option>
+              <option value="КА ҳудудий бошқармаси бошлиғи">КА бошқарма бошлиғи</option>
+              <option value="КА ҳудудий бошқармаси бошлиғи ўринбосари">КА бошқарма бошлиғи ўринбосари</option>
+              <option value="ДКП ҳудудий бошқармаси бошлиғи">ДКП бошқарма бошлиғи</option>
+              <option value="ДКП ҳудудий бошқармаси бошлиғи ўринбосари">ДКП бошқарма бошлиғи ўринбосари</option>
+              <option value="Комплаенс хизмати ходими">Комплаенс ходими</option>
+              <option value="Собиқ ходимлар йўналиши">👤 Собиқ ходимлар</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">3. Йил кесими</label>
+            <select id="dbYearFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча йиллар</option>
+              <option value="2026">2026 йил</option>
+              <option value="2025">2025 йил</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">4. Ой кесими</label>
+            <select id="dbMonthFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча ойлар (1–12)</option>
+              <option value="10">10 — Октябрь</option>
+              <option value="09">09 — Сентябрь</option>
+              <option value="08">08 — Август</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">5. Ҳолати</label>
+            <select id="dbStatusFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барчаси</option>
+              <option value="approved">✓ Ўрганиб чиқилди</option>
+              <option value="in_process">⏳ Ўрганиш жараёнида</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">6. ПИНФЛ / Ф.И.Ш.</label>
+            <input id="dbSearchInput" oninput="renderAll()" type="text" placeholder="Қидирув..." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:115px;">Реестр № / Сана</th>
+                <th style="width:130px;">Ҳудуд (Йил / Ой)</th>
+                <th>Номзод / Собиқ ходим Ф.И.Ш., Паспорт ва ПИНФЛ</th>
+                <th>Йўналиш ва Лавозим</th>
+                <th style="width:165px;">Якуний натижа</th>
+                <th style="width:155px;">Ҳолати</th>
+                <th style="width:150px;">Ҳужжат</th>
+              </tr>
+            </thead>
+            <tbody id="databaseTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. SUPABASE CLOUD + D:\ DRIVE & USERS SETTINGS VIEW (ADMIN) -->
+    <section id="viewSettings" class="space-y-4 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        <!-- SUPABASE ONLINE BRIDGE + D:\ DISK -->
+        <div class="lg:col-span-6 bg-white dark-card rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-900">🌐 Автоматик Уланган Онлайн База + D:\ Диск</span>
+            <span id="supabaseConnectedIndicator" class="text-xs font-extrabold text-emerald-700">🟢 Калитлар ўрнатилган</span>
+          </div>
+          <h3 class="text-lg font-extrabold">1. Supabase Онлайн Кўприк (Кадрлар ва Раҳбар учун)</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Сизнинг Supabase калитларингиз дастур ичига доимий ўрнатилди. Энди Кадрлар, Бўлим бошлиғи ва Кузатувчи раҳбарлар дастурни очиб Логин ва Паролини териши билан маълумотлар автоматик синхрон бўлади!
+          </p>
+
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-slate-800">
+            <div>
+              <label class="block text-xs font-bold mb-1">1. Supabase Project URL (Ўрнатилган):</label>
+              <input id="inpSupabaseUrl" type="text" value="https://kyihefutrwvukbaewzor.supabase.co" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">2. Supabase Publishable / Anon Key (Ўрнатилган):</label>
+              <input id="inpSupabaseKey" type="text" value="sb_publishable_3BO5cEP52JH4KNfGpWlylw_pM0_zg7N" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
+            </div>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button onclick="saveSupabaseConfig()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow cursor-pointer">
+                🔄 Ҳозироқ Supabase билан синхронлаш
+              </button>
+              <button onclick="copySupabaseSql()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold cursor-pointer">
+                📋 SQL жадвал кодини нусхалаш
+              </button>
+            </div>
+          </div>
+
+          <hr class="border-slate-200" />
+
+          <h3 class="text-base font-extrabold">2. Компьютерингизнинг <code class="text-emerald-700">D:\Komplayens_Kadr_Baza\</code> дискига улаш</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button onclick="connectDDriveFolder()" class="p-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
+              📂 1. D:\ дискдан папка танлаш (Авто-сақлаш)
+              <span class="block font-normal text-emerald-100 mt-0.5">Ҳар бир ўзгариш D:\ дискингизга ёзилади</span>
+            </button>
+            <button onclick="downloadBackupJson()" class="p-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
+              💾 2. Базани D:\ дискка файл қилиб сақлаш (.JSON)
+              <span class="block font-normal text-blue-100 mt-0.5">komplayens_kadr_baza.json</span>
+            </button>
+          </div>
+
+          <div class="pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <label class="text-xs font-bold block mb-1">D:\ дискдаги захира файлни юклаш:</label>
+              <input type="file" accept=".json" onchange="restoreBackupJson(event)" class="text-xs" />
+            </div>
+            <button onclick="downloadPortableLauncherBat()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shadow cursor-pointer">
+              ⚡ Установкасиз Ишга Туширувчи (.BAT) юклаб олиш
+            </button>
+          </div>
+        </div>
+
+        <!-- USER & ROLE MANAGEMENT -->
+        <div class="lg:col-span-6 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-amber-100 text-amber-900">🔐 Фақат Админ (Сиз) бошқарадиган бўлим</span>
+          <h3 class="text-lg font-extrabold">Фойдаланувчиларга Рол ва Логин-Парол яратиб бериш</h3>
+          <p class="text-xs text-slate-500">Сиз яратган логин ва парол дарҳол Supabase онлайн базага ҳам ёзилади — ходим ўз компьютеридан ўша логин билан кира олади.</p>
+
+          <form id="userCreateForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-slate-900">
+            <div>
+              <label class="block text-xs font-bold mb-1">Ф.И.Ш. ва Лавозими *</label>
+              <input id="newUserName" type="text" required placeholder="Алиев Вали — Бошқарма бошлиғи" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Роли *</label>
+              <select id="newUserRole" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
+                <option value="kadr">1. Кадрлар бўлими (HR)</option>
+                <option value="rahbar">3. Бўлим бошлиғи (Тасдиқловчи)</option>
+                <option value="kuzatuvchi">4. Раҳбар Кузатувчи (Юқори раҳбарият)</option>
+                <option value="admin">2. Админ (Комплаенс)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Логин *</label>
+              <input id="newUserLogin" type="text" required placeholder="kadr_samarqand" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Парол *</label>
+              <input id="newUserPass" type="text" required placeholder="Samarqand2026!" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
+            </div>
+            <div class="sm:col-span-2">
+              <button type="submit" class="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold cursor-pointer">
+                ➕ Логин ва Паролни яратиш (Онлайн базага сақлаш)
+              </button>
+            </div>
+          </form>
+
+          <div class="overflow-x-auto">
+            <table class="official-table">
+              <thead>
+                <tr>
+                  <th>Ф.И.Ш.</th>
+                  <th>Роли</th>
+                  <th>Логин</th>
+                  <th>Парол</th>
+                  <th>Амал</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ADMIN REVIEW & CONCLUSION EDITOR MODAL -->
+  <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs uppercase font-bold text-amber-300">Админ (Комплаенс) ўрганиш ойнаси</span>
+          <h3 class="text-base font-extrabold" id="editorCandidateTitle">Номзод бўйича Маълумотнома тайёрлаш</h3>
+        </div>
+        <button onclick="closeEditorModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">1. ИЦ Судланганлик ҳолати *</label>
+            <select id="editSudlanganStatus" onchange="onSudlanganSelectChange()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-extrabold bg-white">
+              <option value="clean">✓ Муқаддам судланмаган (Тоза)</option>
+              <option value="sudlangan">🚨 СУДЛАНГАН (ЖК моддаси бор)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">2. ИЦ маълумоти / Жиноят кодекси моддаси ва тафсилоти</label>
+            <input id="editSudlanganText" type="text" placeholder="муқаддам судланмаган" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Маълумоти, ОТМ ва оилавий ҳолати (1-хатбоши учун)</label>
+            <input id="editEduText" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Якуний натижа (Жадвалда кўринадиган стандарт ёзув)</label>
+            <input type="text" disabled value="Тасдиқлангач автоматик: «Ўрганиб чиқилди»" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-emerald-800" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">3. Диний эътиқоди ва ДЭО га алоқадорлиги (2-хатбоши)</label>
+          <textarea id="editPara2" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">4. Иш жойидан тавсиф ва коррупцион ҳолатлар (3–4-хатбошилар)</label>
+          <textarea id="editPara3" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">5. Шахсий ва бошқарув фазилатлари ҳамда муомала маданияти (5–6-хатбошилар)</label>
+          <textarea id="editPara4" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"></textarea>
+        </div>
+      </div>
+
+      <div class="bg-slate-100 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <button onclick="saveDraftOnly()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer">
+          💾 Қоралама сифатида сақлаш (Раҳбарга очмасдан)
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="sendToBossForApproval()" class="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer">
+            📤 Бўлим бошлиғига (И.Зариповга) тасдиқлашга юбориш
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 OFFICIAL MALUMOTNOMA VIEW & PRINT MODAL -->
+  <div id="docModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm overflow-y-auto p-4 md:p-8 hidden">
+    <div class="max-w-4xl mx-auto">
+      <!-- TOP CONTROL BAR -->
+      <div class="bg-slate-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-slate-700 shadow-xl no-print">
+        <div class="flex items-center gap-3">
+          <span id="docModalStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            ✓ Ўрганиб чиқилди
+          </span>
+          <span id="docModalReestrInfo" class="text-xs text-slate-300 font-mono"></span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="copyDocText()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">
+            📋 Матнни нусхалаш
+          </button>
+          <button onclick="exportCurrentDocWord()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer">
+            📄 Word (.doc) юклаб олиш
+          </button>
+          <button onclick="printCurrentDocA4()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow cursor-pointer">
+            🖨 Принтерга печать бериш (А4)
+          </button>
+          <button onclick="closeDocModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer" title="Ёпиш">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- BOSS (I.ZARIPOV) APPROVAL & SUDLANGANLIK GUARD BAR -->
+      <div id="bossActionPanel" class="bg-white rounded-2xl p-4 mb-4 border-2 border-emerald-500 shadow-lg space-y-3 hidden no-print text-slate-900">
+        <!-- RED WARNING IF SUDLANGAN -->
+        <div id="bossSudlanganWarningBox" class="hidden p-4 rounded-xl bg-red-50 border-2 border-red-600 text-red-950 space-y-2 sudlangan-alert-pulse">
+          <div class="flex items-center gap-2 font-extrabold text-sm text-red-700">
+            <span>🚨 ДИҚҚАТ! УШБУ ШАХСДА СУДЛАНГАНЛИК ҲОЛАТИ МАВЖУД!</span>
+          </div>
+          <p class="text-xs font-bold" id="bossSudlanganWarningText"></p>
+          <label class="flex items-center gap-2 pt-1 cursor-pointer select-none">
+            <input id="chkBossConfirmSudlangan" type="checkbox" onchange="toggleBossApproveButton()" class="w-4 h-4 accent-red-600" />
+            <span class="text-xs font-extrabold text-red-800 underline">Мен (Бўлим бошлиғи) ушбу ходимнинг судланганлик маълумоти билан шахсан танишиб чиқдим</span>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-extrabold uppercase text-emerald-800">Бўлим бошлиғи (И.Зарипов) қарори:</span>
+            <p class="text-xs text-slate-600">Тасдиқлашни боссангиз, ҳужжатга имзо тушади ва Кадрлар ҳамда Кузатувчи ойнасида «Ўрганиб чиқилди» бўлиб очилади.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="returnToAdminForRevision()" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold cursor-pointer">
+              ↩️ Админга таҳрирга қайтариш
+            </button>
+            <button id="btnBossFinalApprove" onclick="approveByBoss()" class="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer">
+              ✅ МАЪҚУЛ — ТАСДИҚЛАШ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- A4 SHEET CONTENT -->
+      <div id="a4PrintableSheet" class="a4-sheet doc-serif">
+        <div id="a4InnerContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. ДОИМИЙ НАСТРОЙКАЛАР ВА СПИСОКЛАР (14 ТА ҲУДУД)
+    // =========================================================================
+    const REGIONS_14 = [
+      "Жиззах вилояти",
+      "Тошкент шаҳри",
+      "Тошкент вилояти",
+      "Самарқанд вилояти",
+      "Фарғона вилояти",
+      "Андижон вилояти",
+      "Наманган вилояти",
+      "Бухоро вилояти",
+      "Навоий вилояти",
+      "Қашқадарё вилояти",
+      "Сурхондарё вилояти",
+      "Сирдарё вилояти",
+      "Хоразм вилояти",
+      "Қорақалпоғистон Республикаси"
+    ];
+
+    const STORAGE_KEY = "KOMPLAYENS_KADR_V60_STATE";
+    const SUPABASE_CONFIG_KEY = "KOMPLAYENS_KADR_V60_SUPABASE";
+
+    // СИЗНИНГ ДОИМИЙ SUPABASE КАЛИТЛАРИНГИЗ (АВТОМАТИК УЛАНГАН)
+    const DEFAULT_SUPABASE_URL = "https://kyihefutrwvukbaewzor.supabase.co";
+    const DEFAULT_SUPABASE_KEY = "sb_publishable_3BO5cEP52JH4KNfGpWlylw_pM0_zg7N";
+
+    let currentRole = "admin"; // 'kadr' | 'admin' | 'rahbar' | 'kuzatuvchi'
+    let currentUser = { login: "admin", name: "Мухриддин Элбегиев (Админ)", role: "admin" };
+    let currentTab = "fototablitsa";
+    let activeCandidateId = null;
+    let dDriveFileHandle = null;
+    let isLatinMode = false;
+
+    // SVG расм генератори (3x4 расм учун)
+    function makeAvatarSvg(initials, bg = "#1e3a8a") {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="110" height="140" viewBox="0 0 110 140">
+        <rect width="110" height="140" fill="${bg}"/>
+        <circle cx="55" cy="48" r="22" fill="#e2e8f0"/>
+        <path d="M18 132 C18 95 92 95 92 132 Z" fill="#e2e8f0"/>
+        <text x="55" y="54" text-anchor="middle" fill="${bg}" font-family="Arial" font-weight="bold" font-size="14">${initials}</text>
+      </svg>`;
+      return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+
+    // Бошланғич демо ва реал намуна маълумотлар
+    const INITIAL_STATE = {
+      users: [
+        { login: "admin", pass: "Komplayens2026!", name: "Комплаенс Админ (Яратувчи)", role: "admin" },
+        { login: "zaripov", pass: "Rahbar2026!", name: "И.Зарипов — Бўлим бошлиғи", role: "rahbar" },
+        { login: "kadr_jizzax", pass: "Kadr2026!", name: "Кадрлар бўлими масъул ходими", role: "kadr" },
+        { login: "rahbariyat", pass: "Kuzatuv2026!", name: "Раҳбар Кузатувчи (Юқори раҳбарият)", role: "kuzatuvchi" }
+      ],
+      candidates: [
+        {
+          id: "CAND-101",
+          reestrNo: "ККБ-2026/10-01",
+          createdAt: "14.10.2026",
+          year: "2026",
+          month: "10",
+          recordType: "current",
+          region: "Жиззах вилояти",
+          category: "КА туман (шаҳар) бўлими бошлиғи",
+          districtHeading: "Кадастр агентлиги Жиззах вилояти бошқармаси Дўстлик тумани бўлими бошлиғи лавозимига",
+          appointType: "(ишга олиш)",
+          fio: "Ходиев Адхам Дониёр ўғли",
+          birthDate: "26.01.1996",
+          birthPlace: "Жиззах вилояти, Фориш тумани",
+          passSeries: "AD",
+          passNum: "9697422",
+          pinfl: "32601965390015",
+          currentJob: "Давлат кадастрлари палатаси Жиззах вилояти бошқармаси Бино ва иншоотлар Давлат кадастрини юритиш бўлими бош мутахассиси",
+          jobSince: "15.01.2026 й.",
+          photo: makeAvatarSvg("ХА", "#1e3a8a"),
+          itsChecked: false,
+          sudlanganStatus: "clean",
+          sudlanganText: "муқаддам судланмаган",
+          workflowStage: "admin_review",
+          eduText: "миллати ўзбек, оилали, маълумоти олий, 2019 йилда Жиззах политехника институтини тамомлаган.",
+          para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
+          para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган. Лавозимга номзод сифатида тақдим этилганда, у билан Коррупцияга қарши курашиш бўлими томонидан коррупцияга йўл қўймаслик борасида суҳбат ўтказилган.",
+          para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
+          approvedDate: ""
+        },
+        {
+          id: "CAND-102",
+          reestrNo: "ККБ-2026/10-02",
+          createdAt: "14.10.2026",
+          year: "2026",
+          month: "10",
+          recordType: "current",
+          region: "Жиззах вилояти",
+          category: "КА туман (шаҳар) бўлими бошлиғи",
+          districtHeading: "Кадастр агентлиги Жиззах вилояти бошқармаси Дўстлик тумани бўлими бошлиғи лавозимига",
+          appointType: "(ишга олиш)",
+          fio: "Қобулов Жалил Бердимурод ўғли",
+          birthDate: "30.06.1992",
+          birthPlace: "Жиззах вилояти, Дўстлик тумани",
+          passSeries: "AB",
+          passNum: "5387897",
+          pinfl: "33006921601197",
+          currentJob: "Давлат кадастрлари палатаси Жиззах вилояти бошқармаси Дўстлик тумани филиали бошлиғи",
+          jobSince: "09.10.2023 й.",
+          photo: makeAvatarSvg("ҚЖ", "#0f766e"),
+          itsChecked: true,
+          sudlanganStatus: "clean",
+          sudlanganText: "муқаддам судланмаган",
+          workflowStage: "boss_review",
+          eduText: "миллати ўзбек, оилали, 2 нафар фарзанди бор, маълумоти олий.",
+          para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
+          para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган.",
+          para4: "Мутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
+          approvedDate: ""
+        },
+        {
+          id: "CAND-103",
+          reestrNo: "ККБ-2026/10-03",
+          createdAt: "14.10.2026",
+          year: "2026",
+          month: "10",
+          recordType: "current",
+          region: "Жиззах вилояти",
+          category: "КА туман (шаҳар) бўлими бошлиғи",
+          districtHeading: "Кадастр агентлиги Жиззах вилояти бошқармаси Дўстлик тумани бўлими бошлиғи лавозимига",
+          appointType: "(ишга олиш)",
+          fio: "Пирназаров Шухрат Қўлдош ўғли",
+          birthDate: "23.12.1994",
+          birthPlace: "Жиззах вилояти, Дўстлик тумани",
+          passSeries: "AD",
+          passNum: "9541722",
+          pinfl: "32312941600016",
+          currentJob: "Давлат кадастрлари палатаси Жиззах вилояти бошқармаси Дўстлик тумани филиали Ерларни аукционга қадар аниқлаш ва дастурга жойлаштириш шуъбаси етакчи мутахассиси",
+          jobSince: "04.09.2024 й.",
+          photo: makeAvatarSvg("ПШ", "#991b1b"),
+          itsChecked: true,
+          sudlanganStatus: "sudlangan",
+          sudlanganText: "муқаддам судланган (ЖИБ Дўстлик туман судининг 2021 йил 14 майдаги ҳукми билан ЎзР ЖКнинг 167-моддаси 1-қисми билан жарима жазоси тайинланган)",
+          workflowStage: "boss_review",
+          eduText: "миллати ўзбек, оилали, маълумоти олий.",
+          para2: "Номзод анъанавий ислом динига эътиқод қилади, динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги қайд этилмаган.",
+          para3: "ИЦ базаси орқали текширилганда муқаддам ЎзР ЖКнинг 167-моддаси 1-қисми билан судланганлиги аниқланди.",
+          para4: "Мазкур ҳолат бўйича маълумот раҳбариятга кўриб чиқиш учун тақдим этилмоқда.",
+          approvedDate: ""
+        },
+        {
+          id: "CAND-104",
+          reestrNo: "ККБ-2026/10-05",
+          createdAt: "15.10.2026",
+          year: "2026",
+          month: "10",
+          recordType: "current",
+          region: "Жиззах вилояти",
+          category: "КА туман (шаҳар) бўлими бошлиғи",
+          districtHeading: "Кадастр агентлиги Жиззах вилояти бошқармаси Жиззах шаҳар бўлими бошлиғи лавозимига",
+          appointType: "(ишга олиш)",
+          fio: "Абдусаттров Сардор Суннат ўғли",
+          birthDate: "08.08.1991",
+          birthPlace: "Жиззах вилояти, Жиззах тумани",
+          passSeries: "AD",
+          passNum: "5103326",
+          pinfl: "30808912000014",
+          currentJob: "Кадастр агентлиги Жиззах вилояти бошқармаси Жиззах шаҳар бўлими етакчи инспектори",
+          jobSince: "10.03.2022 й.",
+          photo: makeAvatarSvg("АС", "#15803d"),
+          itsChecked: true,
+          sudlanganStatus: "clean",
+          sudlanganText: "муқаддам судланмаган",
+          workflowStage: "approved",
+          eduText: "миллати ўзбек, оилали, 2 нафар фарзанди бор, маълумоти олий, 2012 йилда Жиззах политехника институтининг Муҳандислик коммуникация қурилиши йўналишини (бакалавр) тамомлаган. Кадастр тизимида 2023 йилдан фаолият кўрсатиб келмоқда.",
+          para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб қувватлаши қайд этилмаган.",
+          para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган. Бўлим раҳбарлигига номзод сифатида тақдим этилганда, у билан Коррупцияга қарши курашиш бўйича бош мутахассис томонидан коррупцияга йўл қўймаслик борасида суҳбат ўтказилган.",
+          para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга, бироқ асосан иш фаолиятида маҳаллалар билан ишлаб келганлиги ва ўз комфорт зонасига ўрганиб қолганлиги сабабли бошқарув жиҳатлари етарли даражада шаклланмаган.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
+          approvedDate: "15.10.2026"
+        },
+        {
+          id: "CAND-105",
+          reestrNo: "ККБ-СХ-2026/10-01",
+          createdAt: "14.10.2026",
+          year: "2026",
+          month: "10",
+          recordType: "former",
+          region: "Фарғона вилояти",
+          category: "Собиқ ходимлар йўналиши",
+          districtHeading: "Давлат кадастрлари палатаси Фарғона вилояти бошқармаси собиқ ходими бўйича",
+          appointType: "(собиқ ходим)",
+          fio: "Абдуалимов Ойбек Мухтарович",
+          birthDate: "11.11.1988",
+          birthPlace: "Фарғона вилояти, Фарғона шаҳри",
+          passSeries: "AD",
+          passNum: "5103326",
+          pinfl: "31111880460036",
+          currentJob: "ДКП Фарғона вилояти бошқармаси собиқ мутахассиси (2021–2024 йй.)",
+          jobSince: "10.05.2021 й.",
+          photo: makeAvatarSvg("АО", "#7e22ce"),
+          itsChecked: true,
+          sudlanganStatus: "sudlangan",
+          sudlanganText: "муқаддам судланган (2024 йилда ЎзР ЖКнинг 210-моддаси билан судланган)",
+          workflowStage: "approved",
+          eduText: "миллати ўзбек, оилали, маълумоти олий.",
+          para2: "Диний мутаассиблик ва ДЭО га алоқадорлиги аниқланмаган.",
+          para3: "Собиқ ходимлар бўйича ўтказилган ИЦ текшируви давомида 2024 йилда ЖКнинг 210-моддаси билан судланганлиги тасдиқланди.",
+          para4: "Маълумот учун умумий реестрга киритилди.",
+          approvedDate: "15.10.2026"
+        }
+      ]
+    };
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.candidates)) return parsed;
+        }
+      } catch (e) {
+        console.warn("State load warning:", e);
+      }
+      return JSON.parse(JSON.stringify(INITIAL_STATE));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn("Local save warning:", e);
+      }
+      autoWriteToDDrive();
+      pushToSupabase();
+    }
+
+    // =========================================================================
+    // 2. SUPABASE ОНЛАЙН КЎПРИК (СИЗНИНГ КАЛИТЛАРИНГИЗ АВТОМАТИК УЛАНГАН)
+    // =========================================================================
+    function getSupabaseConfig() {
+      try {
+        const raw = localStorage.getItem(SUPABASE_CONFIG_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.url && parsed.key) return parsed;
+        }
+      } catch (e) {}
+      return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_KEY };
+    }
+
+    function saveSupabaseConfig() {
+      const url = document.getElementById("inpSupabaseUrl").value.trim().replace(/\/$/, "");
+      const key = document.getElementById("inpSupabaseKey").value.trim();
+      if (!url || !key) {
+        alert("Supabase Project URL ва API Key ни киритинг!");
+        return;
+      }
+      localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify({ url, key }));
+      pullFromSupabase(true);
+    }
+
+    async function pushToSupabase() {
+      const cfg = getSupabaseConfig();
+      if (!cfg.url || !cfg.key) return;
+      try {
+        const res = await fetch(`${cfg.url}/rest/v1/komplayens_store?on_conflict=id`, {
+          method: "POST",
+          headers: {
+            "apikey": cfg.key,
+            "Authorization": `Bearer ${cfg.key}`,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates"
+          },
+          body: JSON.stringify({
+            id: "MAIN_DB",
+            payload: appState,
+            updated_at: new Date().toISOString()
+          })
+        });
+        const badge = document.getElementById("cloudSyncBadge");
+        if (res.ok) {
+          if (badge) {
+            badge.textContent = "☁️ Онлайн База: Синхронланган";
+            badge.className = "text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold";
+          }
+        } else {
+          if (badge) {
+            badge.textContent = "⚠️ SQL жадвални Run қилинг";
+            badge.className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-bold";
+          }
+        }
+      } catch (e) {
+        console.warn("Supabase push error:", e);
+      }
+    }
+
+    async function pullFromSupabase(showNotification = false) {
+      const cfg = getSupabaseConfig();
+      if (!cfg.url || !cfg.key) return;
+      const badge = document.getElementById("cloudSyncBadge");
+      try {
+        const res = await fetch(`${cfg.url}/rest/v1/komplayens_store?id=eq.MAIN_DB&select=payload`, {
+          headers: {
+            "apikey": cfg.key,
+            "Authorization": `Bearer ${cfg.key}`
+          }
+        });
+        if (!res.ok) {
+          if (badge) {
+            badge.textContent = "⚠️ Supabase: SQL Editor да Run босинг";
+            badge.className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-bold";
+          }
+          if (showNotification) {
+            alert("Диққат! Supabase уланди, лекин ҳали «komplayens_store» жадвали яратилмаган.\n\nSupabase чап менюсидан SQL Editor га кириб, берилган SQL кодни Run қилинг!");
+          }
+          return;
+        }
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0 && rows[0].payload && Array.isArray(rows[0].payload.candidates)) {
+          appState = rows[0].payload;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+        } else {
+          await pushToSupabase();
+        }
+        if (badge) {
+          badge.textContent = "☁️ Онлайн База: Фаол (Supabase)";
+          badge.className = "text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold";
+        }
+        if (showNotification) alert("Supabase онлайн база билан муваффақиятли синхронланди!");
+      } catch (e) {
+        console.warn("Supabase pull warning:", e);
+      }
+    }
+
+    function copySupabaseSql() {
+      const sql = `CREATE TABLE IF NOT EXISTS komplayens_store (\n  id TEXT PRIMARY KEY,\n  payload JSONB NOT NULL,\n  updated_at TIMESTAMPTZ DEFAULT NOW()\n);\nALTER TABLE komplayens_store ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Allow all access" ON komplayens_store FOR ALL USING (true) WITH CHECK (true);`;
+      navigator.clipboard.writeText(sql);
+      alert("SQL код нусхаланди! Энди Supabase -> SQL Editor ичига ташлаб «Run» тугмасини босинг.");
+    }
+
+    // Ҳар 12 сонияда бошқа компьютерлар киритган ўзгаришларни автоматик тортиб олиш
+    setInterval(() => {
+      pullFromSupabase(false);
+    }, 12000);
+
+    // =========================================================================
+    // 3. РОЛЛАР, ЛОГИН ВА ТАБЛАР БОШҚАРУВИ
+    // =========================================================================
+    function quickFillLogin(u, p) {
+      document.getElementById("loginUsername").value = u;
+      document.getElementById("loginPassword").value = p;
+    }
+
+    function openLoginModal() {
+      document.getElementById("loginOverlay").classList.remove("hidden");
+    }
+
+    document.getElementById("btnLoginSubmit").addEventListener("click", () => {
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value.trim();
+      const found = appState.users.find(x => x.login === u && x.pass === p);
+      if (!found) {
+        document.getElementById("loginError").classList.remove("hidden");
+        return;
+      }
+      document.getElementById("loginError").classList.add("hidden");
+      document.getElementById("loginOverlay").classList.add("hidden");
+      currentUser = found;
+      switchRole(found.role);
+    });
+
+    function switchRole(role) {
+      currentRole = role;
+      const roleButtons = {
+        kadr: document.getElementById("roleBtnKadr"),
+        admin: document.getElementById("roleBtnAdmin"),
+        rahbar: document.getElementById("roleBtnRahbar"),
+        kuzatuvchi: document.getElementById("roleBtnKuzatuvchi")
+      };
+      Object.keys(roleButtons).forEach(r => {
+        if (r === role) {
+          roleButtons[r].className = "px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow cursor-pointer";
+        } else {
+          roleButtons[r].className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 cursor-pointer";
+        }
+      });
+
+      const banner = document.getElementById("roleBannerText");
+      if (role === "kadr") {
+        banner.innerHTML = "👤 <b>Жорий рол: 1. Кадрлар бўлими (HR)</b> — Номзод ва собиқ ходимларни киритади, фақат раҳбар тасдиқлаган («Ўрганиб чиқилди») хулосани кўради ва чоп этади.";
+      } else if (role === "admin") {
+        banner.innerHTML = "🛡️ <b>Жорий рол: 2. Админ (Комплаенс — Яратувчи)</b> — ИЦ Excel юклаб олади, судланганлик моддасини ва Маълумотномани ёзиб Бўлим бошлиғига тасдиқлашга юборади.";
+      } else if (role === "rahbar") {
+        banner.innerHTML = "✅ <b>Жорий рол: 3. Бўлим бошлиғи (И.Зарипов)</b> — Админ юборган Маълумотномани ўқиб тасдиқлайди ёки таҳрирга қайтаради (Судланганлар қизил огоҳлантириш билан чиқади).";
+      } else if (role === "kuzatuvchi") {
+        banner.innerHTML = "👁 <b>Жорий рол: 4. Раҳбар Кузатувчи (Юқори раҳбарият)</b> — Фақат тасдиқланган («✓ Ўрганиб чиқилди») хулосаларни очиб ўқий олади. Ўрганиш жараёнидагилар ёпиқ туради.";
+      }
+
+      // Кадрларга ИЦ ва Судланганлар реестри кўринмайди
+      document.getElementById("tabBtnIts").classList.toggle("hidden", role === "kadr");
+      document.getElementById("tabBtnNegative").classList.toggle("hidden", role === "kadr");
+      document.getElementById("tabBtnSettings").classList.toggle("hidden", role !== "admin");
+      document.getElementById("negativeExportWrap").classList.toggle("hidden", role !== "admin");
+      document.getElementById("btnBulkSendClean").classList.toggle("hidden", role !== "admin");
+
+      // Фақат Кадр ва Админда номзод қўшиш формаси чиқади
+      const addPanel = document.getElementById("addCandidatePanel");
+      const fotoContainer = document.getElementById("fototablitsaContainer");
+      if (role === "rahbar" || role === "kuzatuvchi") {
+        addPanel.classList.add("hidden");
+        fotoContainer.className = "lg:col-span-12 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm";
+      } else {
+        addPanel.classList.remove("hidden");
+        fotoContainer.className = "lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm";
+      }
+
+      if (role === "kadr" && (currentTab === "its" || currentTab === "negative" || currentTab === "settings")) {
+        switchTab("fototablitsa");
+      } else if (role !== "admin" && currentTab === "settings") {
+        switchTab("dashboard");
+      } else {
+        renderAll();
+      }
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const views = {
+        dashboard: "viewDashboard",
+        fototablitsa: "viewFototablitsa",
+        former: "viewFormer",
+        its: "viewIts",
+        negative: "viewNegative",
+        database: "viewDatabase",
+        settings: "viewSettings"
+      };
+      const btns = {
+        dashboard: "tabBtnDashboard",
+        fototablitsa: "tabBtnFototablitsa",
+        former: "tabBtnFormer",
+        its: "tabBtnIts",
+        negative: "tabBtnNegative",
+        database: "tabBtnDatabase",
+        settings: "tabBtnSettings"
+      };
+      Object.keys(views).forEach(k => {
+        document.getElementById(views[k]).classList.toggle("hidden", k !== tab);
+        const b = document.getElementById(btns[k]);
+        if (b) {
+          if (k === tab) {
+            b.className = "px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-500 text-slate-950 shadow cursor-pointer";
+          } else {
+            b.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-200 hover:bg-slate-700 cursor-pointer";
+          }
+        }
+      });
+      renderAll();
+    }
+
+    // =========================================================================
+    // 4. ЖАДВАЛЛАР ВА КЎРСАТКИЧЛАРНИ ЧИЗИШ (RENDER)
+    // =========================================================================
+    function populateRegionSelects() {
+      const inpReg = document.getElementById("inpRegion");
+      const fotoReg = document.getElementById("fotoRegionFilter");
+      const formerReg = document.getElementById("formerRegionFilter");
+      const dbReg = document.getElementById("dbRegionFilter");
+
+      inpReg.innerHTML = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+      const allOpt = `<option value="ALL">Барча ҳудудлар (14 та)</option>` + REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+      fotoReg.innerHTML = allOpt;
+      formerReg.innerHTML = allOpt;
+      dbReg.innerHTML = allOpt;
+    }
+
+    // «Якуний натижа» устуни — фақат «Ўрганиб чиқилди» ёки «Ўрганиш жараёнида»
+    function getFinalResultBadge(c) {
+      if (c.workflowStage === "approved") {
+        return `<span class="inline-block px-3 py-1 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-xs">✓ Ўрганиб чиқилди</span>`;
+      }
+      return `<span class="inline-block px-3 py-1 rounded-md bg-amber-100 text-amber-900 border border-amber-400 font-bold text-xs">⏳ Ўрганиш жараёнида</span>`;
+    }
+
+    function getFinalResultPlainText(c) {
+      return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
+    }
+
+    // Ички босқич ва тугмалар логикаси (4 та рол учун: Кузатувчи фақат тасдиқланганни оча олади!)
+    function renderActionCell(c) {
+      const resultBadge = getFinalResultBadge(c);
+      const isSudlangan = c.sudlanganStatus === "sudlangan";
+
+      // 1. КАДРЛАР РОЛИ
+      if (currentRole === "kadr") {
+        if (c.workflowStage === "approved") {
+          return `
+            <div class="space-y-1.5 text-center">
+              ${resultBadge}
+              <div class="text-xs font-bold text-emerald-800">Тасдиқланди (${c.approvedDate || c.createdAt})</div>
+              <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow cursor-pointer">
+                📄 МАЪЛУМОТНОМА (Чоп этиш)
+              </button>
+            </div>
+          `;
+        }
+        return `
+          <div class="space-y-1 text-center">
+            ${resultBadge}
+            <div class="text-xs text-slate-500 italic">Комплаенс текширувида</div>
+          </div>
+        `;
+      }
+
+      // 2. АДМИН (СИЗ) РОЛИ
+      if (currentRole === "admin") {
+        let stageInfo = "";
+        if (c.workflowStage === "admin_review") {
+          stageInfo = `<div class="text-xs font-bold text-amber-700">1-босқич: Админ ўрганмоқда</div>`;
+        } else if (c.workflowStage === "boss_review") {
+          stageInfo = `<div class="text-xs font-bold text-blue-700">2-босқич: Бўлим бошлиғи тасдиғида</div>`;
+        } else {
+          stageInfo = `<div class="text-xs font-bold text-emerald-700">✓ Раҳбар тасдиқлаган</div>`;
+        }
+
+        const sudAlert = isSudlangan
+          ? `<div class="p-1.5 rounded bg-red-100 border border-red-400 text-red-900 font-bold text-xs">🚨 СУДЛАНГАН: ${c.sudlanganText}</div>`
+          : `<div class="text-xs font-semibold text-emerald-800">✓ ${c.sudlanganText || "муқаддам судланмаган"}</div>`;
+
+        return `
+          <div class="space-y-1.5">
+            ${resultBadge}
+            ${stageInfo}
+            ${sudAlert}
+            <div class="flex flex-wrap gap-1 pt-1">
+              <button onclick="openEditorModal('${c.id}')" class="flex-1 py-1.5 px-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer">
+                ✍️ Ўрганиш / Таҳрир
+              </button>
+              <button onclick="openDocModal('${c.id}')" class="py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer">
+                📄 Хулоса
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. БЎЛИМ БОШЛИҒИ (И.ЗАРИПОВ) РОЛИ
+      if (currentRole === "rahbar") {
+        if (c.workflowStage === "admin_review") {
+          return `
+            <div class="space-y-1 text-center">
+              ${resultBadge}
+              <div class="text-xs font-semibold text-slate-500">🔒 Админ ўрганмоқда (Тасдиқлашга юборилгач очилади)</div>
+            </div>
+          `;
+        }
+        if (c.workflowStage === "boss_review") {
+          if (isSudlangan) {
+            return `
+              <div class="space-y-1.5 p-2 rounded-lg bg-red-50 border-2 border-red-500 sudlangan-alert-pulse">
+                <div class="text-xs font-extrabold text-red-700 uppercase">🚨 ДИҚҚАТ! СУДЛАНГАНЛИК БОР!</div>
+                <div class="text-xs font-bold text-red-900">${c.sudlanganText}</div>
+                <button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold text-xs shadow cursor-pointer">
+                  🚨 ДИҚҚАТ БИЛАН ЎҚИШ ВА ҚАРОР БЕРИШ
+                </button>
+              </div>
+            `;
+          }
+          return `
+            <div class="space-y-1.5">
+              ${resultBadge}
+              <div class="text-xs font-bold text-emerald-800">✓ Муқаддам судланмаган</div>
+              <button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow cursor-pointer">
+                👁 Ўқиб кўриш ва Тасдиқлаш
+              </button>
+            </div>
+          `;
+        }
+        return `
+          <div class="space-y-1.5">
+            ${resultBadge}
+            ${isSudlangan ? `<div class="text-xs font-bold text-red-700">🚨 ${c.sudlanganText}</div>` : `<div class="text-xs font-semibold text-emerald-800">✓ Муқаддам судланмаган</div>`}
+            <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer">
+              📄 МАЪЛУМОТНОМА
+            </button>
+          </div>
+        `;
+      }
+
+      // 4. РАҲБАР КУЗАТУВЧИ (ЮҚОРИ РАҲБАРИЯТ) — фақат тасдиқланганларни очиб ўқий олади!
+      if (currentRole === "kuzatuvchi") {
+        if (c.workflowStage !== "approved") {
+          return `
+            <div class="space-y-1.5 text-center">
+              ${resultBadge}
+              <div class="p-1.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold text-xs">
+                🔒 Ўрганиш жараёнида<br><span class="font-normal text-[11px]">(Тасдиқлангач очилади)</span>
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="space-y-1.5">
+            ${resultBadge}
+            ${isSudlangan ? `<div class="p-1 rounded bg-red-100 text-red-900 font-bold text-xs">🚨 СУДЛАНГАН: ${c.sudlanganText}</div>` : `<div class="text-xs text-emerald-800 font-semibold">✓ Муқаддам судланмаган</div>`}
+            <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs cursor-pointer">
+              👁 Маълумотномани ўқиш
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function renderAll() {
+      const all = appState.candidates;
+      document.getElementById("kpiTotal").textContent = all.length;
+      document.getElementById("kpiCurrent").textContent = all.filter(x => x.recordType === "current").length;
+      document.getElementById("kpiFormer").textContent = all.filter(x => x.recordType === "former").length;
+      document.getElementById("kpiInProcess").textContent = all.filter(x => x.workflowStage !== "approved").length;
+      document.getElementById("kpiApproved").textContent = all.filter(x => x.workflowStage === "approved").length;
+      document.getElementById("kpiSudlangan").textContent = all.filter(x => x.sudlanganStatus === "sudlangan").length;
+
+      renderDashboardTable();
+      renderFototablitsaTable();
+      renderFormerTable();
+      renderItsTable();
+      renderNegativeTable();
+      renderDatabaseTable();
+      renderUsersTable();
+    }
+
+    function renderDashboardTable() {
+      const tbody = document.getElementById("dashboardTableBody");
+      let html = "";
+      REGIONS_14.forEach((reg, idx) => {
+        const list = appState.candidates.filter(c => c.region === reg);
+        const kaManagement = list.filter(c => c.recordType === "current" && (c.category.includes("КА ҳудудий бошқармаси"))).length;
+        const dkpManagement = list.filter(c => c.recordType === "current" && (c.category.includes("ДКП ҳудудий бошқармаси"))).length;
+        const kaDistrict = list.filter(c => c.recordType === "current" && c.category === "КА туман (шаҳар) бўлими бошлиғи").length;
+        const dkpDistrict = list.filter(c => c.recordType === "current" && c.category === "ДКП туман (шаҳар) филиали бошлиғи").length;
+        const compliance = list.filter(c => c.recordType === "current" && c.category === "Комплаенс хизмати ходими").length;
+        const former = list.filter(c => c.recordType === "former").length;
+        const inProc = list.filter(c => c.workflowStage !== "approved").length;
+        const appr = list.filter(c => c.workflowStage === "approved").length;
+        const sud = list.filter(c => c.sudlanganStatus === "sudlangan").length;
+
+        html += `
+          <tr>
+            <td class="text-center font-bold">${idx + 1}.</td>
+            <td class="font-bold">${reg}</td>
+            <td class="text-center">${kaManagement}</td>
+            <td class="text-center">${dkpManagement}</td>
+            <td class="text-center font-bold">${kaDistrict}</td>
+            <td class="text-center font-bold">${dkpDistrict}</td>
+            <td class="text-center">${compliance}</td>
+            <td class="text-center font-bold text-purple-800">${former}</td>
+            <td class="text-center font-bold text-amber-700">${inProc}</td>
+            <td class="text-center font-bold text-emerald-700">${appr}</td>
+            <td class="text-center font-extrabold text-red-600">${sud}</td>
+            <td class="text-center font-extrabold">${list.length}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderFototablitsaTable() {
+      const regFilter = document.getElementById("fotoRegionFilter").value;
+      const catFilter = document.getElementById("fotoCategoryFilter").value;
+      const tbody = document.getElementById("fototablitsaBody");
+
+      const filtered = appState.candidates.filter(c => {
+        if (c.recordType !== "current") return false;
+        if (regFilter !== "ALL" && c.region !== regFilter) return false;
+        if (catFilter !== "ALL" && c.category !== catFilter) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500 font-bold">Танланган фильтр бўйича номзодлар топилмади</td></tr>`;
+        return;
+      }
+
+      const groups = {};
+      filtered.forEach(c => {
+        const key = `${c.districtHeading}|||${c.appointType}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(c);
+      });
+
+      let html = "";
+      let counter = 1;
+      Object.keys(groups).forEach(key => {
+        const [heading, appType] = key.split("|||");
+        html += `
+          <tr>
+            <td colspan="5" class="text-center font-bold py-2 bg-slate-50" style="font-size:15px;">
+              <span class="text-blue-950">${heading}</span>
+              <span class="text-red-600"> ${appType || ""}</span>
+            </td>
+          </tr>
+        `;
+        groups[key].forEach(c => {
+          html += `
+            <tr>
+              <td class="text-center font-bold">${counter++}.</td>
+              <td class="text-center">
+                <img src="${c.photo}" alt="Фото" style="width:92px;height:118px;object-fit:cover;margin:0 auto;border:1px solid #334155;" />
+              </td>
+              <td class="text-center">
+                <div class="font-bold text-base">${c.fio}</div>
+                <div class="mt-2">${c.birthDate} йил,<br/>${c.birthPlace}</div>
+                <div class="font-mono text-xs mt-1">${c.passSeries} ${c.passNum}</div>
+                <div class="font-mono font-bold mt-0.5">${c.pinfl}</div>
+              </td>
+              <td class="text-center text-blue-950">
+                <div>${c.currentJob}</div>
+                <div class="mt-3 font-semibold">${c.jobSince}</div>
+              </td>
+              <td>${renderActionCell(c)}</td>
+            </tr>
+          `;
+        });
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function renderFormerTable() {
+      const regFilter = document.getElementById("formerRegionFilter").value;
+      const tbody = document.getElementById("formerTableBody");
+      const list = appState.candidates.filter(c => {
+        if (c.recordType !== "former") return false;
+        if (regFilter !== "ALL" && c.region !== regFilter) return false;
+        return true;
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map((c, i) => `
+        <tr>
+          <td class="text-center font-bold">${i + 1}.</td>
+          <td class="text-center">
+            <img src="${c.photo}" alt="Фото" style="width:88px;height:112px;object-fit:cover;margin:0 auto;border:1px solid #334155;" />
+          </td>
+          <td class="text-center">
+            <div class="font-bold">${c.fio}</div>
+            <div class="mt-1">${c.birthDate} йил, ${c.birthPlace}</div>
+            <div class="font-mono font-bold mt-1">ПИНФЛ: ${c.pinfl} | ${c.passSeries} ${c.passNum}</div>
+          </td>
+          <td class="text-center text-purple-950">
+            <div class="font-bold">${c.region}</div>
+            <div class="mt-1">${c.currentJob}</div>
+            <div class="mt-1 text-xs">${c.jobSince}</div>
+          </td>
+          <td>${renderActionCell(c)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderItsTable() {
+      const statusFilter = document.getElementById("itsFilterStatus").value;
+      const tbody = document.getElementById("itsTableBody");
+      const readOnly = currentRole !== "admin";
+
+      const list = appState.candidates.filter(c => {
+        if (statusFilter === "UNCHECKED" && c.itsChecked) return false;
+        if (statusFilter === "SUDLANGAN" && c.sudlanganStatus !== "sudlangan") return false;
+        return true;
+      });
+
+      tbody.innerHTML = list.map((c, idx) => `
+        <tr>
+          <td class="text-center font-bold">${idx + 1}</td>
+          <td class="font-bold">${c.fio}</td>
+          <td class="text-center font-mono">${c.birthDate}</td>
+          <td class="text-center font-mono font-bold">${c.passSeries}</td>
+          <td class="text-center font-mono font-bold">${c.passNum}</td>
+          <td class="text-center font-mono font-bold">${c.pinfl}</td>
+          <td class="text-center text-xs font-bold">
+            ${c.recordType === "former" ? `<span class="text-purple-700">Собиқ ходим</span>` : `<span class="text-blue-800">Номзод</span>`}<br/>
+            ${c.region}
+          </td>
+          <td>
+            ${readOnly ? `
+              <div class="font-bold ${c.sudlanganStatus === 'sudlangan' ? 'text-red-700' : 'text-emerald-800'}">
+                ${c.sudlanganStatus === 'sudlangan' ? '🚨 ' + c.sudlanganText : '✓ ' + c.sudlanganText}
+              </div>
+            ` : `
+              <div class="space-y-1">
+                <select id="itsSel_${c.id}" onchange="quickSaveItsRow('${c.id}')" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                  <option value="clean" ${c.sudlanganStatus === 'clean' ? 'selected' : ''}>✓ Муқаддам судланмаган</option>
+                  <option value="sudlangan" ${c.sudlanganStatus === 'sudlangan' ? 'selected' : ''}>🚨 СУДЛАНГАН (ЖК моддаси бор)</option>
+                </select>
+                <input id="itsTxt_${c.id}" type="text" value="${c.sudlanganText.replace(/"/g, '&quot;')}" placeholder="ЖК моддаси ва суд ҳукми..." class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+            `}
+          </td>
+          <td class="text-center">
+            ${readOnly ? getFinalResultBadge(c) : `
+              <div class="space-y-1">
+                <button onclick="quickSaveItsRow('${c.id}', true)" class="w-full py-1 px-2 rounded bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer">
+                  💾 Сақлаш
+                </button>
+                <button onclick="openEditorModal('${c.id}')" class="w-full py-1 px-2 rounded bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer">
+                  ✍️ Хулоса ёзиш
+                </button>
+              </div>
+            `}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function quickSaveItsRow(id, notify = false) {
+      const c = appState.candidates.find(x => x.id === id);
+      if (!c) return;
+      const sel = document.getElementById(`itsSel_${id}`).value;
+      const txt = document.getElementById(`itsTxt_${id}`).value.trim();
+      c.sudlanganStatus = sel;
+      c.itsChecked = true;
+      if (sel === "clean") {
+        c.sudlanganText = txt || "муқаддам судланмаган";
+      } else {
+        c.sudlanganText = txt.includes("судланган") ? txt : `муқаддам судланган (${txt || "ЖК моддаси аниқланди"})`;
+      }
+      saveState();
+      renderAll();
+      if (notify) alert(`${c.fio} бўйича ИЦ натижаси сақланди!`);
+    }
+
+    function bulkSendCleanToBoss() {
+      let count = 0;
+      appState.candidates.forEach(c => {
+        if (c.workflowStage === "admin_review" && c.sudlanganStatus === "clean") {
+          c.itsChecked = true;
+          c.workflowStage = "boss_review";
+          count++;
+        }
+      });
+      saveState();
+      renderAll();
+      alert(`${count} нафар тоза («муқаддам судланмаган») номзоднинг Маълумотномаси Бўлим бошлиғига (И.Зариповга) тасдиқлаш учун юборилди!`);
+    }
+
+    function renderNegativeTable() {
+      const tbody = document.getElementById("negativeTableBody");
+      const list = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan");
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Судланганлиги чиққан ходимлар йўқ</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map((c, idx) => `
+        <tr>
+          <td class="text-center font-bold">${idx + 1}.</td>
+          <td class="font-bold">${c.fio}<br/><span class="text-xs font-normal">${c.birthDate} й. (${c.birthPlace})</span></td>
+          <td class="font-mono text-xs font-bold">${c.passSeries} ${c.passNum}<br/>ПИНФЛ: ${c.pinfl}</td>
+          <td class="text-xs font-bold">${c.region}<br/><span class="text-blue-900">${c.category}</span></td>
+          <td class="font-bold text-red-700">🚨 ${c.sudlanganText}</td>
+          <td class="text-center">${getFinalResultBadge(c)}</td>
+          <td class="text-center">
+            ${(currentRole === "kuzatuvchi" && c.workflowStage !== "approved") ? `
+              <span class="text-xs font-bold text-slate-500">🔒 Тасдиқлангач очилади</span>
+            ` : `
+              <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer">
+                📄 МАЪЛУМОТНОМА
+              </button>
+            `}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDatabaseTable() {
+      const reg = document.getElementById("dbRegionFilter").value;
+      const cat = document.getElementById("dbCategoryFilter").value;
+      const yr = document.getElementById("dbYearFilter").value;
+      const mo = document.getElementById("dbMonthFilter").value;
+      const st = document.getElementById("dbStatusFilter").value;
+      const q = document.getElementById("dbSearchInput").value.trim().toLowerCase();
+
+      const list = appState.candidates.filter(c => {
+        if (reg !== "ALL" && c.region !== reg) return false;
+        if (cat !== "ALL" && c.category !== cat) return false;
+        if (yr !== "ALL" && c.year !== yr) return false;
+        if (mo !== "ALL" && c.month !== mo) return false;
+        if (st === "approved" && c.workflowStage !== "approved") return false;
+        if (st === "in_process" && c.workflowStage === "approved") return false;
+        if (q && !(c.fio.toLowerCase().includes(q) || c.pinfl.includes(q))) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById("databaseTableBody");
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(c => {
+        const canOpenDoc =
+          currentRole === "admin" ||
+          (currentRole === "rahbar" && c.workflowStage !== "admin_review") ||
+          ((currentRole === "kadr" || currentRole === "kuzatuvchi") && c.workflowStage === "approved");
+
+        return `
+          <tr>
+            <td class="font-mono text-xs font-bold">${c.reestrNo}<br/><span class="font-normal">${c.createdAt}</span></td>
+            <td class="font-bold text-xs">${c.region}<br/><span class="text-emerald-700">${c.year}-йил, ${c.month}-ой</span></td>
+            <td>
+              <div class="font-bold">${c.fio}</div>
+              <div class="font-mono text-xs text-slate-600">ПИНФЛ: ${c.pinfl} | ${c.passSeries} ${c.passNum}</div>
+            </td>
+            <td class="text-xs">
+              <div class="font-bold text-blue-950">${c.category}</div>
+              <div>${c.currentJob}</div>
+            </td>
+            <td class="text-center font-bold">${getFinalResultPlainText(c)}</td>
+            <td class="text-center">${getFinalResultBadge(c)}</td>
+            <td class="text-center">
+              ${canOpenDoc ? `
+                <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer">
+                  📄 МАЪЛУМОТНОМА
+                </button>
+              ` : `<span class="text-xs text-slate-400 font-bold">🔒 Ўрганиш жараёнида</span>`}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById("usersTableBody");
+      if (!tbody) return;
+      const roleNames = {
+        kadr: "1. Кадрлар (HR)",
+        admin: "2. Админ (Комплаенс)",
+        rahbar: "3. Бўлим бошлиғи",
+        kuzatuvchi: "4. Раҳбар Кузатувчи"
+      };
+      tbody.innerHTML = appState.users.map((u, idx) => `
+        <tr>
+          <td class="font-bold text-xs">${u.name}</td>
+          <td class="text-xs font-bold">${roleNames[u.role] || u.role}</td>
+          <td class="font-mono text-xs font-bold">${u.login}</td>
+          <td class="font-mono text-xs">${u.pass}</td>
+          <td class="text-center">
+            ${u.login === "admin" ? `<span class="text-xs text-slate-400">Асосий</span>` : `
+              <button onclick="deleteUser(${idx})" class="px-2 py-1 rounded bg-red-600 text-white text-xs font-bold cursor-pointer">Ўчириш</button>
+            `}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("userCreateForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = document.getElementById("newUserName").value.trim();
+      const role = document.getElementById("newUserRole").value;
+      const login = document.getElementById("newUserLogin").value.trim();
+      const pass = document.getElementById("newUserPass").value.trim();
+      if (appState.users.some(u => u.login === login)) {
+        alert("Бу логин банд!");
+        return;
+      }
+      appState.users.push({ name, role, login, pass });
+      saveState();
+      renderUsersTable();
+      e.target.reset();
+      alert(`Фойдаланувчи (${login}) яратилди ва онлайн базага сақланди!`);
+    });
+
+    function deleteUser(idx) {
+      appState.users.splice(idx, 1);
+      saveState();
+      renderUsersTable();
+    }
+
+    // =========================================================================
+    // 5. ЯНГИ НОМЗОД ҚЎШИШ ВА 14 ХОНАЛИ ПИНФЛ ДУБЛИКАТ ТЕКШИРУВИ
+    // =========================================================================
+    document.getElementById("inpPinfl").addEventListener("input", e => {
+      const val = e.target.value.replace(/\D/g, "");
+      e.target.value = val;
+      const box = document.getElementById("pinflDuplicateBox");
+      if (val.length === 14) {
+        const dup = appState.candidates.find(c => c.pinfl === val);
+        if (dup) {
+          box.classList.remove("hidden");
+          box.innerHTML = `⚠️ <b>ДИҚҚАТ! ПИНФЛ ДУБЛИКАТИ АНИҚЛАНДИ:</b><br/>Ушбу шахс (<b>${dup.fio}</b>) базада мавжуд! Реестр: <b>${dup.reestrNo}</b> (${dup.region}). Якуний натижа: <b>${getFinalResultPlainText(dup)}</b>.`;
+        } else {
+          box.classList.remove("hidden");
+          box.innerHTML = `✅ <b>ПИНФЛ тоза:</b> Аввал хулоса берилмаган.`;
+        }
+      } else {
+        box.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("candidateForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const recordType = document.getElementById("inpRecordType").value;
+      const region = document.getElementById("inpRegion").value;
+      const category = document.getElementById("inpCategory").value;
+      const district = document.getElementById("inpDistrict").value.trim();
+      const appointType = document.getElementById("inpAppointType").value;
+      const pinfl = document.getElementById("inpPinfl").value.trim();
+      const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase();
+      const passNum = document.getElementById("inpPassNum").value.trim();
+      const fio = document.getElementById("inpFio").value.trim();
+      const birthDate = document.getElementById("inpBirthDate").value.trim();
+      const birthPlace = document.getElementById("inpBirthPlace").value.trim();
+      const currentJob = document.getElementById("inpCurrentJob").value.trim();
+      const jobSince = document.getElementById("inpJobSince").value.trim();
+      const fileInput = document.getElementById("inpPhotoFile");
+
+      if (pinfl.length !== 14) {
+        alert("ПИНФЛ аниқ 14 та рақамдан иборат бўлиши шарт!");
+        return;
+      }
+
+      const finishCreate = (photoDataUrl) => {
+        const num = String(appState.candidates.length + 1).padStart(2, "0");
+        const prefix = recordType === "former" ? "ККБ-СХ-2026/10-" : "ККБ-2026/10-";
+        const newCand = {
+          id: "CAND-" + Date.now(),
+          reestrNo: prefix + num,
+          createdAt: "15.10.2026",
+          year: "2026",
+          month: "10",
+          recordType,
+          region,
+          category,
+          districtHeading: `Кадастр агентлиги ва ДКП ${region} ${district} лавозимига`,
+          appointType,
+          fio,
+          birthDate,
+          birthPlace,
+          passSeries,
+          passNum,
+          pinfl,
+          currentJob,
+          jobSince,
+          photo: photoDataUrl,
+          itsChecked: false,
+          sudlanganStatus: "clean",
+          sudlanganText: "муқаддам судланмаган",
+          workflowStage: "admin_review",
+          eduText: "миллати ўзбек, оилали, маълумоти олий.",
+          para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
+          para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган.",
+          para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
+          approvedDate: ""
+        };
+        appState.candidates.unshift(newCand);
+        saveState();
+        renderAll();
+        e.target.reset();
+        document.getElementById("pinflDuplicateBox").classList.add("hidden");
+        if (recordType === "former") switchTab("former");
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = ev => finishCreate(ev.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        const parts = fio.split(" ");
+        const init = ((parts[0] ? parts[0][0] : "Х") + (parts[1] ? parts[1][0] : "А")).toUpperCase();
+        finishCreate(makeAvatarSvg(init, "#1e3a8a"));
+      }
+    });
+
+    // =========================================================================
+    // 6. АДМИН ТАҲРИР ОЙНАСИ ВА А4 МАЪЛУМОТНОМА ОЙНАСИ
+    // =========================================================================
+    function openEditorModal(id) {
+      const c = appState.candidates.find(x => x.id === id);
+      if (!c) return;
+      activeCandidateId = id;
+      document.getElementById("editorCandidateTitle").textContent = `${c.fio} (${c.region}) — Маълумотномани тайёрлаш`;
+      document.getElementById("editSudlanganStatus").value = c.sudlanganStatus;
+      document.getElementById("editSudlanganText").value = c.sudlanganText;
+      document.getElementById("editEduText").value = c.eduText;
+      document.getElementById("editPara2").value = c.para2;
+      document.getElementById("editPara3").value = c.para3;
+      document.getElementById("editPara4").value = c.para4;
+      document.getElementById("editorModal").classList.remove("hidden");
+    }
+
+    function closeEditorModal() {
+      document.getElementById("editorModal").classList.add("hidden");
+    }
+
+    function onSudlanganSelectChange() {
+      const val = document.getElementById("editSudlanganStatus").value;
+      const inp = document.getElementById("editSudlanganText");
+      if (val === "clean") {
+        inp.value = "муқаддам судланмаган";
+      } else if (inp.value === "муқаддам судланмаган") {
+        inp.value = "муқаддам судланган (ЎзР ЖКнинг ___-моддаси билан)";
+      }
+    }
+
+    function collectEditorFields(c) {
+      c.sudlanganStatus = document.getElementById("editSudlanganStatus").value;
+      c.sudlanganText = document.getElementById("editSudlanganText").value.trim() || "муқаддам судланмаган";
+      c.eduText = document.getElementById("editEduText").value.trim();
+      c.para2 = document.getElementById("editPara2").value.trim();
+      c.para3 = document.getElementById("editPara3").value.trim();
+      c.para4 = document.getElementById("editPara4").value.trim();
+      c.itsChecked = true;
+    }
+
+    function saveDraftOnly() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      collectEditorFields(c);
+      saveState();
+      renderAll();
+      closeEditorModal();
+    }
+
+    function sendToBossForApproval() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      collectEditorFields(c);
+      c.workflowStage = "boss_review";
+      saveState();
+      renderAll();
+      closeEditorModal();
+      alert(`«${c.fio}» бўйича Маълумотнома Бўлим бошлиғига (И.Зариповга) тасдиқлаш учун юборилди!`);
+    }
+
+    // Расмий А4 МАЪЛУМОТНОМА HTML генератори
+    function buildOfficialMalumotnomaHtml(c) {
+      const p3Parts = (c.para3 || "").split("\n").filter(Boolean);
+      const p4Parts = (c.para4 || "").split("\n").filter(Boolean);
+
+      const sudHtml = c.sudlanganStatus === "sudlangan"
+        ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>`
+        : `${c.sudlanganText}`;
+
+      const stampHtml = c.workflowStage === "approved"
+        ? `<div style="border:2px solid #047857;color:#047857;padding:4px 12px;border-radius:6px;font-size:11pt;font-weight:bold;text-align:center;">
+             ТАСДИҚЛАНДИ<br/><span style="font-size:9pt;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
+           </div>`
+        : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:4px 12px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center;">
+             ЎРГАНИШ ЖАРАЁНИДА
+           </div>`;
+
+      return `
+        <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
+          <div style="text-align:center;font-weight:bold;font-size:14pt;line-height:1.35;margin-bottom:14pt;">
+            ${c.districtHeading.replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>
+            ${c.fio} бўйича<br/>
+            МАЪЛУМОТНОМА
+          </div>
+
+          <div class="malumotnoma-text">
+            <p>
+              Номзод ${c.jobSince.replace(/ й\.?$/, "")} йилдан ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}
+            </p>
+            <p>${c.para2}</p>
+            ${p3Parts.map(line => `<p>${line}</p>`).join("")}
+            ${p4Parts.map(line => `<p>${line}</p>`).join("")}
+          </div>
+
+          <div style="margin-top:26pt;display:flex;align-items:center;justify-content:space-between;font-family:'Times New Roman',Times,serif;font-size:14pt;font-weight:bold;color:#000000;">
+            <div style="line-height:1.35;">
+              Коррупцияга қарши курашиш<br/>бўлими бошлиғи
+            </div>
+            ${stampHtml}
+            <div>И.Зарипов</div>
+          </div>
+
+          <div style="margin-top:16pt;padding-top:6pt;border-top:1px solid #cbd5e1;display:flex;justify-content:space-between;font-size:9.5pt;color:#475569;font-family:'Times New Roman',Times,serif;">
+            <span>«КОМПЛАЕНС-КАДР» реестри: ${c.reestrNo} (${c.region})</span>
+            <span>ПИНФЛ: ${c.pinfl} | Якуний натижа: ${getFinalResultPlainText(c)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function openDocModal(id) {
+      const c = appState.candidates.find(x => x.id === id);
+      if (!c) return;
+
+      // Кузатувчи ва Кадрлар фақат тасдиқланган («Ўрганиб чиқилди») хулосани оча олади!
+      if ((currentRole === "kuzatuvchi" || currentRole === "kadr") && c.workflowStage !== "approved") {
+        alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
+        return;
+      }
+
+      activeCandidateId = id;
+      document.getElementById("a4InnerContent").innerHTML = buildOfficialMalumotnomaHtml(c);
+      document.getElementById("docModalReestrInfo").textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
+
+      const badge = document.getElementById("docModalStatusBadge");
+      if (c.workflowStage === "approved") {
+        badge.textContent = "✓ Ўрганиб чиқилди";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+      } else {
+        badge.textContent = "⏳ Ўрганиш жараёнида";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
+      }
+
+      // Бўлим бошлиғи (И.Зарипов) тасдиқлаш ва судланганлик ҳимояси
+      const bossPanel = document.getElementById("bossActionPanel");
+      const warnBox = document.getElementById("bossSudlanganWarningBox");
+      const chk = document.getElementById("chkBossConfirmSudlangan");
+      const btnApprove = document.getElementById("btnBossFinalApprove");
+
+      if (currentRole === "rahbar" && c.workflowStage === "boss_review") {
+        bossPanel.classList.remove("hidden");
+        if (c.sudlanganStatus === "sudlangan") {
+          warnBox.classList.remove("hidden");
+          document.getElementById("bossSudlanganWarningText").textContent = `ИЦ Маълумоти: ${c.sudlanganText}`;
+          chk.checked = false;
+          btnApprove.disabled = true;
+          btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
+        } else {
+          warnBox.classList.add("hidden");
+          btnApprove.disabled = false;
+          btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
+        }
+      } else {
+        bossPanel.classList.add("hidden");
+      }
+
+      document.getElementById("docModal").classList.remove("hidden");
+    }
+
+    function toggleBossApproveButton() {
+      const chk = document.getElementById("chkBossConfirmSudlangan");
+      const btnApprove = document.getElementById("btnBossFinalApprove");
+      if (chk.checked) {
+        btnApprove.disabled = false;
+        btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
+      } else {
+        btnApprove.disabled = true;
+        btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
+      }
+    }
+
+    function approveByBoss() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      c.workflowStage = "approved";
+      c.approvedDate = "15.10.2026";
+      saveState();
+      renderAll();
+      openDocModal(c.id);
+    }
+
+    function returnToAdminForRevision() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      c.workflowStage = "admin_review";
+      saveState();
+      renderAll();
+      closeDocModal();
+    }
+
+    function closeDocModal() {
+      document.getElementById("docModal").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // 7. ПРИНТЕРГА А4 ПЕЧАТЬ БЕРИШ ВА 1:1 РАМКАЛИ WORD/EXCEL ЭКСПОРТ
+    // =========================================================================
+    function printCurrentDocA4() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>МАЪЛУМОТНОМА — ${c.fio}</title>
+          <style>
+            @page { size: A4 portrait; margin: 16mm 16mm 16mm 22mm; }
+            body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: 0; }
+            .malumotnoma-text p { text-indent: 1.25cm; text-align: justify; line-height: 1.48; font-size: 14pt; margin: 0 0 8pt 0; }
+          </style>
+        </head>
+        <body>
+          ${buildOfficialMalumotnomaHtml(c)}
+        </body>
+        </html>
+      `;
+
+      const printWin = window.open("", "_blank", "width=850,height=950");
+      if (printWin) {
+        printWin.document.open();
+        printWin.document.write(htmlContent);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => {
+          printWin.print();
+        }, 300);
+      } else {
+        window.print();
+      }
+    }
+
+    function copyDocText() {
+      const el = document.getElementById("a4InnerContent");
+      navigator.clipboard.writeText(el.innerText);
+      alert("Маълумотнома матни буферга нусхаланди!");
+    }
+
+    function downloadBlobFile(content, filename, mimeType) {
+      const blob = new Blob(["\ufeff", content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCurrentDocWord() {
+      const c = appState.candidates.find(x => x.id === activeCandidateId);
+      if (!c) return;
+      const docHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>${c.fio}</title>
+        <style>
+          @page { size: 21cm 29.7cm; margin: 1.8cm 1.8cm 1.8cm 2.4cm; }
+          body { font-family: 'Times New Roman', serif; font-size: 14pt; }
+          p { text-indent: 1.25cm; text-align: justify; line-height: 1.45; margin-bottom: 8pt; }
+        </style>
+        </head>
+        <body>${buildOfficialMalumotnomaHtml(c)}</body></html>
+      `;
+      downloadBlobFile(docHtml, `Маълумотнома_${c.fio.replace(/\s+/g, "_")}.doc`, "application/msword;charset=utf-8");
+    }
+
+    function wrapFramedExportHtml(title, tableHtml) {
+      return `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1.5pt solid #000000; padding: 6pt 8pt; vertical-align: middle; font-family: 'Times New Roman', Times, serif; }
+            th { background-color: #e2efda; font-weight: bold; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <h3 style="text-align:center;font-family:'Times New Roman',serif;">${title}</h3>
+          ${tableHtml}
+        </body>
+        </html>
+      `;
+    }
+
+    function exportFototablitsaWord(recordType) {
+      const regFilter = recordType === "former"
+        ? document.getElementById("formerRegionFilter").value
+        : document.getElementById("fotoRegionFilter").value;
+
+      const list = appState.candidates.filter(c => c.recordType === recordType && (regFilter === "ALL" || c.region === regFilter));
+      let rows = "";
+      list.forEach((c, i) => {
+        rows += `
+          <tr>
+            <td style="text-align:center;font-weight:bold;">${i + 1}.</td>
+            <td style="text-align:center;"><img src="${c.photo}" width="85" height="110" /></td>
+            <td style="text-align:center;"><b>${c.fio}</b><br/>${c.birthDate} йил, ${c.birthPlace}<br/>${c.passSeries} ${c.passNum}<br/><b>${c.pinfl}</b></td>
+            <td style="text-align:center;color:#1e3a8a;">${c.currentJob}<br/><b>${c.jobSince}</b></td>
+            <td style="text-align:center;font-weight:bold;">${getFinalResultPlainText(c)}</td>
+          </tr>
+        `;
+      });
+      const table = `<table><thead><tr><th>Т/р</th><th>Расм</th><th>Ф.И.Ш., туғилган йили ва жойи</th><th>Эгаллаб турган лавозими ва қайси санадан</th><th>Якуний натижа</th></tr></thead><tbody>${rows}</tbody></table>`;
+      downloadBlobFile(wrapFramedExportHtml(`ФОТОТАБЛИЦА (${regFilter})`, table), `Фототаблица_${regFilter}.doc`, "application/msword;charset=utf-8");
+    }
+
+    function exportFototablitsaExcel(recordType) {
+      const regFilter = recordType === "former"
+        ? document.getElementById("formerRegionFilter").value
+        : document.getElementById("fotoRegionFilter").value;
+      const list = appState.candidates.filter(c => c.recordType === recordType && (regFilter === "ALL" || c.region === regFilter));
+      let rows = "";
+      list.forEach((c, i) => {
+        rows += `
+          <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td><b>${c.fio}</b></td>
+            <td>${c.region}</td>
+            <td>${c.category}</td>
+            <td style="text-align:center;">${c.birthDate}</td>
+            <td style="text-align:center;">${c.passSeries} ${c.passNum}</td>
+            <td style="mso-number-format:'\\@';text-align:center;">${c.pinfl}</td>
+            <td>${c.currentJob} (${c.jobSince})</td>
+            <td style="text-align:center;font-weight:bold;">${getFinalResultPlainText(c)}</td>
+          </tr>
+        `;
+      });
+      const table = `<table><thead><tr><th>Т/р</th><th>Ф.И.Ш.</th><th>Ҳудуд</th><th>Йўналиш</th><th>Туғилган сана</th><th>Паспорт</th><th>ПИНФЛ</th><th>Лавозими</th><th>Якуний натижа</th></tr></thead><tbody>${rows}</tbody></table>`;
+      downloadBlobFile(wrapFramedExportHtml(`Номзодлар_Жадвали_${regFilter}`, table), `Фототаблица_${regFilter}.xls`, "application/vnd.ms-excel;charset=utf-8");
+    }
+
+    function exportItsExcel(mode) {
+      const list = appState.candidates.filter(c => mode === "UNCHECKED" ? !c.itsChecked : true);
+      let rows = "";
+      list.forEach((c, i) => {
+        rows += `
+          <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td>${c.fio}</td>
+            <td style="text-align:center;">${c.birthDate}</td>
+            <td style="text-align:center;">${c.passSeries}</td>
+            <td style="mso-number-format:'\\@';text-align:center;">${c.passNum}</td>
+            <td style="mso-number-format:'\\@';text-align:center;">${c.pinfl}</td>
+            <td>${c.itsChecked ? c.sudlanganText : ""}</td>
+          </tr>
+        `;
+      });
+      const table = `<table><thead><tr><th>T/R</th><th>FIO</th><th>Tug'ilgan yili, oy va sana</th><th>Pasport seriyasi</th><th>Pasport raqami</th><th>PINFL</th><th>Судланганлик натижаси</th></tr></thead><tbody>${rows}</tbody></table>`;
+      downloadBlobFile(wrapFramedExportHtml("ИЦ текшириш учун", table), "ИЦ_текшириш_учун.xls", "application/vnd.ms-excel;charset=utf-8");
+    }
+
+    function exportNegativeExcel() {
+      const list = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan");
+      let rows = "";
+      list.forEach((c, i) => {
+        rows += `
+          <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td><b>${c.fio}</b> (${c.birthDate})</td>
+            <td style="mso-number-format:'\\@';">${c.passSeries} ${c.passNum} | ${c.pinfl}</td>
+            <td>${c.region} — ${c.category}</td>
+            <td style="color:#b91c1c;font-weight:bold;">${c.sudlanganText}</td>
+            <td style="text-align:center;font-weight:bold;">${getFinalResultPlainText(c)}</td>
+          </tr>
+        `;
+      });
+      const table = `<table><thead><tr><th>Т/р</th><th>Ф.И.Ш.</th><th>Паспорт ва ПИНФЛ</th><th>Ҳудуд ва Йўналиш</th><th>Судланганлик моддаси</th><th>Якуний натижа</th></tr></thead><tbody>${rows}</tbody></table>`;
+      downloadBlobFile(wrapFramedExportHtml("Судланганлар махсус реестри", table), "Судланганлар_Реестри.xls", "application/vnd.ms-excel;charset=utf-8");
+    }
+
+    function exportDatabaseExcel() {
+      let rows = "";
+      appState.candidates.forEach((c, i) => {
+        rows += `
+          <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td>${c.reestrNo} (${c.createdAt})</td>
+            <td>${c.region} (${c.year}/${c.month})</td>
+            <td><b>${c.fio}</b></td>
+            <td style="mso-number-format:'\\@';">${c.pinfl}</td>
+            <td>${c.category}</td>
+            <td>${c.currentJob}</td>
+            <td style="text-align:center;font-weight:bold;">${getFinalResultPlainText(c)}</td>
+          </tr>
+        `;
+      });
+      const table = `<table><thead><tr><th>Т/р</th><th>Реестр №</th><th>Ҳудуд (Йил/Ой)</th><th>Ф.И.Ш.</th><th>ПИНФЛ</th><th>Тоифа</th><th>Лавозим</th><th>Якуний натижа</th></tr></thead><tbody>${rows}</tbody></table>`;
+      downloadBlobFile(wrapFramedExportHtml("Ягона Комплаенс Базаси", table), "Ягона_База_Реестр.xls", "application/vnd.ms-excel;charset=utf-8");
+    }
+
+    function exportDashboardExcel() {
+      const tableHtml = document.getElementById("dashboardStatsTable").outerHTML;
+      downloadBlobFile(wrapFramedExportHtml("Ҳудудлар ва Йўналишлар кесимида Статистика", tableHtml), "Статистика_Ҳудудлар.xls", "application/vnd.ms-excel;charset=utf-8");
+    }
+
+    // =========================================================================
+    // 8. D:\ ДИСК БИЛАН ИШЛАШ ВА PORTABLE (.BAT) ГЕНЕРАТОРИ
+    // =========================================================================
+    async function connectDDriveFolder() {
+      try {
+        if ("showSaveFilePicker" in window) {
+          dDriveFileHandle = await window.showSaveFilePicker({
+            suggestedName: "komplayens_kadr_baza.json",
+            types: [{ description: "JSON Database", accept: { "application/json": [".json"] } }]
+          });
+          await autoWriteToDDrive();
+          document.getElementById("dDriveStatusBadge").textContent = "🟢 D:\\ Авто-сақлаш ёқилган";
+          alert("D:\\ дискдаги база файли муваффақиятли боғланди!");
+        } else {
+          downloadBackupJson();
+        }
+      } catch (e) {
+        console.warn("D drive picker cancelled:", e);
+      }
+    }
+
+    async function autoWriteToDDrive() {
+      if (!dDriveFileHandle) return;
+      try {
+        const writable = await dDriveFileHandle.createWritable();
+        await writable.write(JSON.stringify(appState, null, 2));
+        await writable.close();
+      } catch (e) {
+        console.warn("Auto write warning:", e);
+      }
+    }
+
+    function downloadBackupJson() {
+      downloadBlobFile(JSON.stringify(appState, null, 2), "komplayens_kadr_baza.json", "application/json;charset=utf-8");
+    }
+
+    function restoreBackupJson(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.candidates)) {
+            appState = parsed;
+            saveState();
+            renderAll();
+            alert("D:\\ дискдаги база муваффақиятли тикланди ва онлайн базага синхронланди!");
+          }
+        } catch (err) {
+          alert("Файл формати нотўғри!");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadPortableLauncherBat() {
+      const batContent = `@echo off\r\ntitle KOMPLAYENS-KADR v6.0\r\nstart msedge.exe --app="%~dp0kadastr_komplayens_tizimi.html" --start-maximized\r\nexit`;
+      downloadBlobFile(batContent, "KOMPLAYENS_KADR_ISHGA_TUSHIRISH.bat", "application/bat;charset=utf-8");
+    }
+
+    // =========================================================================
+    // 9. КИРИЛЛ / ЛОТИН ВА ТУНГИ РЕЖИМ
+    // =========================================================================
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      document.getElementById("btnThemeToggle").textContent = isDark ? "☀️ Кундузги" : "🌙 Тунги";
+    }
+
+    function cyrToLat(text) {
+      const map = {
+        'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'Yo','Ж':'J','З':'Z','И':'I','Й':'Y','К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R','С':'S','Т':'T','У':'U','Ф':'F','Х':'X','Ц':'Ts','Ч':'Ch','Ш':'Sh','Ъ':'’','Э':'E','Ю':'Yu','Я':'Ya','Ў':'O‘','Қ':'Q','Ғ':'G‘','Ҳ':'H',
+        'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'j','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'x','ц':'ts','ч':'ch','ш':'sh','ъ':'’','ь':'','э':'e','ю':'yu','я':'ya','ў':'o‘','қ':'q','ғ':'g‘','ҳ':'h'
+      };
+      return text.replace(/[А-Яа-яЁёЎўҚқҒғҲҳЪъЬь]/g, ch => map[ch] !== undefined ? map[ch] : ch);
+    }
+
+    function toggleAlphabet() {
+      isLatinMode = !isLatinMode;
+      if (isLatinMode) {
+        const walker = document.createTreeWalker(document.querySelector("main"), NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (node.nodeValue.trim()) {
+            node._origCyr = node._origCyr || node.nodeValue;
+            node.nodeValue = cyrToLat(node._origCyr);
+          }
+        }
+      } else {
+        renderAll();
+      }
+    }
+
+    // INIT
+    populateRegionSelects();
+    switchRole("admin");
+    switchTab("fototablitsa");
+    pullFromSupabase(false);
+  </script>
+</body>
+</html>
