@@ -7,8 +7,10 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win --x64",
-    "build:portable": "electron-builder --win portable"
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win --x64 --publish never",
+    "build:portable": "electron-builder --win portable --publish never",
+    "build:all": "electron-builder --win --x64 --ia32 --publish never"
   },
   "devDependencies": {
     "electron": "^30.0.0",
@@ -17,6 +19,7 @@
   "build": {
     "appId": "uz.kadastr.komplayens",
     "productName": "KOMPLAYENS-KADR",
+    "publish": null,
     "directories": {
       "output": "dist"
     },
