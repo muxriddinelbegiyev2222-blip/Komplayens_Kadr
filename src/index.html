@@ -169,25 +169,7 @@
         </div>
         <button id="btnLoginSubmit" class="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-base shadow-lg transition cursor-pointer">
           Тизимга кириш
-        </button>
-
-        <div class="pt-3 border-t border-slate-200">
-          <p class="text-xs font-bold text-slate-500 uppercase mb-2">Тезкор кириш (4 та ролни синаб кўриш):</p>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <button type="button" onclick="quickFillLogin('kadr_jizzax','Kadr2026!')" class="p-2 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-left font-bold text-blue-900 cursor-pointer">
-              1. Кадрлар (HR)<br><span class="font-normal text-slate-600">kadr_jizzax</span>
-            </button>
-            <button type="button" onclick="quickFillLogin('admin','Komplayens2026!')" class="p-2 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-left font-bold text-amber-900 cursor-pointer">
-              2. Админ (Сиз)<br><span class="font-normal text-slate-600">admin</span>
-            </button>
-            <button type="button" onclick="quickFillLogin('zaripov','Rahbar2026!')" class="p-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-left font-bold text-emerald-900 cursor-pointer">
-              3. Бўлим бошлиғи<br><span class="font-normal text-slate-600">zaripov</span>
-            </button>
-            <button type="button" onclick="quickFillLogin('rahbariyat','Kuzatuv2026!')" class="p-2 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-left font-bold text-purple-900 cursor-pointer">
-              4. Раҳбар Кузатувчи<br><span class="font-normal text-slate-600">rahbariyat</span>
-            </button>
-          </div>
-        </div>
+        </button>  
       </div>
     </div>
   </div>
@@ -240,12 +222,11 @@
         <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">📊 Статистика</button>
         <button id="tabBtnFototablitsa" onclick="switchTab('fototablitsa')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">🖼️ Фототаблица</button>
         <button id="tabBtnFormer" onclick="switchTab('former')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">👤 Собиқ ходимлар</button>
-        <button id="tabBtnIts" onclick="switchTab('its')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">🔍 ИЦ Жадвали</button>
-        <button id="tabBtnNegative" onclick="switchTab('negative')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">⚠️ Судланганлар</button>
-        <button id="tabBtnDatabase" onclick="switchTab('database')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">🗂️ Ягона База</button>
-        <button id="tabBtnAudit" onclick="switchTab('audit')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">📋 Аудит-Лог</button>
-        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">💾 Созламалар</button>
-      </div>
+        <button id="tabBtnIts" onclick="switchTab('its')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">🔍 ИЦ Жадвали</button>
+        <button id="tabBtnNegative" onclick="switchTab('negative')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">⚠️ Судланганлар</button>
+        <button id="tabBtnDatabase" onclick="switchTab('database')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">🗂️ Ягона База</button>
+       <button id="tabBtnAudit" onclick="switchTab('audit')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">📋 Аудит-Лог</button>
+        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">💾 Созламалар</button>
     </div>
   </header>
 
@@ -350,14 +331,14 @@
 
             <div>
               <label class="block text-xs font-bold mb-1">3. Мақсадли йўналиш (7 та тоифа) *</label>
-              <select id="inpCategory" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <              <select id="inpCategory" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
                 <option value="КА туман (шаҳар) бўлими бошлиғи">1. КА ҳудудий туман (шаҳар) бўлими бошлиғи</option>
                 <option value="ДКП туман (шаҳар) филиали бошлиғи">2. ДКП ҳудудий туман (шаҳар) филиали раҳбари</option>
                 <option value="КА ҳудудий бошқармаси бошлиғи">3. КА ҳудудий бошқармаси бошлиғи</option>
-                <option value="КА ҳудудий бошқармаси бошлиғи ўринбосари">4. КА ҳудудий бошқармаси бошлиғи ўринбосари</option>
-                <option value="ДКП ҳудудий бошқармаси бошлиғи">5. ДКП ҳудудий бошқармаси бошлиғи</option>
-                <option value="ДКП ҳудудий бошқармаси бошлиғи ўринбосари">6. ДКП ҳудудий бошқармаси бошлиғи ўринбосари</option>
-                <option value="Комплаенс хизмати ходими">7. Коррупцияга қарши курашиш ходими</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи">4. ДКП ҳудудий бошқармаси бошлиғи</option>
+                <option value="КА марказий аппарати ходими">5. КА Марказий аппарати ходими</option>
+                <option value="ДКП марказий аппарати ходими">6. ДКП Марказий аппарати ходими</option>
+                <option value="Комплаенс хизмати ходими">7. Коррупцияга қарши курашиш (комплаенс) ходими</option>
                 <option value="Собиқ ходимлар йўналиши">8. Собиқ ходимлар йўналиши</option>
               </select>
             </div>
@@ -1552,7 +1533,7 @@ CREATE POLICY "Allow all access"
       switchTab("fototablitsa");
     }
 
-    function switchRole(role) {
+        function switchRole(role) {
       currentRole = role;
 
       const roleNames = {
@@ -1576,23 +1557,44 @@ CREATE POLICY "Allow all access"
         banner.innerHTML = "👁 <b>Раҳбар Кузатувчи</b> — Фақат тасдиқланган хулосаларни ўқий олади.";
       }
 
-      // Ролга кўра кўринишни созлаш
+      // ============ ТАБЛАРНИ РОЛГА ҚАРАБ КЎРСАТИШ ============
       const tabIts = document.getElementById("tabBtnIts");
       const tabNegative = document.getElementById("tabBtnNegative");
+      const tabDatabase = document.getElementById("tabBtnDatabase");
       const tabSettings = document.getElementById("tabBtnSettings");
       const tabAudit = document.getElementById("tabBtnAudit");
       const negativeExportWrap = document.getElementById("negativeExportWrap");
       const btnBulk = document.getElementById("btnBulkSendClean");
 
-      // Кадрлар: ИЦ, Судланганлар, Аудит, Созламалар — ЙЎҚ
-      if (tabIts) tabIts.classList.toggle("hidden", role === "kadr");
-      if (tabNegative) tabNegative.classList.toggle("hidden", role === "kadr");
-      if (tabSettings) tabSettings.classList.toggle("hidden", role !== "admin");
-      if (tabAudit) tabAudit.classList.toggle("hidden", role !== "admin");
-      if (negativeExportWrap) negativeExportWrap.classList.toggle("hidden", role !== "admin");
-      if (btnBulk) btnBulk.classList.toggle("hidden", role !== "admin");
+      // Аввал ҳаммасини яшириш
+      if (tabIts) tabIts.style.display = "none";
+      if (tabNegative) tabNegative.style.display = "none";
+      if (tabDatabase) tabDatabase.style.display = "none";
+      if (tabSettings) tabSettings.style.display = "none";
+      if (tabAudit) tabAudit.style.display = "none";
+      if (negativeExportWrap) negativeExportWrap.style.display = "none";
+      if (btnBulk) btnBulk.style.display = "none";
 
-      // Номзод қўшиш панели
+      // Ролга қараб кўрсатиш
+      if (role === "admin") {
+        if (tabIts) tabIts.style.display = "inline-block";
+        if (tabNegative) tabNegative.style.display = "inline-block";
+        if (tabDatabase) tabDatabase.style.display = "inline-block";
+        if (tabSettings) tabSettings.style.display = "inline-block";
+        if (tabAudit) tabAudit.style.display = "inline-block";
+        if (negativeExportWrap) negativeExportWrap.style.display = "block";
+        if (btnBulk) btnBulk.style.display = "inline-block";
+      } else if (role === "rahbar") {
+        if (tabIts) tabIts.style.display = "inline-block";
+        if (tabNegative) tabNegative.style.display = "inline-block";
+        if (tabDatabase) tabDatabase.style.display = "inline-block";
+      } else if (role === "kuzatuvchi") {
+        if (tabNegative) tabNegative.style.display = "inline-block";
+        if (tabDatabase) tabDatabase.style.display = "inline-block";
+      }
+      // kadr (HR) — ҲЕЧ НАРСА КЎРМАЙДИ!
+
+      // ============ НОМЗОД ҚЎШИШ ПАНЕЛИ ============
       const addPanel = document.getElementById("addCandidatePanel");
       const fotoContainer = document.getElementById("fototablitsaContainer");
       if (role === "rahbar" || role === "kuzatuvchi") {
@@ -1603,16 +1605,20 @@ CREATE POLICY "Allow all access"
         fotoContainer.className = "lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm";
       }
 
-      // Ролга мос бўлмаган табни кўрсатмаслик
-      if (role === "kadr" && (currentTab === "its" || currentTab === "negative" || currentTab === "settings" || currentTab === "audit")) {
+      // ============ ХАТО ТАБГА ЎТИБ ҚОЛГАН БЎЛСА ============
+      const forbiddenForKadr = ["its", "negative", "settings", "audit"];
+      const forbiddenForOthers = ["settings", "audit"];
+
+      if (role === "kadr" && forbiddenForKadr.includes(currentTab)) {
         switchTab("fototablitsa");
-      } else if (role !== "admin" && (currentTab === "settings" || currentTab === "audit")) {
+      } else if (role !== "admin" && forbiddenForOthers.includes(currentTab)) {
+        switchTab("dashboard");
+      } else if (role === "kuzatuvchi" && currentTab === "its") {
         switchTab("dashboard");
       } else {
         renderAll();
       }
     }
-
     function switchTab(tab) {
       currentTab = tab;
       const views = {
