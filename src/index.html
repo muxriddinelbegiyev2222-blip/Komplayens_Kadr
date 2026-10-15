@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>«КОМПЛАЕНС-КАДР» — Кадастр агентлиги ва Давлат кадастрлари палатаси тизими v7.0 (Electron + Online)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>      <!-- ⚡ Supabase Realtime SDK -->   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -1208,9 +1208,14 @@
       pullFromSupabase(true);
     }
 
-    async function pushToSupabase() {
+       async function pushToSupabase() {
       const cfg = getSupabaseConfig();
       if (!cfg.url || !cfg.key) return;
+      
+      // Ўз ўзгаришимиз вақтини сақлаймиз
+      const now = new Date().toISOString();
+      localStorage.setItem("MY_LAST_UPDATE", now);
+      
       try {
         const res = await fetch(`${cfg.url}/rest/v1/komplayens_store?on_conflict=id`, {
           method: "POST",
@@ -1223,7 +1228,7 @@
           body: JSON.stringify({
             id: "MAIN_DB",
             payload: appState,
-            updated_at: new Date().toISOString()
+            updated_at: now
           })
         });
         const badge = document.getElementById("cloudSyncBadge");
@@ -1288,10 +1293,101 @@
       alert("SQL код нусхаланди! Энди Supabase -> SQL Editor ичига ташлаб «Run» тугмасини босинг.");
     }
 
-    // Ҳар 12 сонияда бошқа компьютерлар киритган ўзгаришларни автоматик тортиб олиш
-    setInterval(() => {
-      pullFromSupabase(false);
-    }, 12000);
+        // =========================================================================
+    // 2.1 ⚡ SUPABASE REALTIME — WebSocket орқали ДАРҲОЛ синхронлаш
+    // =========================================================================
+    let supabaseRealtimeClient = null;
+    let supabaseChannel = null;
+
+    function initRealtime() {
+      const cfg = getSupabaseConfig();
+      if (!cfg.url || !cfg.key) {
+        console.warn("⚠️ Supabase калитлари йўқ");
+        return;
+      }
+      
+      if (typeof supabase === "undefined" || !supabase.createClient) {
+        console.warn("⚠️ Supabase SDK юкланмаган — polling fallback");
+        setInterval(() => pullFromSupabase(false), 30000);
+        return;
+      }
+      
+      try {
+        supabaseRealtimeClient = supabase.createClient(cfg.url, cfg.key);
+        
+        supabaseChannel = supabaseRealtimeClient
+          .channel("komplayens-realtime")
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "komplayens_store",
+              filter: "id=eq.MAIN_DB"
+            },
+            (payload) => {
+              console.log("⚡ Realtime янгилик:", new Date().toLocaleTimeString());
+              
+              if (payload.new && payload.new.payload && Array.isArray(payload.new.payload.candidates)) {
+                // Ўз ўзгаришимизни ўтказиб юбориш
+                const myUpdateTime = localStorage.getItem("MY_LAST_UPDATE");
+                const serverUpdateTime = payload.new.updated_at;
+                
+                if (myUpdateTime && serverUpdateTime && 
+                    Math.abs(new Date(myUpdateTime) - new Date(serverUpdateTime)) < 3000) {
+                  console.log("⏭ Ўз ўзгаришимиз — ўтказиб юборамиз");
+                  return;
+                }
+                
+                appState = payload.new.payload;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                renderAll();
+                
+                showRealtimeToast("⚡ Янгилик келди!");
+                
+                const badge = document.getElementById("cloudSyncBadge");
+                if (badge) {
+                  badge.textContent = "⚡ Realtime: Фаол";
+                  badge.className = "text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold";
+                }
+              }
+            }
+          )
+          .subscribe((status) => {
+            const badge = document.getElementById("cloudSyncBadge");
+            if (status === "SUBSCRIBED") {
+              console.log("✅ Realtime уланди");
+              if (badge) {
+                badge.textContent = "⚡ Realtime: Уланган";
+                badge.className = "text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold";
+              }
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              console.warn("⚠️ Realtime узилди — polling fallback");
+              if (badge) {
+                badge.textContent = "⚠️ Realtime: Узилди";
+                badge.className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-bold";
+              }
+              setTimeout(() => pullFromSupabase(false), 30000);
+            }
+          });
+          
+      } catch (e) {
+        console.warn("Realtime init warning:", e);
+        setInterval(() => pullFromSupabase(false), 30000);
+      }
+    }
+
+    function showRealtimeToast(message) {
+      const toast = document.createElement("div");
+      toast.className = "fixed bottom-4 right-4 z-[9999] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl font-bold text-sm";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transition = "opacity 0.3s";
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
 
     // =========================================================================
     // 3. РОЛЛАР, ЛОГИН ВА ТАБЛАР БОШҚАРУВИ
@@ -2604,17 +2700,20 @@
     // =========================================================================
     // 11. ИШГА ТУШИРИШ (INIT)
     // =========================================================================
-        // INIT
+           // INIT
     populateRegionSelects();
     switchTab("fototablitsa");
     
-    // Логин ойнасини кўрсатиш (автоматик кирмайди!)
+    // Логин ойнасини кўрсатиш
     document.getElementById("loginOverlay").classList.remove("hidden");
     document.getElementById("loginUsername").value = "";
     document.getElementById("loginPassword").value = "";
     document.getElementById("loginUsername").focus();
     
-    // Онлайн базани тортиш
+    // ⚡ REALTIME ни ишга тушириш
+    initRealtime();
+    
+    // Биринчи марта онлайн базани тортиш
     pullFromSupabase(false);
 
     // Electron rejimida D:\ diskka birinchi avtomatik saqlash
