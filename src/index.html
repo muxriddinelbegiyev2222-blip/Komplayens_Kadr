@@ -228,19 +228,8 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
-          <button id="roleBtnKadr" onclick="switchRole('kadr')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-            1. Кадрлар (HR)
-          </button>
-          <button id="roleBtnAdmin" onclick="switchRole('admin')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-            2. Админ (Комплаенс)
-          </button>
-          <button id="roleBtnRahbar" onclick="switchRole('rahbar')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-            3. Бўлим бошлиғи (И.Зарипов)
-          </button>
-          <button id="roleBtnKuzatuvchi" onclick="switchRole('kuzatuvchi')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
-            4. 👁 Раҳбар Кузатувчи
-          </button>
+                <div class="flex items-center bg-slate-800 px-4 py-1.5 rounded-xl border border-slate-700">
+          <span id="currentRoleLabel" class="text-xs font-bold text-emerald-300">— Тизимга кирилмаган —</span>
         </div>
 
         <button onclick="pullFromSupabase(true)" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs font-bold text-white border border-emerald-500 cursor-pointer" title="Онлайн базадан янгилаш">
@@ -255,8 +244,8 @@
           🌙 Тунги
         </button>
 
-        <button onclick="openLoginModal()" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold cursor-pointer">
-          Чиқиш
+                <button id="logoutBtn" onclick="doLogout()" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold cursor-pointer">
+          🚪 Чиқиш
         </button>
       </div>
     </div>
@@ -1316,35 +1305,75 @@
       document.getElementById("loginOverlay").classList.remove("hidden");
     }
 
-    document.getElementById("btnLoginSubmit").addEventListener("click", () => {
+        function performLogin() {
       const u = document.getElementById("loginUsername").value.trim();
       const p = document.getElementById("loginPassword").value.trim();
       const found = appState.users.find(x => x.login === u && x.pass === p);
       if (!found) {
         document.getElementById("loginError").classList.remove("hidden");
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginPassword").focus();
         return;
       }
       document.getElementById("loginError").classList.add("hidden");
       document.getElementById("loginOverlay").classList.add("hidden");
       currentUser = found;
       switchRole(found.role);
+    }
+
+    document.getElementById("btnLoginSubmit").addEventListener("click", performLogin);
+
+    // Enter tugmasi bilan kirish
+    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") performLogin();
+    });
+    document.getElementById("loginUsername").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("loginPassword").focus();
     });
 
-    function switchRole(role) {
+    // Чиқиш функцияси
+    function doLogout() {
+      if (!confirm("Тизимдан чиқмоқчимисиз?")) return;
+      currentUser = null;
+      currentRole = "kadr";
+      
+      // Логин майдонларини тозалаш
+      document.getElementById("loginUsername").value = "";
+      document.getElementById("loginPassword").value = "";
+      
+      // Логин ойнасини очиш
+      document.getElementById("loginOverlay").classList.remove("hidden");
+      
+      // Роль кўрсаткичини янгилаш
+      document.getElementById("currentRoleLabel").textContent = "— Тизимга кирилмаган —";
+      document.getElementById("roleBannerText").innerHTML = "";
+      
+      // Барча админ-махсус элементларни яшириш
+      document.getElementById("tabBtnSettings").classList.add("hidden");
+      document.getElementById("tabBtnIts").classList.add("hidden");
+      document.getElementById("tabBtnNegative").classList.add("hidden");
+      document.getElementById("negativeExportWrap").classList.add("hidden");
+      document.getElementById("btnBulkSendClean").classList.add("hidden");
+      
+      // Фототаблицага ўтиш
+      switchTab("fototablitsa");
+      
+      // Данные обновить
+      renderAll();
+    }
+
+        function switchRole(role) {
       currentRole = role;
-      const roleButtons = {
-        kadr: document.getElementById("roleBtnKadr"),
-        admin: document.getElementById("roleBtnAdmin"),
-        rahbar: document.getElementById("roleBtnRahbar"),
-        kuzatuvchi: document.getElementById("roleBtnKuzatuvchi")
+      
+      // Жорий роль label ни янгилаш
+      const roleLabel = document.getElementById("currentRoleLabel");
+      const roleNames = {
+        kadr: "👤 Кадрлар бўлими (HR)",
+        admin: "🛡️ Админ (Комплаенс)",
+        rahbar: "✅ Бўлим бошлиғи (И.Зарипов)",
+        kuzatuvchi: "👁 Раҳбар Кузатувчи"
       };
-      Object.keys(roleButtons).forEach(r => {
-        if (r === role) {
-          roleButtons[r].className = "px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow cursor-pointer";
-        } else {
-          roleButtons[r].className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-700 cursor-pointer";
-        }
-      });
+      if (roleLabel) roleLabel.textContent = roleNames[role] || role;
 
       const banner = document.getElementById("roleBannerText");
       if (role === "kadr") {
@@ -2575,9 +2604,17 @@
     // =========================================================================
     // 11. ИШГА ТУШИРИШ (INIT)
     // =========================================================================
+        // INIT
     populateRegionSelects();
-    switchRole("admin");
     switchTab("fototablitsa");
+    
+    // Логин ойнасини кўрсатиш (автоматик кирмайди!)
+    document.getElementById("loginOverlay").classList.remove("hidden");
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("loginUsername").focus();
+    
+    // Онлайн базани тортиш
     pullFromSupabase(false);
 
     // Electron rejimida D:\ diskka birinchi avtomatik saqlash
