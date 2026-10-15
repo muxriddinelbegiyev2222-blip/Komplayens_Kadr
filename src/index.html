@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» — Кадастр агентлиги ва Давлат кадастрлари палатаси тизими v6.0 (Online + D:\ Baza)</title>
+  <title>«КОМПЛАЕНС-КАДР» — Кадастр агентлиги ва Давлат кадастрлари палатаси тизими v7.0 (Electron + Online)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -33,7 +33,6 @@
       padding: 0;
     }
 
-    /* 1:1 Расмий ҳужжат ва экспорт таблица услуби */
     .doc-serif {
       font-family: 'Times New Roman', Times, serif;
     }
@@ -78,7 +77,6 @@
       border-color: #64748b !important;
     }
 
-    /* А4 Маълумотнома оқ қоғози — узилиб қолмаслиги учун яхлит блок */
     .a4-sheet {
       width: 210mm;
       min-height: 285mm;
@@ -111,7 +109,6 @@
       animation: pulseDanger 1.8s infinite;
     }
 
-    /* Принтерда фақат А4 Маълумотномани 1 бетда чиқариш */
     @media print {
       @page {
         size: A4 portrait;
@@ -146,6 +143,18 @@
       }
     }
   </style>
+  
+  <!-- ⚡ ELECTRON ANIQLASH -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+        document.body.classList.add('electron-app');
+        console.log('✅ Electron rejimida ishlayapti');
+      } else {
+        console.log('🌐 Brauzer rejimida ishlayapti');
+      }
+    });
+  </script>
 </head>
 <body class="min-h-screen flex flex-col">
 
@@ -157,7 +166,7 @@
           <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center font-extrabold text-xl text-emerald-300">КК</div>
           <div>
             <span class="text-xs uppercase tracking-widest text-emerald-300 font-bold block">Кадастр агентлиги ва ДКП</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v6.0</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v7.0</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">☁️ Supabase Online</span>
@@ -206,7 +215,7 @@
         <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center font-extrabold text-emerald-300 text-base">КК</div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v6.0</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v7.0</span>
             <span id="cloudSyncBadge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold">
               ☁️ Онлайн База: Уланмоқда...
             </span>
@@ -218,7 +227,6 @@
         </div>
       </div>
 
-      <!-- 4 ТА РОЛ ТЕЗКОР АЛМАШТИРГИЧ -->
       <div class="flex flex-wrap items-center gap-2">
         <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
           <button id="roleBtnKadr" onclick="switchRole('kadr')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">
@@ -253,7 +261,6 @@
       </div>
     </div>
 
-    <!-- ROLE BANNER & NAVIGATION TABS -->
     <div class="bg-slate-800/95 border-t border-slate-700 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
       <div id="roleBannerText" class="text-xs font-semibold text-emerald-300"></div>
       <div class="flex flex-wrap items-center gap-1.5">
@@ -355,10 +362,9 @@
       </div>
     </section>
 
-    <!-- 2. FOTOTABLITSA (CURRENT CANDIDATES) VIEW -->
+    <!-- 2. FOTOTABLITSA VIEW -->
     <section id="viewFototablitsa" class="space-y-4">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <!-- LEFT FORM: ADD CANDIDATE -->
         <div id="addCandidatePanel" class="lg:col-span-4 bg-white dark-card rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
           <div class="border-b border-slate-200 pb-3 mb-3 flex items-center justify-between">
             <div>
@@ -426,7 +432,6 @@
               </div>
             </div>
 
-            <!-- PINFL DUPLICATE ALERT -->
             <div id="pinflDuplicateBox" class="hidden p-2.5 rounded-lg bg-amber-50 border-2 border-amber-400 text-amber-950 text-xs"></div>
 
             <div>
@@ -467,7 +472,6 @@
           </form>
         </div>
 
-        <!-- RIGHT TABLE: OFFICIAL FOTOTABLITSA -->
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-200">
             <div class="flex flex-wrap items-center gap-2">
@@ -557,7 +561,7 @@
       </div>
     </section>
 
-    <!-- 4. ИЦ (SUDLANGANLIK) TABLE VIEW -->
+    <!-- 4. ИЦ TABLE VIEW -->
     <section id="viewIts" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -589,7 +593,7 @@
               <tr>
                 <th style="width:45px;">T/R</th>
                 <th>FIO</th>
-                <th style="width:125px;">Tug‘ilgan yili, oy va sana</th>
+                <th style="width:125px;">Tug'ilgan yili, oy va sana</th>
                 <th style="width:110px;">Pasport seriyasi</th>
                 <th style="width:125px;">Pasport raqami</th>
                 <th style="width:165px;">PINFL</th>
@@ -604,7 +608,7 @@
       </div>
     </section>
 
-    <!-- 5. NEGATIVE / SUDLANGANLAR REGISTRY VIEW -->
+    <!-- 5. NEGATIVE REGISTRY VIEW -->
     <section id="viewNegative" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border-2 border-red-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
@@ -638,7 +642,7 @@
       </div>
     </section>
 
-    <!-- 6. UNIFIED DATABASE VIEW -->
+    <!-- 6. DATABASE VIEW -->
     <section id="viewDatabase" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -720,11 +724,10 @@
       </div>
     </section>
 
-    <!-- 7. SUPABASE CLOUD + D:\ DRIVE & USERS SETTINGS VIEW (ADMIN) -->
+    <!-- 7. SETTINGS VIEW -->
     <section id="viewSettings" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-        <!-- SUPABASE ONLINE BRIDGE + D:\ DISK -->
         <div class="lg:col-span-6 bg-white dark-card rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-900">🌐 Автоматик Уланган Онлайн База + D:\ Диск</span>
@@ -759,27 +762,23 @@
           <h3 class="text-base font-extrabold">2. Компьютерингизнинг <code class="text-emerald-700">D:\Komplayens_Kadr_Baza\</code> дискига улаш</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button onclick="connectDDriveFolder()" class="p-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
-              📂 1. D:\ дискдан папка танлаш (Авто-сақлаш)
-              <span class="block font-normal text-emerald-100 mt-0.5">Ҳар бир ўзгариш D:\ дискингизга ёзилади</span>
+              📂 1. D:\ дискга сақлаш (Electron авто)
+              <span class="block font-normal text-emerald-100 mt-0.5">Ҳар бир ўзгариш автоматик сақланади</span>
             </button>
             <button onclick="downloadBackupJson()" class="p-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
-              💾 2. Базани D:\ дискка файл қилиб сақлаш (.JSON)
+              💾 2. Базани захира нусхасини олиш (.JSON)
               <span class="block font-normal text-blue-100 mt-0.5">komplayens_kadr_baza.json</span>
             </button>
           </div>
 
           <div class="pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
             <div>
-              <label class="text-xs font-bold block mb-1">D:\ дискдаги захира файлни юклаш:</label>
+              <label class="text-xs font-bold block mb-1">Захира файлни юклаш:</label>
               <input type="file" accept=".json" onchange="restoreBackupJson(event)" class="text-xs" />
             </div>
-            <button onclick="downloadPortableLauncherBat()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shadow cursor-pointer">
-              ⚡ Установкасиз Ишга Туширувчи (.BAT) юклаб олиш
-            </button>
           </div>
         </div>
 
-        <!-- USER & ROLE MANAGEMENT -->
         <div class="lg:col-span-6 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
           <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-amber-100 text-amber-900">🔐 Фақат Админ (Сиз) бошқарадиган бўлим</span>
           <h3 class="text-lg font-extrabold">Фойдаланувчиларга Рол ва Логин-Парол яратиб бериш</h3>
@@ -835,7 +834,7 @@
 
   </main>
 
-  <!-- ADMIN REVIEW & CONCLUSION EDITOR MODAL -->
+  <!-- ADMIN EDITOR MODAL -->
   <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
       <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
@@ -901,10 +900,9 @@
     </div>
   </div>
 
-  <!-- A4 OFFICIAL MALUMOTNOMA VIEW & PRINT MODAL -->
+  <!-- A4 MALUMOTNOMA MODAL -->
   <div id="docModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm overflow-y-auto p-4 md:p-8 hidden">
     <div class="max-w-4xl mx-auto">
-      <!-- TOP CONTROL BAR -->
       <div class="bg-slate-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-slate-700 shadow-xl no-print">
         <div class="flex items-center gap-3">
           <span id="docModalStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
@@ -929,9 +927,7 @@
         </div>
       </div>
 
-      <!-- BOSS (I.ZARIPOV) APPROVAL & SUDLANGANLIK GUARD BAR -->
       <div id="bossActionPanel" class="bg-white rounded-2xl p-4 mb-4 border-2 border-emerald-500 shadow-lg space-y-3 hidden no-print text-slate-900">
-        <!-- RED WARNING IF SUDLANGAN -->
         <div id="bossSudlanganWarningBox" class="hidden p-4 rounded-xl bg-red-50 border-2 border-red-600 text-red-950 space-y-2 sudlangan-alert-pulse">
           <div class="flex items-center gap-2 font-extrabold text-sm text-red-700">
             <span>🚨 ДИҚҚАТ! УШБУ ШАХСДА СУДЛАНГАНЛИК ҲОЛАТИ МАВЖУД!</span>
@@ -959,14 +955,14 @@
         </div>
       </div>
 
-      <!-- A4 SHEET CONTENT -->
       <div id="a4PrintableSheet" class="a4-sheet doc-serif">
         <div id="a4InnerContent"></div>
       </div>
     </div>
   </div>
 
-  <script>
+<!-- ============ SCRIPT QISMI 2/3 va 3/3 da davom etadi ============ -->
+    <script>
     // =========================================================================
     // 1. ДОИМИЙ НАСТРОЙКАЛАР ВА СПИСОКЛАР (14 ТА ҲУДУД)
     // =========================================================================
@@ -987,14 +983,13 @@
       "Қорақалпоғистон Республикаси"
     ];
 
-    const STORAGE_KEY = "KOMPLAYENS_KADR_V60_STATE";
-    const SUPABASE_CONFIG_KEY = "KOMPLAYENS_KADR_V60_SUPABASE";
+    const STORAGE_KEY = "KOMPLAYENS_KADR_V70_STATE";
+    const SUPABASE_CONFIG_KEY = "KOMPLAYENS_KADR_V70_SUPABASE";
 
-    // СИЗНИНГ ДОИМИЙ SUPABASE КАЛИТЛАРИНГИЗ (АВТОМАТИК УЛАНГАН)
     const DEFAULT_SUPABASE_URL = "https://kyihefutrwvukbaewzor.supabase.co";
     const DEFAULT_SUPABASE_KEY = "sb_publishable_3BO5cEP52JH4KNfGpWlylw_pM0_zg7N";
 
-    let currentRole = "admin"; // 'kadr' | 'admin' | 'rahbar' | 'kuzatuvchi'
+    let currentRole = "admin";
     let currentUser = { login: "admin", name: "Мухриддин Элбегиев (Админ)", role: "admin" };
     let currentTab = "fototablitsa";
     let activeCandidateId = null;
@@ -1200,7 +1195,7 @@
     }
 
     // =========================================================================
-    // 2. SUPABASE ОНЛАЙН КЎПРИК (СИЗНИНГ КАЛИТЛАРИНГИЗ АВТОМАТИК УЛАНГАН)
+    // 2. SUPABASE ОНЛАЙН КЎПРИК
     // =========================================================================
     function getSupabaseConfig() {
       try {
@@ -1362,14 +1357,12 @@
         banner.innerHTML = "👁 <b>Жорий рол: 4. Раҳбар Кузатувчи (Юқори раҳбарият)</b> — Фақат тасдиқланган («✓ Ўрганиб чиқилди») хулосаларни очиб ўқий олади. Ўрганиш жараёнидагилар ёпиқ туради.";
       }
 
-      // Кадрларга ИЦ ва Судланганлар реестри кўринмайди
       document.getElementById("tabBtnIts").classList.toggle("hidden", role === "kadr");
       document.getElementById("tabBtnNegative").classList.toggle("hidden", role === "kadr");
       document.getElementById("tabBtnSettings").classList.toggle("hidden", role !== "admin");
       document.getElementById("negativeExportWrap").classList.toggle("hidden", role !== "admin");
       document.getElementById("btnBulkSendClean").classList.toggle("hidden", role !== "admin");
 
-      // Фақат Кадр ва Админда номзод қўшиш формаси чиқади
       const addPanel = document.getElementById("addCandidatePanel");
       const fotoContainer = document.getElementById("fototablitsaContainer");
       if (role === "rahbar" || role === "kuzatuvchi") {
@@ -1439,7 +1432,6 @@
       dbReg.innerHTML = allOpt;
     }
 
-    // «Якуний натижа» устуни — фақат «Ўрганиб чиқилди» ёки «Ўрганиш жараёнида»
     function getFinalResultBadge(c) {
       if (c.workflowStage === "approved") {
         return `<span class="inline-block px-3 py-1 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-xs">✓ Ўрганиб чиқилди</span>`;
@@ -1451,12 +1443,10 @@
       return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
     }
 
-    // Ички босқич ва тугмалар логикаси (4 та рол учун: Кузатувчи фақат тасдиқланганни оча олади!)
     function renderActionCell(c) {
       const resultBadge = getFinalResultBadge(c);
       const isSudlangan = c.sudlanganStatus === "sudlangan";
 
-      // 1. КАДРЛАР РОЛИ
       if (currentRole === "kadr") {
         if (c.workflowStage === "approved") {
           return `
@@ -1477,7 +1467,6 @@
         `;
       }
 
-      // 2. АДМИН (СИЗ) РОЛИ
       if (currentRole === "admin") {
         let stageInfo = "";
         if (c.workflowStage === "admin_review") {
@@ -1509,7 +1498,6 @@
         `;
       }
 
-      // 3. БЎЛИМ БОШЛИҒИ (И.ЗАРИПОВ) РОЛИ
       if (currentRole === "rahbar") {
         if (c.workflowStage === "admin_review") {
           return `
@@ -1552,7 +1540,6 @@
         `;
       }
 
-      // 4. РАҲБАР КУЗАТУВЧИ (ЮҚОРИ РАҲБАРИЯТ) — фақат тасдиқланганларни очиб ўқий олади!
       if (currentRole === "kuzatuvchi") {
         if (c.workflowStage !== "approved") {
           return `
@@ -1919,7 +1906,9 @@
         </tr>
       `).join("");
     }
-
+    // =========================================================================
+    // 5. ЯНГИ НОМЗОД ҚЎШИШ ВА ПИНФЛ ДУБЛИКАТ ТЕКШИРУВИ
+    // =========================================================================
     document.getElementById("userCreateForm").addEventListener("submit", e => {
       e.preventDefault();
       const name = document.getElementById("newUserName").value.trim();
@@ -1943,9 +1932,6 @@
       renderUsersTable();
     }
 
-    // =========================================================================
-    // 5. ЯНГИ НОМЗОД ҚЎШИШ ВА 14 ХОНАЛИ ПИНФЛ ДУБЛИКАТ ТЕКШИРУВИ
-    // =========================================================================
     document.getElementById("inpPinfl").addEventListener("input", e => {
       const val = e.target.value.replace(/\D/g, "");
       e.target.value = val;
@@ -2039,7 +2025,7 @@
     });
 
     // =========================================================================
-    // 6. АДМИН ТАҲРИР ОЙНАСИ ВА А4 МАЪЛУМОТНОМА ОЙНАСИ
+    // 6. АДМИН ТАҲРИР ОЙНАСИ
     // =========================================================================
     function openEditorModal(id) {
       const c = appState.candidates.find(x => x.id === id);
@@ -2099,7 +2085,9 @@
       alert(`«${c.fio}» бўйича Маълумотнома Бўлим бошлиғига (И.Зариповга) тасдиқлаш учун юборилди!`);
     }
 
-    // Расмий А4 МАЪЛУМОТНОМА HTML генератори
+    // =========================================================================
+    // 7. A4 МАЪЛУМОТНОМА ГЕНЕРАТОРИ ВА МОДАЛ
+    // =========================================================================
     function buildOfficialMalumotnomaHtml(c) {
       const p3Parts = (c.para3 || "").split("\n").filter(Boolean);
       const p4Parts = (c.para4 || "").split("\n").filter(Boolean);
@@ -2153,7 +2141,6 @@
       const c = appState.candidates.find(x => x.id === id);
       if (!c) return;
 
-      // Кузатувчи ва Кадрлар фақат тасдиқланган («Ўрганиб чиқилди») хулосани оча олади!
       if ((currentRole === "kuzatuvchi" || currentRole === "kadr") && c.workflowStage !== "approved") {
         alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
         return;
@@ -2172,7 +2159,6 @@
         badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
       }
 
-      // Бўлим бошлиғи (И.Зарипов) тасдиқлаш ва судланганлик ҳимояси
       const bossPanel = document.getElementById("bossActionPanel");
       const warnBox = document.getElementById("bossSudlanganWarningBox");
       const chk = document.getElementById("chkBossConfirmSudlangan");
@@ -2234,7 +2220,7 @@
     }
 
     // =========================================================================
-    // 7. ПРИНТЕРГА А4 ПЕЧАТЬ БЕРИШ ВА 1:1 РАМКАЛИ WORD/EXCEL ЭКСПОРТ
+    // 8. ПРИНТЕР ВА WORD/EXCEL ЭКСПОРТ
     // =========================================================================
     function printCurrentDocA4() {
       const c = appState.candidates.find(x => x.id === activeCandidateId);
@@ -2438,9 +2424,22 @@
     }
 
     // =========================================================================
-    // 8. D:\ ДИСК БИЛАН ИШЛАШ ВА PORTABLE (.BAT) ГЕНЕРАТОРИ
+    // 9. D:\ ДИСК БИЛАН ИШЛАШ (ELECTRON + BRAUZER REJIMI)
     // =========================================================================
     async function connectDDriveFolder() {
+      // ⚡ Electron rejimida
+      if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+        const result = await window.ElectronAPI.saveToDDrive(appState);
+        if (result.ok) {
+          document.getElementById("dDriveStatusBadge").textContent = "🟢 D:\\ Авто-сақлаш ёқилган";
+          alert("✅ База D:\\ дискига сақланди:\n" + result.path);
+        } else {
+          alert("❌ Хатолик: " + result.error);
+        }
+        return;
+      }
+
+      // Brauzer rejimida (eski usul)
       try {
         if ("showSaveFilePicker" in window) {
           dDriveFileHandle = await window.showSaveFilePicker({
@@ -2459,6 +2458,21 @@
     }
 
     async function autoWriteToDDrive() {
+      // ⚡ Electron rejimida — har o'zgarishda avtomatik saqlash
+      if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+        try {
+          const result = await window.ElectronAPI.saveToDDrive(appState);
+          if (result.ok) {
+            const badge = document.getElementById("dDriveStatusBadge");
+            if (badge) badge.textContent = "🟢 D:\\ Авто-сақлаш ёқилган";
+          }
+        } catch (e) {
+          console.warn("Electron save warning:", e);
+        }
+        return;
+      }
+
+      // Brauzer rejimi (eski usul)
       if (!dDriveFileHandle) return;
       try {
         const writable = await dDriveFileHandle.createWritable();
@@ -2469,11 +2483,38 @@
       }
     }
 
-    function downloadBackupJson() {
+    async function downloadBackupJson() {
+      // ⚡ Electron rejimida — to'g'ridan-to'g'ri D:\ ga saqlash
+      if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+        const result = await window.ElectronAPI.saveToDDrive(appState);
+        if (result.ok) {
+          alert("✅ База сақланди:\n" + result.path);
+        } else {
+          alert("❌ Хатолик: " + result.error);
+        }
+        return;
+      }
+
+      // Brauzer rejimi (eski usul)
       downloadBlobFile(JSON.stringify(appState, null, 2), "komplayens_kadr_baza.json", "application/json;charset=utf-8");
     }
 
-    function restoreBackupJson(ev) {
+    async function restoreBackupJson(ev) {
+      // ⚡ Electron rejimida — dialog orqali fayl tanlash
+      if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+        const result = await window.ElectronAPI.selectJsonFile();
+        if (result.ok && result.data && Array.isArray(result.data.candidates)) {
+          appState = result.data;
+          saveState();
+          renderAll();
+          alert("✅ База муваффақиятли тикланди!");
+        } else if (result.error) {
+          alert("❌ Хатолик: " + result.error);
+        }
+        return;
+      }
+
+      // Brauzer rejimi (eski usul)
       const file = ev.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -2484,7 +2525,7 @@
             appState = parsed;
             saveState();
             renderAll();
-            alert("D:\\ дискдаги база муваффақиятли тикланди ва онлайн базага синхронланди!");
+            alert("D:\\ дискдаги база муваффақиятли тикланди!");
           }
         } catch (err) {
           alert("Файл формати нотўғри!");
@@ -2494,12 +2535,12 @@
     }
 
     function downloadPortableLauncherBat() {
-      const batContent = `@echo off\r\ntitle KOMPLAYENS-KADR v6.0\r\nstart msedge.exe --app="%~dp0kadastr_komplayens_tizimi.html" --start-maximized\r\nexit`;
-      downloadBlobFile(batContent, "KOMPLAYENS_KADR_ISHGA_TUSHIRISH.bat", "application/bat;charset=utf-8");
+      // Electron versiyasida bu funksiya ishlatilmaydi
+      console.log('Bu funksiya Electron versiyasida ishlatilmaydi');
     }
 
     // =========================================================================
-    // 9. КИРИЛЛ / ЛОТИН ВА ТУНГИ РЕЖИМ
+    // 10. КИРИЛЛ / ЛОТИН ВА ТУНГИ РЕЖИМ
     // =========================================================================
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
@@ -2531,11 +2572,21 @@
       }
     }
 
-    // INIT
+    // =========================================================================
+    // 11. ИШГА ТУШИРИШ (INIT)
+    // =========================================================================
     populateRegionSelects();
     switchRole("admin");
     switchTab("fototablitsa");
     pullFromSupabase(false);
+
+    // Electron rejimida D:\ diskka birinchi avtomatik saqlash
+    if (window.ElectronAPI && window.ElectronAPI.isElectron) {
+      setTimeout(() => {
+        autoWriteToDDrive();
+      }, 2000);
+    }
   </script>
 </body>
 </html>
+<!-- ============ SCRIPT QISMI 3/3 da davom etadi ============ -->
