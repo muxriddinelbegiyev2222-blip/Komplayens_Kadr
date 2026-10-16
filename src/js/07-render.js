@@ -1,10 +1,10 @@
 // =========================================================================
 // 07-RENDER.JS — Барча жадвалларни чизиш
-// «КОМПЛАЕНС-КАДР» v10.1 — Тўғирланган colspan + Drag&Drop учун
+// «КОМПЛАЕНС-КАДР» v10.2 — Марказий аппарат + Тизим ташкилотлари
 // =========================================================================
 
 // =========================================================================
-// АСОСИЙ RENDER ФУНКЦИЯСИ
+// АСОСИЙ RENDER
 // =========================================================================
 
 function renderAll() {
@@ -12,7 +12,6 @@ function renderAll() {
 
   const all = appState.candidates || [];
 
-  // KPI карточкалар
   setKpi("kpiTotal", all.length);
   setKpi("kpiCurrent", all.filter(x => x.recordType === "current").length);
   setKpi("kpiFormer", all.filter(x => x.recordType === "former").length);
@@ -20,7 +19,6 @@ function renderAll() {
   setKpi("kpiApproved", all.filter(x => x.workflowStage === "approved").length);
   setKpi("kpiSudlangan", all.filter(x => x.sudlanganStatus === "sudlangan").length);
 
-  // Барча жадваллар
   renderDashboardTable();
   renderSubtabsCounters();
   renderFototablitsaTable();
@@ -31,12 +29,10 @@ function renderAll() {
   renderUsersTable();
   renderAuditTable();
 
-  // Уведомления badge
   if (typeof updateNotificationBadge === "function") {
     updateNotificationBadge();
   }
 
-  // Filter селектларини тўлдириш
   populateRegionSelects();
 }
 
@@ -44,10 +40,6 @@ function setKpi(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
-
-// =========================================================================
-// СУБ-ТАБЛАР ҲИСОБЛАГИЧИ
-// =========================================================================
 
 function renderSubtabsCounters() {
   const all = appState.candidates || [];
@@ -66,7 +58,7 @@ function renderSubtabsCounters() {
 }
 
 // =========================================================================
-// 1. DASHBOARD (13 USTUN)
+// 1. DASHBOARD (14 USTUN — Тизим ташкилотлари қўшилди)
 // =========================================================================
 
 function renderDashboardTable() {
@@ -78,13 +70,52 @@ function renderDashboardTable() {
   REGIONS_14.forEach((reg, idx) => {
     const list = appState.candidates.filter(c => c.region === reg);
 
-    const kaManagement = list.filter(c => c.recordType === "current" && c.category && c.category.includes("КА ҳудудий бошқармаси")).length;
-    const dkpManagement = list.filter(c => c.recordType === "current" && c.category && c.category.includes("ДКП ҳудудий бошқармаси")).length;
-    const kaDistrict = list.filter(c => c.recordType === "current" && c.category === "КА туман (шаҳар) бўлими бошлиғи").length;
-    const dkpDistrict = list.filter(c => c.recordType === "current" && c.category === "ДКП туман (шаҳар) филиали бошлиғи").length;
-    const compliance = list.filter(c => c.recordType === "current" && c.category === "Комплаенс хизмати ходими").length;
-    const centralKA = list.filter(c => c.recordType === "current" && c.category === "КА марказий аппарати ходими").length;
-    const centralDKP = list.filter(c => c.recordType === "current" && c.category === "ДКП марказий аппарати ходими").length;
+    // 🆕 Махсус категориялар
+    const isCentralKA = reg === "Кадастр агентлиги Марказий аппарати";
+    const isCentralDKP = reg === "Давлат кадастрлари палатаси Марказий аппарати";
+    const isTizim = reg === "Тизим ташкилотлари";
+    const isSpecial = isCentralKA || isCentralDKP || isTizim;
+
+    let kaManagement, dkpManagement, kaDistrict, dkpDistrict, compliance, centralKA, centralDKP, tizim;
+
+    if (isCentralKA) {
+      kaManagement = 0;
+      dkpManagement = 0;
+      kaDistrict = 0;
+      dkpDistrict = 0;
+      compliance = 0;
+      centralKA = list.filter(c => c.recordType === "current").length;
+      centralDKP = 0;
+      tizim = 0;
+    } else if (isCentralDKP) {
+      kaManagement = 0;
+      dkpManagement = 0;
+      kaDistrict = 0;
+      dkpDistrict = 0;
+      compliance = 0;
+      centralKA = 0;
+      centralDKP = list.filter(c => c.recordType === "current").length;
+      tizim = 0;
+    } else if (isTizim) {
+      kaManagement = 0;
+      dkpManagement = 0;
+      kaDistrict = 0;
+      dkpDistrict = 0;
+      compliance = 0;
+      centralKA = 0;
+      centralDKP = 0;
+      tizim = list.filter(c => c.recordType === "current").length;
+    } else {
+      kaManagement = list.filter(c => c.recordType === "current" && c.category && c.category.includes("КА ҳудудий бошқармаси")).length;
+      dkpManagement = list.filter(c => c.recordType === "current" && c.category && c.category.includes("ДКП ҳудудий бошқармаси")).length;
+      kaDistrict = list.filter(c => c.recordType === "current" && c.category === "КА туман (шаҳар) бўлими бошлиғи").length;
+      dkpDistrict = list.filter(c => c.recordType === "current" && c.category === "ДКП туман (шаҳар) филиали бошлиғи").length;
+      compliance = list.filter(c => c.recordType === "current" && c.category === "Комплаенс хизмати ходими").length;
+      centralKA = 0;
+      centralDKP = 0;
+      tizim = 0;
+    }
+
     const former = list.filter(c => c.recordType === "former").length;
     const inProc = list.filter(c => c.workflowStage !== "approved").length;
     const appr = list.filter(c => c.workflowStage === "approved").length;
@@ -92,16 +123,28 @@ function renderDashboardTable() {
 
     const onclick = (type) => `onclick="openDashboardDetail('${reg}', '${type}')" class="cursor-pointer hover:bg-blue-50 transition"`;
 
+    // Қатор номи
+    let regDisplay = reg;
+    let rowClass = "";
+    if (isCentralKA || isCentralDKP) {
+      regDisplay = "🏢 " + reg;
+      rowClass = "bg-purple-50";
+    } else if (isTizim) {
+      regDisplay = "🔷 " + reg;
+      rowClass = "bg-blue-50";
+    }
+
     html += `
-      <tr>
+      <tr class="${rowClass}">
         <td class="text-center font-bold">${idx + 1}.</td>
-        <td class="font-bold">${reg}</td>
+        <td class="font-bold">${regDisplay}</td>
         <td class="text-center" ${onclick("ka_management")}>${kaManagement}</td>
         <td class="text-center" ${onclick("dkp_management")}>${dkpManagement}</td>
         <td class="text-center font-bold" ${onclick("ka_district")}>${kaDistrict}</td>
         <td class="text-center font-bold" ${onclick("dkp_district")}>${dkpDistrict}</td>
         <td class="text-center" ${onclick("compliance")}>${compliance}</td>
         <td class="text-center font-bold text-purple-800" ${onclick("central")}>${centralKA + centralDKP}</td>
+        <td class="text-center font-bold text-blue-800" ${onclick("tizim")}>${tizim}</td>
         <td class="text-center font-bold text-purple-800" ${onclick("former")}>${former}</td>
         <td class="text-center font-bold text-amber-700" ${onclick("in_process")}>${inProc}</td>
         <td class="text-center font-bold text-emerald-700" ${onclick("approved")}>${appr}</td>
@@ -138,6 +181,7 @@ function getDetailTitle(type) {
     dkp_district: "ДКП туман филиали раҳбари",
     compliance: "Комплаенс ходимлари",
     central: "Марказий аппарат",
+    tizim: "Тизим ташкилотлари",
     former: "Собиқ ходимлар",
     in_process: "Ўрганиш жараёнида",
     approved: "Ўрганиб чиқилган",
@@ -148,7 +192,7 @@ function getDetailTitle(type) {
 }
 
 // =========================================================================
-// 2. ФОТОТАБЛИЦА (5 USTUN — ТЎҒИРЛАНДИ!)
+// 2. ФОТОТАБЛИЦА
 // =========================================================================
 
 function renderFototablitsaTable() {
@@ -190,7 +234,6 @@ function renderFototablitsaTable() {
       in_process: "⏳ Тасдиқлаш жараёнида",
       approved: "✅ Ўрганиб чиқилган"
     };
-    // ✅ 5 USTUN учун colspan="5"
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500 font-bold">
       ${subtabNames[currentSubTab] || ""} бўлимида ёзувлар топилмади
     </td></tr>`;
@@ -209,7 +252,6 @@ function renderFototablitsaTable() {
 
   Object.keys(groups).forEach(key => {
     const [heading, appType] = key.split("|||");
-    // ✅ 5 USTUN учун colspan="5"
     html += `
       <tr>
         <td colspan="5" class="text-center font-bold py-2 bg-slate-50" style="font-size:14px;">
@@ -283,7 +325,6 @@ function renderActionCell(c) {
   const resultBadge = getFinalResultBadge(c);
   const isSudlangan = c.sudlanganStatus === "sudlangan";
 
-  // КАДРЛАР
   if (currentRole === ROLES.KADR) {
     if (c.workflowStage === "approved") {
       return `
@@ -304,7 +345,6 @@ function renderActionCell(c) {
     `;
   }
 
-  // КОРРУПСИЯ
   if (currentRole === ROLES.KORRUPSIYA) {
     let stageInfo = "";
     if (c.workflowStage === "admin_review") {
@@ -342,7 +382,6 @@ function renderActionCell(c) {
     `;
   }
 
-  // РАҲБАР
   if (currentRole === ROLES.RAHBAR) {
     if (c.workflowStage === "admin_review") {
       return `
@@ -384,7 +423,6 @@ function renderActionCell(c) {
     `;
   }
 
-  // КУЗАТУВЧИ
   if (currentRole === ROLES.KUZATUVCHI) {
     if (c.workflowStage !== "approved") {
       return `
@@ -409,7 +447,7 @@ function renderActionCell(c) {
 }
 
 // =========================================================================
-// 3. СОБИҚ ХОДИМЛАР (5 USTUN — ТЎҒИРЛАНДИ!)
+// 3. СОБИҚ ХОДИМЛАР
 // =========================================================================
 
 function renderFormerTable() {
@@ -426,7 +464,6 @@ function renderFormerTable() {
   });
 
   if (list.length === 0) {
-    // ✅ ТЎҒИРЛАНДИ: colspan="5" (6 эмас)
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`;
     return;
   }
@@ -461,7 +498,7 @@ function renderFormerTable() {
 }
 
 // =========================================================================
-// 4. ИЦ ЖАДВАЛИ (9 USTUN)
+// 4. ИЦ ЖАДВАЛИ
 // =========================================================================
 
 function renderItsTable() {
@@ -481,7 +518,6 @@ function renderItsTable() {
   });
 
   if (list.length === 0) {
-    // ✅ 9 USTUN
     tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`;
     return;
   }
@@ -530,7 +566,7 @@ function renderItsTable() {
 }
 
 // =========================================================================
-// 5. СУДЛАНГАНЛАР (7 USTUN)
+// 5. СУДЛАНГАНЛАР
 // =========================================================================
 
 function renderNegativeTable() {
@@ -566,7 +602,7 @@ function renderNegativeTable() {
 }
 
 // =========================================================================
-// 6. ЯГОНА БАЗА (7 USTUN)
+// 6. ЯГОНА БАЗА
 // =========================================================================
 
 function renderDatabaseTable() {
@@ -638,7 +674,7 @@ function renderDatabaseTable() {
 }
 
 // =========================================================================
-// 7. ФОЙДАЛАНУВЧИЛАР (5 USTUN)
+// 7. ФОЙДАЛАНУВЧИЛАР
 // =========================================================================
 
 function renderUsersTable() {
@@ -668,11 +704,6 @@ function renderUsersTable() {
 }
 
 // =========================================================================
-// 8. АУДИТ-ЛОГ (6 USTUN) — 03-audit.js да
-// =========================================================================
-// renderAuditTable() 03-audit.js да
-
-// =========================================================================
 // ЁРДАМЧИ ФУНКЦИЯЛАР
 // =========================================================================
 
@@ -694,7 +725,7 @@ function populateRegionSelects() {
   const formerReg = document.getElementById("formerRegionFilter");
   const dbReg = document.getElementById("dbRegionFilter");
 
-  const allOpt = `<option value="ALL">Барча ҳудудлар (14 та)</option>` +
+  const allOpt = `<option value="ALL">Барча ҳудудлар (${REGIONS_14.length} та)</option>` +
     REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
 
   const singleOpts = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
@@ -715,4 +746,4 @@ function populateRegionSelects() {
   }
 }
 
-console.log("✅ 07-render.js юкланди (v10.1 — colspan тузатилди)");
+console.log("✅ 07-render.js юкланди (v10.2 — 17 та ҳудуд + Тизим ташкилотлари)");
