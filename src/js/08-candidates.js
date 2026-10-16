@@ -1,23 +1,28 @@
 // =========================================================================
-// 08-CANDIDATES.JS — Номзодлар CRUD
-// «КОМПЛАЕНС-КАДР» v10.0 — Ақлли сарлавҳа + Қўлда тузатиш
+// 08-CANDIDATES.JS — Номзодлар CRUD + Drag&Drop расм
+// «КОМПЛАЕНС-КАДР» v10.1
 // =========================================================================
 
 // =========================================================================
-// 1. ЛОТИН → КИРИЛЛ
+// 1. РАСМ УЧУН ГЛОБАЛ ЎЗГАРУВЧИЛАР
+// =========================================================================
+
+let currentPhotoDataUrl = null;       // Номзод формаси учун
+let currentEditPhotoDataUrl = null;   // Таҳрир модали учун
+
+// =========================================================================
+// 2. ЛОТИН → КИРИЛЛ
 // =========================================================================
 
 function latToCyr(text) {
   if (!text) return text;
 
-  // Агар матнда 50%+ кирилл бўлса — тегишмаймиз
   const cyrCount = (text.match(/[А-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length;
   const allLetters = (text.match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length;
   if (cyrCount > allLetters / 2) return text;
 
   let r = text;
 
-  // Диграфлар
   r = r.replace(/sh/gi, m => m[0] === "S" ? "Ш" : "ш");
   r = r.replace(/ch/gi, m => m[0] === "C" ? "Ч" : "ч");
   r = r.replace(/yo/gi, m => m[0] === "Y" ? "Ё" : "ё");
@@ -25,11 +30,9 @@ function latToCyr(text) {
   r = r.replace(/ya/gi, m => m[0] === "Y" ? "Я" : "я");
   r = r.replace(/ts/gi, m => m[0] === "T" ? "Ц" : "ц");
 
-  // O', G'
   r = r.replace(/[oO]['ʻ`‘’ʼ]/g, m => m[0] === "O" ? "Ў" : "ў");
   r = r.replace(/[gG]['ʻ`‘’ʼ]/g, m => m[0] === "G" ? "Ғ" : "ғ");
 
-  // Оддий ҳарфлар
   const map = {
     "a":"а","b":"б","d":"д","e":"е","f":"ф","g":"г","h":"ҳ","i":"и","j":"ж",
     "k":"к","l":"л","m":"м","n":"н","o":"о","p":"п","q":"қ","r":"р","s":"с",
@@ -45,26 +48,256 @@ function latToCyr(text) {
 }
 
 // =========================================================================
-// 2. ТАШКИЛОТ ВА ЛАВОЗИМНИ АНИҚЛАШ
+// 3. РАСМ DRAG & DROP ФУНКЦИЯЛАРИ
 // =========================================================================
 
-// Категориядан ташкилотни олиш
-function getOrganizationFromCategory(category) {
-  if (!category) return "Кадастр агентлиги";
+// --- Drag Over ---
+function handlePhotoDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const zone = e.currentTarget;
+  if (zone) zone.classList.add("drag-over");
+}
 
-  // ДКП (Давлат кадастрлари палатаси)
-  if (category.includes("ДКП")) {
-    return "Давлат кадастрлари палатаси";
+// --- Drag Leave ---
+function handlePhotoDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const zone = e.currentTarget;
+  if (zone) zone.classList.remove("drag-over");
+}
+
+// --- Drop ---
+async function handlePhotoDrop(e, zoneId) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const zone = document.getElementById(zoneId);
+  if (zone) zone.classList.remove("drag-over");
+
+  const dt = e.dataTransfer;
+  if (!dt) return;
+
+  // 1. Files
+  if (dt.files && dt.files.length > 0) {
+    const file = dt.files[0];
+    if (file.type && file.type.startsWith("image/")) {
+      await loadPhotoFromFile(file, zoneId);
+      return;
+    }
   }
 
-  // КА ва бошқалар (Кадастр агентлиги)
+  // 2. Items (баъзи браузерларда files бўш бўлади)
+  if (dt.items && dt.items.length > 0) {
+    for (let i = 0; i < dt.items.length; i++) {
+      const item = dt.items[i];
+      if (item.kind === "file" && item.type && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          await loadPhotoFromFile(file, zoneId);
+          return;
+        }
+      }
+    }
+  }
+
+  // 3. HTML (Word, браузер)
+  const html = dt.getData("text/html");
+  if (html) {
+    const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (match && match[1]) {
+      const src = match[1];
+      if (src.startsWith("data:image")) {
+        showPhotoPreview(src, zoneId);
+        return;
+      } else if (src.startsWith("http")) {
+        await loadPhotoFromUrl(src, zoneId);
+        return;
+      }
+    }
+  }
+
+  // 4. URL
+  const url = dt.getData("text/uri-list") || dt.getData("text/plain");
+  if (url) {
+    const trimmed = url.trim();
+    if (trimmed.startsWith("http") && /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(trimmed)) {
+      await loadPhotoFromUrl(trimmed, zoneId);
+      return;
+    }
+  }
+
+  if (typeof showToast === "function") {
+    showToast("❌ Расм топилмади. Файлни танланг.", "warning");
+  }
+}
+
+// --- Файлдан расм юклаш ---
+async function loadPhotoFromFile(file, zoneId) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      showPhotoPreview(ev.target.result, zoneId);
+      resolve();
+    };
+    reader.onerror = () => {
+      if (typeof showToast === "function") showToast("❌ Файлни ўқишда хато", "error");
+      resolve();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- URL дан расм юклаш ---
+async function loadPhotoFromUrl(url, zoneId) {
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const blob = await response.blob();
+
+    if (!blob.type.startsWith("image/")) {
+      throw new Error("Расм эмас");
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        showPhotoPreview(ev.target.result, zoneId);
+        resolve();
+      };
+      reader.onerror = () => {
+        if (typeof showToast === "function") showToast("❌ Расмни ўқишда хато", "error");
+        resolve();
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.error("URL load error:", e);
+    if (typeof showToast === "function") {
+      showToast("❌ Расмни юклаб бўлмади (CORS). Файлни танланг.", "warning");
+    }
+  }
+}
+
+// --- Расм превью кўрсатиш ---
+function showPhotoPreview(dataUrl, zoneId) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+
+  // Саклаш
+  if (zoneId === "editCandPhotoDropZone") {
+    currentEditPhotoDataUrl = dataUrl;
+  } else {
+    currentPhotoDataUrl = dataUrl;
+  }
+
+  // Zone class
+  zone.classList.add("has-photo");
+
+  // Ички контент
+  const contentArea = zone.querySelector(".drop-zone-content");
+  const previewImg = zone.querySelector(".drop-zone-preview");
+  const clearBtn = zone.querySelector(".drop-zone-clear");
+
+  if (contentArea) contentArea.classList.add("hidden");
+  if (previewImg) {
+    previewImg.src = dataUrl;
+    previewImg.classList.remove("hidden");
+  }
+  if (clearBtn) clearBtn.classList.remove("hidden");
+
+  if (typeof showToast === "function") {
+    showToast("✅ Расм юкланди", "success");
+  }
+}
+
+// --- Расмни тозалаш ---
+function clearPhoto(zoneId) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+
+  if (zoneId === "editCandPhotoDropZone") {
+    currentEditPhotoDataUrl = null;
+  } else {
+    currentPhotoDataUrl = null;
+  }
+
+  zone.classList.remove("has-photo", "drag-over");
+
+  const contentArea = zone.querySelector(".drop-zone-content");
+  const previewImg = zone.querySelector(".drop-zone-preview");
+  const clearBtn = zone.querySelector(".drop-zone-clear");
+
+  if (contentArea) contentArea.classList.remove("hidden");
+  if (previewImg) {
+    previewImg.src = "";
+    previewImg.classList.add("hidden");
+  }
+  if (clearBtn) clearBtn.classList.add("hidden");
+}
+
+// --- Файл танлаш тугмаси ---
+function triggerPhotoFileSelect(zoneId) {
+  const inputId = zoneId === "editCandPhotoDropZone" ? "editCandPhotoFile" : "inpPhotoFile";
+  const input = document.getElementById(inputId);
+  if (input) input.click();
+}
+
+// --- Файл input ўзгарганда ---
+async function handlePhotoFileInput(e, zoneId) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    if (typeof showToast === "function") showToast("❌ Фақат расм файллари", "warning");
+    return;
+  }
+  await loadPhotoFromFile(file, zoneId);
+  // Input ни тозалаш
+  e.target.value = "";
+}
+
+// --- Ctrl+V Paste хук ---
+function setupPhotoPasteListener() {
+  document.addEventListener("paste", (e) => {
+    // Фақат форма ёки модал очиқ бўлса ишлайди
+    const editModal = document.getElementById("editCandidateModal");
+    const editModalOpen = editModal && !editModal.classList.contains("hidden");
+
+    const candidateForm = document.getElementById("candidateForm");
+    const formVisible = candidateForm && candidateForm.offsetParent !== null;
+
+    if (!editModalOpen && !formVisible) return;
+
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          const targetZone = editModalOpen ? "editCandPhotoDropZone" : "inpPhotoDropZone";
+          loadPhotoFromFile(file, targetZone);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+  });
+}
+
+// =========================================================================
+// 4. АҚЛЛИ САРЛАВҲА
+// =========================================================================
+
+function getOrganizationFromCategory(category) {
+  if (!category) return "Кадастр агентлиги";
+  if (category.includes("ДКП")) return "Давлат кадастрлари палатаси";
   return "Кадастр агентлиги";
 }
 
-// Категориядан лавозимни олиш
 function getPositionFromCategory(category) {
   if (!category) return "";
-
   if (category.includes("КА туман")) return "бўлими бошлиғи";
   if (category.includes("ДКП туман")) return "филиали раҳбари";
   if (category.includes("КА ҳудудий")) return "бошлиғи";
@@ -73,35 +306,22 @@ function getPositionFromCategory(category) {
   if (category.includes("ДКП марказий")) return "Марказий аппарати ходими";
   if (category.includes("Комплаенс")) return "комплаенс ходими";
   if (category.includes("Собиқ")) return "собиқ ходими бўйича";
-
   return "";
 }
 
-// =========================================================================
-// 3. АҚЛЛИ САРЛАВҲА ЯСАШ
-// =========================================================================
-
 function buildDistrictHeading(region, district, category) {
-  // Собиқ ходимлар — махсус
   if (category && category.includes("Собиқ")) {
     const org = getOrganizationFromCategory(category);
     return `${org} ${region || ""} собиқ ходими бўйича`.trim();
   }
 
-  // Ташкилот
   const org = getOrganizationFromCategory(category);
-
-  // Ҳудуд қисми
   const regionPart = region ? `${org} ${region} бошқармаси` : org;
-
-  // Лавозим (category дан)
   const posFromCategory = getPositionFromCategory(category);
 
-  // District
   let cleanDistrict = (district || "").trim();
   cleanDistrict = latToCyr(cleanDistrict);
 
-  // Агар district бўш бўлса — фақат ҳудуд + лавозим
   if (!cleanDistrict) {
     if (posFromCategory) {
       return `${regionPart} ${posFromCategory} лавозимига`;
@@ -109,25 +329,18 @@ function buildDistrictHeading(region, district, category) {
     return `${regionPart} лавозимига`;
   }
 
-  // District да аллақачон лавозим сўзи борми?
   const positionWords = /бўлими|бўлим|бошлиғи|бошлиқ|филиали|филиал|раҳбари|раҳбар|мутахассиси|мутахассис|ходими|ходим|аппарати/i;
   const hasPosition = positionWords.test(cleanDistrict);
 
   if (hasPosition) {
-    // District да лавозим бор
     return `${regionPart} ${cleanDistrict} лавозимига`;
   } else {
-    // District да лавозим йўқ — category дан қўшамиз
     if (posFromCategory) {
       return `${regionPart} ${cleanDistrict} ${posFromCategory} лавозимига`;
     }
     return `${regionPart} ${cleanDistrict} лавозимига`;
   }
 }
-
-// =========================================================================
-// 4. САРЛАВҲА ПРЕВЬЮСИ (реал-тайм)
-// =========================================================================
 
 function updateHeadingPreview() {
   const region = document.getElementById("inpRegion")?.value || "";
@@ -138,11 +351,7 @@ function updateHeadingPreview() {
 
   const field = document.getElementById("inpDistrictHeading");
   if (field) {
-    // Агар фойдаланувчи қўлда таҳрирлаган бўлса — автоматик ўчирилади
-    if (field.dataset.manualEdited === "true") {
-      console.log("⏸ Қўлда таҳрирланган — автоматик янгилаш ўчирилди");
-      return;
-    }
+    if (field.dataset.manualEdited === "true") return;
     field.value = heading;
   }
 }
@@ -151,7 +360,6 @@ function setupHeadingFieldTracking() {
   const field = document.getElementById("inpDistrictHeading");
   if (!field) return;
 
-  // Фойдаланувчи қўлда ёзса — белгилаш
   field.addEventListener("input", () => {
     if (!field.dataset.tracking) {
       field.dataset.tracking = "1";
@@ -159,7 +367,6 @@ function setupHeadingFieldTracking() {
     }
   });
 
-  // Region/Category ўзгарганда — таҳрир ҳолатини тозалаш
   ["inpRegion", "inpCategory", "inpDistrict"].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -177,6 +384,9 @@ function setupHeadingFieldTracking() {
       });
     }
   });
+
+  // 📷 Расм paste listener
+  setupPhotoPasteListener();
 }
 
 function getFinalHeading() {
@@ -324,115 +534,115 @@ function handleCandidateFormSubmit(e) {
   let birthPlace = document.getElementById("inpBirthPlace").value.trim();
   let currentJob = document.getElementById("inpCurrentJob").value.trim();
   const jobSince = document.getElementById("inpJobSince").value.trim();
-  const fileInput = document.getElementById("inpPhotoFile");
 
-  // 🆕 Автоконвертация
+  // Автоконвертация
   fio = latToCyr(fio);
   birthPlace = latToCyr(birthPlace);
   currentJob = latToCyr(currentJob);
 
-  const finishCreate = (photoDataUrl) => {
-    const now = getNow();
-    const num = String(appState.candidates.length + 1).padStart(2, "0");
-    const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-";
-    const reestrNo = `${prefix}${now.year}/${now.month}-${num}`;
+  // 📷 Расмни олиш (Drag&Drop ёки файлдан)
+  let photoDataUrl = currentPhotoDataUrl;
 
-    // 🆕 ЯКУНИЙ САРЛАВҲА
-    const districtHeading = getFinalHeading();
-
-    const newCand = {
-      id: "CAND-" + Date.now(),
-      reestrNo: reestrNo,
-      createdAt: now.date,
-      createdTime: now.time,
-      createdBy: currentUser?.login || "unknown",
-      createdByName: currentUser?.name || "",
-      year: now.year,
-      month: now.month,
-      recordType,
-      region,
-      category,
-      districtHeading,
-      appointType,
-      fio,
-      birthDate,
-      birthPlace,
-      passSeries,
-      passNum,
-      pinfl,
-      currentJob,
-      jobSince,
-      photo: photoDataUrl,
-      itsChecked: false,
-      sudlanganStatus: "clean",
-      sudlanganText: "муқаддам судланмаган",
-      workflowStage: "admin_review",
-      eduText: "миллати ўзбек, оилали, маълумоти олий.",
-      para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
-      para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган.",
-      para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
-      korrupsiyaViewedAt: "",
-      sentToBossAt: "",
-      sentToBossTime: "",
-      sentToBossBy: "",
-      sentToBossByName: "",
-      bossViewedAt: "",
-      bossApprovedAt: "",
-      bossApprovedBy: "",
-      bossReturnedAt: "",
-      bossReturnReason: "",
-      approvedDate: "",
-      lastEditedAt: "",
-      lastEditedBy: "",
-      editHistory: []
-    };
-
-    appState.candidates.unshift(newCand);
-
-    if (typeof logCandidateAdded === "function") logCandidateAdded(newCand);
-
-    if (typeof addNotification === "function") {
-      addNotification({
-        type: "new_candidate",
-        candidateId: newCand.id,
-        candidateName: newCand.fio,
-        message: "🆕 Янги ходим киритилди",
-        detail: `${newCand.region} | ${newCand.category}`,
-        forRoles: [ROLES.KORRUPSIYA, ROLES.RAHBAR]
-      });
-    }
-
-    saveState();
-    renderAll();
-
-    // Формани тозалаш
-    e.target.reset();
-
-    // Превьюни тозалаш
-    const headingField = document.getElementById("inpDistrictHeading");
-    if (headingField) {
-      headingField.value = "";
-      headingField.dataset.manualEdited = "false";
-      headingField.dataset.tracking = "";
-    }
-
-    document.getElementById("pinflDuplicateBox").classList.add("hidden");
-
-    if (recordType === "former") switchTab("former");
-    else if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") switchSubTab("new");
-
-    showToast(`✅ Номзод қўшилди! (${reestrNo})`, "success");
-  };
-
-  if (fileInput && fileInput.files && fileInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = ev => finishCreate(ev.target.result);
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
+  if (!photoDataUrl) {
+    // Аватар ясаш
     const parts = fio.split(" ");
     const init = ((parts[0] ? parts[0][0] : "Х") + (parts[1] ? parts[1][0] : "А")).toUpperCase();
-    finishCreate(makeAvatarSvg(init, "#4a6fa5"));
+    photoDataUrl = makeAvatarSvg(init, "#4a6fa5");
   }
+
+  const now = getNow();
+  const num = String(appState.candidates.length + 1).padStart(2, "0");
+  const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-";
+  const reestrNo = `${prefix}${now.year}/${now.month}-${num}`;
+
+  const districtHeading = getFinalHeading();
+
+  const newCand = {
+    id: "CAND-" + Date.now(),
+    reestrNo: reestrNo,
+    createdAt: now.date,
+    createdTime: now.time,
+    createdBy: currentUser?.login || "unknown",
+    createdByName: currentUser?.name || "",
+    year: now.year,
+    month: now.month,
+    recordType,
+    region,
+    category,
+    districtHeading,
+    appointType,
+    fio,
+    birthDate,
+    birthPlace,
+    passSeries,
+    passNum,
+    pinfl,
+    currentJob,
+    jobSince,
+    photo: photoDataUrl,
+    itsChecked: false,
+    sudlanganStatus: "clean",
+    sudlanganText: "муқаддам судланмаган",
+    workflowStage: "admin_review",
+    eduText: "миллати ўзбек, оилали, маълумоти олий.",
+    para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
+    para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган.",
+    para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
+    korrupsiyaViewedAt: "",
+    sentToBossAt: "",
+    sentToBossTime: "",
+    sentToBossBy: "",
+    sentToBossByName: "",
+    bossViewedAt: "",
+    bossApprovedAt: "",
+    bossApprovedBy: "",
+    bossReturnedAt: "",
+    bossReturnReason: "",
+    approvedDate: "",
+    lastEditedAt: "",
+    lastEditedBy: "",
+    editHistory: []
+  };
+
+  appState.candidates.unshift(newCand);
+
+  if (typeof logCandidateAdded === "function") logCandidateAdded(newCand);
+
+  if (typeof addNotification === "function") {
+    addNotification({
+      type: "new_candidate",
+      candidateId: newCand.id,
+      candidateName: newCand.fio,
+      message: "🆕 Янги ходим киритилди",
+      detail: `${newCand.region} | ${newCand.category}`,
+      forRoles: [ROLES.KORRUPSIYA, ROLES.RAHBAR]
+    });
+  }
+
+  saveState();
+  renderAll();
+
+  // Формани тозалаш
+  e.target.reset();
+
+  // Расмни тозалаш
+  currentPhotoDataUrl = null;
+  clearPhoto("inpPhotoDropZone");
+
+  // Сарлавҳа превьюни тозалаш
+  const headingField = document.getElementById("inpDistrictHeading");
+  if (headingField) {
+    headingField.value = "";
+    headingField.dataset.manualEdited = "false";
+    headingField.dataset.tracking = "";
+  }
+
+  document.getElementById("pinflDuplicateBox").classList.add("hidden");
+
+  if (recordType === "former") switchTab("former");
+  else if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") switchSubTab("new");
+
+  showToast(`✅ Номзод қўшилди! (${reestrNo})`, "success");
 }
 
 // =========================================================================
@@ -445,6 +655,8 @@ function editCandidate(id) {
   if (!c) return;
 
   activeCandidateId = id;
+
+  // Майдонларни тўлдириш
   setValueIfExists("editCandFio", c.fio);
   setValueIfExists("editCandPinfl", c.pinfl);
   setValueIfExists("editCandPassSeries", c.passSeries);
@@ -457,11 +669,31 @@ function editCandidate(id) {
 
   const regionSel = document.getElementById("editCandRegion");
   if (regionSel) regionSel.value = c.region;
+
   const catSel = document.getElementById("editCandCategory");
   if (catSel) catSel.value = c.category;
+
   const appSel = document.getElementById("editCandAppointType");
   if (appSel) appSel.value = c.appointType;
 
+  // 📷 Расмни кўрсатиш
+  currentEditPhotoDataUrl = c.photo || null;
+  const photoZone = document.getElementById("editCandPhotoDropZone");
+  if (photoZone && c.photo) {
+    const contentArea = photoZone.querySelector(".drop-zone-content");
+    const previewImg = photoZone.querySelector(".drop-zone-preview");
+    const clearBtn = photoZone.querySelector(".drop-zone-clear");
+
+    if (contentArea) contentArea.classList.add("hidden");
+    if (previewImg) { previewImg.src = c.photo; previewImg.classList.remove("hidden"); }
+    if (clearBtn) clearBtn.classList.remove("hidden");
+    photoZone.classList.add("has-photo");
+  } else if (photoZone) {
+    clearPhoto("editCandPhotoDropZone");
+    currentEditPhotoDataUrl = c.photo || null;
+  }
+
+  // Таҳрир тарихи
   const histEl = document.getElementById("editHistoryBlock");
   if (histEl) {
     if (c.editHistory && c.editHistory.length > 0) {
@@ -557,6 +789,14 @@ function saveEditedCandidate() {
     }
   });
 
+  // 📷 Расм ўзгарганми?
+  if (currentEditPhotoDataUrl && currentEditPhotoDataUrl !== c.photo) {
+    changes.push({
+      at: now.dateTime, by: `${editorName} (${editor})`,
+      field: "Расм", oldValue: "[эски]", newValue: "[янги]"
+    });
+  }
+
   if (changes.length === 0) { alert("Ўзгариш йўқ."); return; }
 
   c.fio = newFio;
@@ -571,6 +811,11 @@ function saveEditedCandidate() {
   c.category = newCategory;
   c.appointType = newAppointType;
   c.districtHeading = newDistrict;
+
+  // 📷 Расмни сақлаш
+  if (currentEditPhotoDataUrl) {
+    c.photo = currentEditPhotoDataUrl;
+  }
 
   if (!Array.isArray(c.editHistory)) c.editHistory = [];
   c.editHistory = c.editHistory.concat(changes);
@@ -591,6 +836,7 @@ function closeEditCandidateModal() {
   const modal = document.getElementById("editCandidateModal");
   if (modal) modal.classList.add("hidden");
   activeCandidateId = null;
+  currentEditPhotoDataUrl = null;
 }
 
 // =========================================================================
@@ -699,4 +945,4 @@ async function handleUserCreateSubmit(e) {
   showToast(`✅ ${login} яратилди`, "success");
 }
 
-console.log("✅ 08-candidates.js юкланди (v10.0 — Ақлли сарлавҳа + Қўлда тузатиш)");
+console.log("✅ 08-candidates.js юкланди (v10.1 — Drag&Drop расм)");
