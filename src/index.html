@@ -337,9 +337,25 @@
                 <label class="block text-xs font-bold mb-1">Қайси санадан ишлайди *</label>
                 <input id="inpJobSince" type="text" required placeholder="15.01.2026 й." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
               </div>
-              <div>
-                <label class="block text-xs font-bold mb-1">9. Фотосурат (3x4)</label>
-                <input id="inpPhotoFile" type="file" accept="image/*" class="w-full text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-200 file:text-slate-800 file:font-bold" />
+                            <div class="col-span-2">
+                <label class="block text-xs font-bold mb-1">9. 📷 Расм (3x4)</label>
+                <div id="inpPhotoDropZone" 
+                     class="photo-drop-zone"
+                     ondragover="handlePhotoDragOver(event)"
+                     ondragleave="handlePhotoDragLeave(event)"
+                     ondrop="handlePhotoDrop(event, 'inpPhotoDropZone')">
+                  <div class="drop-zone-content">
+                    <span class="drop-icon">📷</span>
+                    <span class="drop-text">Расмни бу ерга судраб ташланг</span>
+                    <span class="drop-hint">Ёки Ctrl+V босинг</span>
+                    <button type="button" onclick="event.stopPropagation(); triggerPhotoFileSelect('inpPhotoDropZone')" class="drop-file-btn">
+                      📁 Файл танлаш
+                    </button>
+                  </div>
+                  <img class="drop-zone-preview hidden" alt="Расм" />
+                  <button type="button" onclick="event.stopPropagation(); clearPhoto('inpPhotoDropZone')" class="drop-zone-clear hidden" title="Ўчириш">✕</button>
+                  <input type="file" id="inpPhotoFile" accept="image/*" onchange="handlePhotoFileInput(event, 'inpPhotoDropZone')" hidden />
+                </div>
               </div>
             </div>
 
@@ -882,7 +898,7 @@
             <label class="block text-xs font-bold mb-1">Қайси санадан ишлайди *</label>
             <input id="editCandJobSince" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold" />
           </div>
-          <div>
+                    <div>
             <label class="block text-xs font-bold mb-1">Тайинлов тури</label>
             <select id="editCandAppointType" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
               <option value="(ишга олиш)">(ишга олиш)</option>
@@ -891,10 +907,30 @@
               <option value="(собиқ ходим)">(собиқ ходим)</option>
             </select>
           </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold mb-1">📷 Расм (3x4)</label>
+            <div id="editCandPhotoDropZone" 
+                 class="photo-drop-zone"
+                 ondragover="handlePhotoDragOver(event)"
+                 ondragleave="handlePhotoDragLeave(event)"
+                 ondrop="handlePhotoDrop(event, 'editCandPhotoDropZone')">
+              <div class="drop-zone-content">
+                <span class="drop-icon">📷</span>
+                <span class="drop-text">Расмни бу ерга судраб ташланг</span>
+                <span class="drop-hint">Ёки Ctrl+V босинг</span>
+                <button type="button" onclick="event.stopPropagation(); triggerPhotoFileSelect('editCandPhotoDropZone')" class="drop-file-btn">
+                  📁 Файл танлаш
+                </button>
+              </div>
+              <img class="drop-zone-preview hidden" alt="Расм" />
+              <button type="button" onclick="event.stopPropagation(); clearPhoto('editCandPhotoDropZone')" class="drop-zone-clear hidden" title="Ўчириш">✕</button>
+              <input type="file" id="editCandPhotoFile" accept="image/*" onchange="handlePhotoFileInput(event, 'editCandPhotoDropZone')" hidden />
+            </div>
+          </div>
         </div>
 
         <div id="editHistoryBlock" class="hidden p-3 rounded-lg bg-amber-50 border border-amber-200"></div>
-      </div>
 
       <div class="bg-slate-100 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
         <button onclick="closeEditCandidateModal()" class="px-4 py-2 rounded-xl bg-slate-400 hover:bg-slate-500 text-white text-xs font-bold cursor-pointer">❌ Бекор қилиш</button>
