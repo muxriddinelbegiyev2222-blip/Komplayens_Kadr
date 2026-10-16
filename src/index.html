@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» v9.0 — Кадастр агентлиги комплаенс тизими</title>
+  <title>«КОМПЛАЕНС-КАДР» v10.0 — Кадастр агентлиги комплаенс тизими</title>
 
   <!-- External Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +24,7 @@
           <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">КК</div>
           <div>
             <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v9.0</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v10.0</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
@@ -60,7 +60,7 @@
         <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">КК</div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v9.0</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v10.0</span>
             <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
               <span class="realtime-dot"></span> Уланмоқда...
             </span>
@@ -133,7 +133,7 @@
   </header>
 
   <!-- ================================================================ -->
-  <!-- УВЕДОМЛЕНИЯ ПАНЕЛИ (Dropdown) -->
+  <!-- УВЕДОМЛЕНИЯ ПАНЕЛИ -->
   <!-- ================================================================ -->
   <div id="notificationPanel" class="fixed top-24 right-4 z-[80] bg-white rounded-2xl shadow-2xl border border-slate-200 w-96 max-h-[600px] overflow-hidden hidden">
     <div class="bg-blue-900 text-white px-4 py-3 flex items-center justify-between">
@@ -254,13 +254,13 @@
               </div>
               <div>
                 <label class="block text-xs font-bold mb-1">2. Ҳудуд (14 та) *</label>
-                <select id="inpRegion" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+                <select id="inpRegion" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
               </div>
             </div>
 
             <div>
               <label class="block text-xs font-bold mb-1">3. Мақсадли йўналиш (8 та) *</label>
-              <select id="inpCategory" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <select id="inpCategory" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
                 <option value="КА туман (шаҳар) бўлими бошлиғи">1. КА ҳудудий туман (шаҳар) бўлими бошлиғи</option>
                 <option value="ДКП туман (шаҳар) филиали бошлиғи">2. ДКП ҳудудий туман (шаҳар) филиали раҳбари</option>
                 <option value="КА ҳудудий бошқармаси бошлиғи">3. КА ҳудудий бошқармаси бошлиғи</option>
@@ -274,18 +274,25 @@
 
             <div class="grid grid-cols-3 gap-2">
               <div class="col-span-2">
-                <label class="block text-xs font-bold mb-1">4. Топширилаётган лавозими *</label>
-<input id="inpDistrict" type="text" required placeholder="Дўстлик тумани бўлими бошлиғи" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+                <label class="block text-xs font-bold mb-1">4. Туман / шаҳар (қисқа) *</label>
+                <input id="inpDistrict" type="text" required placeholder="Дўстлик тумани бўлими" oninput="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
               </div>
               <div>
                 <label class="block text-xs font-bold mb-1">Тайинлов *</label>
                 <select id="inpAppointType" class="w-full px-2 py-2 rounded-lg border border-slate-300 text-xs font-bold text-red-700 bg-white">
-                  <option value="ишга олиш">(ишга олиш)</option>
-                  <option value="ротация">(ротация)</option>
-                  <option value="захирага олиш">(захира)</option>
-                  <option value="собиқ ходим">(собиқ ходим)</option>
+                  <option value="(ишга олиш)">(ишга олиш)</option>
+                  <option value="(ротация)">(ротация)</option>
+                  <option value="(захира)">(захира)</option>
+                  <option value="(собиқ ходим)">(собиқ ходим)</option>
                 </select>
               </div>
+            </div>
+
+            <!-- 🆕 ТЎЛИҚ САРЛАВҲА ПРЕВЬЮСИ -->
+            <div class="p-2.5 rounded-lg bg-blue-50 border-2 border-blue-300">
+              <label class="block text-xs font-bold text-blue-900 mb-1">📝 Тўлиқ сарлавҳа (автоматик — қўлда тузатиш мумкин)</label>
+              <textarea id="inpDistrictHeading" rows="2" placeholder="Автоматик ясалади..." class="w-full px-2.5 py-2 rounded-lg border-2 border-blue-400 bg-white text-xs font-semibold text-slate-900"></textarea>
+              <p class="text-[10px] text-blue-700 mt-1">⚠️ Нотўғри бўлса — <b>қўлда тузатинг</b>. Автоматик янгилаш ўчирилади.</p>
             </div>
 
             <div class="grid grid-cols-3 gap-2">
@@ -345,16 +352,16 @@
         <!-- RIGHT: FOTOTABLITSA TABLE -->
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
 
-          <!-- 🆕 СУБ-ТАБЛАР -->
+          <!-- SUBTABS -->
           <div class="bg-slate-100 rounded-xl p-1.5 mb-4 flex flex-wrap gap-1.5">
             <button id="subtabNew" onclick="switchSubTab('new')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
               🆕 Янги келганлар
               <span id="subtabNewCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold">0</span>
             </button>
             <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
-  ⏳ Тасдиқлаш жараёнида
-  <span id="subtabInProcessCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">0</span>
-</button>
+              ⏳ Тасдиқлаш жараёнида
+              <span id="subtabInProcessCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">0</span>
+            </button>
             <button id="subtabApproved" onclick="switchSubTab('approved')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
               ✅ Тугатилган
               <span id="subtabApprovedCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">0</span>
@@ -434,7 +441,7 @@
             <thead>
               <tr>
                 <th style="width:45px;">Т/р</th>
-                <th style="width:100px;">Расм</th>
+                <th style="width:130px;">Расм</th>
                 <th style="width:230px;">Ф.И.Ш., туғилган сана, ПИНФЛ</th>
                 <th style="width:280px;">Илгари ишлаган лавозими</th>
                 <th style="width:200px;">Якуний натижа</th>
@@ -809,7 +816,7 @@
   </div>
 
   <!-- ================================================================ -->
-  <!-- EDIT CANDIDATE MODAL (🆕 Ходим маълумотини таҳрирлаш) -->
+  <!-- EDIT CANDIDATE MODAL -->
   <!-- ================================================================ -->
   <div id="editCandidateModal" class="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
@@ -864,8 +871,8 @@
             </select>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold mb-1">Туман / шаҳар / бошқарма *</label>
-            <input id="editCandDistrict" type="text" placeholder="Дўстлик тумани бўлими бошлиғи" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold" />
+            <label class="block text-xs font-bold mb-1">Тўлиқ сарлавҳа (қўлда тузатиш мумкин) *</label>
+            <textarea id="editCandDistrict" rows="2" placeholder="Кадастр агентлиги ... лавозимига" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"></textarea>
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold mb-1">Лавозими *</label>
@@ -880,7 +887,7 @@
             <select id="editCandAppointType" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
               <option value="(ишга олиш)">(ишга олиш)</option>
               <option value="(ротация)">(ротация)</option>
-              <option value="(захирага олиш)">(захира)</option>
+              <option value="(захира)">(захира)</option>
               <option value="(собиқ ходим)">(собиқ ходим)</option>
             </select>
           </div>
