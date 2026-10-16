@@ -1,6 +1,6 @@
 // =========================================================================
 // 08-CANDIDATES.JS — Номзодлар CRUD
-// «КОМПЛАЕНС-КАДР» v10.2 — Марказий аппарат + Тизим ташкилотлари
+// «КОМПЛАЕНС-КАДР» v10.3 — Central Office тўғри ишлайди
 // =========================================================================
 
 // =========================================================================
@@ -309,36 +309,50 @@ function buildDistrictHeading(region, district, category) {
 
   // ============ СОБИҚ ХОДИМЛАР ============
   if (category && category.includes("Собиқ")) {
-    if (region === "Кадастр агентлиги Марказий аппарати") {
-      return "Кадастр агентлиги Марказий аппарати собиқ ходими бўйича";
+    if (region === "Кадастр агентлиги") {
+      return "Кадастр агентлиги собиқ ходими бўйича";
     }
-    if (region === "Давлат кадастрлари палатаси Марказий аппарати") {
-      return "Давлат кадастрлари палатаси Марказий аппарати собиқ ходими бўйича";
+    if (region === "Давлат кадастрлари палатаси") {
+      return "Давлат кадастрлари палатаси собиқ ходими бўйича";
     }
     if (region === "Тизим ташкилотлари") {
-      return "Тизим ташкилоти собиқ ходими бўйича";
+      return district
+        ? cleanText(`Тизим ташкилоти ${district} собиқ ходими бўйича`)
+        : "Тизим ташкилоти собиқ ходими бўйича";
     }
     const org = getOrganizationFromCategory(category);
     return cleanText(`${org} ${region || ""} собиқ ходими бўйича`);
   }
 
-  // ============ 🆕 КА МАРКАЗИЙ АППАРАТИ ============
-  if (region === "Кадастр агентлиги Марказий аппарати") {
+  // ============ КАДАСТР АГЕНТЛИГИ (марказий) ============
+  if (region === "Кадастр агентлиги") {
     if (category && category.includes("Комплаенс")) {
-      return "Кадастр агентлиги Марказий аппарати комплаенс ходими лавозимига";
+      return "Кадастр агентлиги комплаенс ходими лавозимига";
     }
-    return "Кадастр агентлиги Марказий аппарати ходими лавозимига";
+    if (category && category.includes("КА марказий")) {
+      return "Кадастр агентлиги ходими лавозимига";
+    }
+    if (category && category.includes("КА ҳудудий")) {
+      return "Кадастр агентлиги ҳудудий бошқармаси бошлиғи лавозимига";
+    }
+    return "Кадастр агентлиги ходими лавозимига";
   }
 
-  // ============ 🆕 ДКП МАРКАЗИЙ АППАРАТИ ============
-  if (region === "Давлат кадастрлари палатаси Марказий аппарати") {
+  // ============ ДАВЛАТ КАДАСТРЛАРИ ПАЛАТАСИ (марказий) ============
+  if (region === "Давлат кадастрлари палатаси") {
     if (category && category.includes("Комплаенс")) {
-      return "Давлат кадастрлари палатаси Марказий аппарати комплаенс ходими лавозимига";
+      return "Давлат кадастрлари палатаси комплаенс ходими лавозимига";
     }
-    return "Давлат кадастрлари палатаси Марказий аппарати ходими лавозимига";
+    if (category && category.includes("ДКП марказий")) {
+      return "Давлат кадастрлари палатаси ходими лавозимига";
+    }
+    if (category && category.includes("ДКП ҳудудий")) {
+      return "Давлат кадастрлари палатаси ҳудудий бошқармаси бошлиғи лавозимига";
+    }
+    return "Давлат кадастрлари палатаси ходими лавозимига";
   }
 
-  // ============ 🆕 ТИЗИМ ТАШКИЛОТЛАРИ ============
+  // ============ ТИЗИМ ТАШКИЛОТЛАРИ ============
   if (region === "Тизим ташкилотлари") {
     if (district) {
       return cleanText(`Тизим ташкилоти ${district} лавозимига`);
@@ -346,7 +360,7 @@ function buildDistrictHeading(region, district, category) {
     return "Тизим ташкилоти ходими лавозимига";
   }
 
-  // ============ СТАНДАРТ ҲУДУДЛАР ============
+  // ============ СТАНДАРТ ҲУДУДЛАР (14 та вилоят/шаҳар) ============
   const org = getOrganizationFromCategory(category);
   const regionPart = region ? `${org} ${region} бошқармаси` : org;
   const posFromCategory = getPositionFromCategory(category);
@@ -377,6 +391,33 @@ function updateHeadingPreview() {
   const region = document.getElementById("inpRegion")?.value || "";
   const category = document.getElementById("inpCategory")?.value || "";
   const district = document.getElementById("inpDistrict")?.value.trim() || "";
+
+  // 🆕 Туман майдонини динамик созлаш
+  const districtInput = document.getElementById("inpDistrict");
+  const districtLabel = document.getElementById("inpDistrictLabel");
+
+  if (districtInput) {
+    if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") {
+      // Марказий — туман керак эмас
+      districtInput.placeholder = "Керак эмас";
+      districtInput.disabled = true;
+      districtInput.value = "";
+      districtInput.classList.add("bg-slate-100", "cursor-not-allowed");
+      if (districtLabel) districtLabel.textContent = "4. Туман / шаҳар (керак эмас)";
+    } else if (region === "Тизим ташкилотлари") {
+      // Тизим — ташкилот номи
+      districtInput.placeholder = 'Масалан: "Kadastr IT" МЧЖ';
+      districtInput.disabled = false;
+      districtInput.classList.remove("bg-slate-100", "cursor-not-allowed");
+      if (districtLabel) districtLabel.textContent = "4. Ташкилот номи *";
+    } else {
+      // Стандарт ҳудуд
+      districtInput.placeholder = "Дўстлик тумани бўлими";
+      districtInput.disabled = false;
+      districtInput.classList.remove("bg-slate-100", "cursor-not-allowed");
+      if (districtLabel) districtLabel.textContent = "4. Туман / шаҳар (қисқа) *";
+    }
+  }
 
   const heading = buildDistrictHeading(region, district, category);
 
@@ -496,7 +537,22 @@ function validateCandidateForm() {
   const jobErr = validateCurrentJob(currentJob);
   if (jobErr) errors.push(jobErr);
 
-  if (!district || district.length < 3) errors.push("Туман/шаҳар номи киритилиши шарт");
+  // 🆕 Марказий аппарат учун туман шарт эмас
+  const regionEl = document.getElementById("inpRegion");
+  const selectedRegion = regionEl ? regionEl.value : "";
+
+  const noDistrictRegions = ["Кадастр агентлиги", "Давлат кадастрлари палатаси"];
+
+  if (!noDistrictRegions.includes(selectedRegion)) {
+    if (!district || district.length < 3) {
+      if (selectedRegion === "Тизим ташкилотлари") {
+        errors.push("Тизим ташкилоти номи киритилиши шарт");
+      } else {
+        errors.push("Туман/шаҳар номи киритилиши шарт");
+      }
+    }
+  }
+
   if (!heading || heading.length < 20) errors.push("Тўлиқ сарлавҳа 20+ белгидан иборат бўлиши керак");
 
   return errors;
@@ -554,7 +610,7 @@ function handleCandidateFormSubmit(e) {
   const recordType = document.getElementById("inpRecordType").value;
   const region = document.getElementById("inpRegion").value;
   const category = document.getElementById("inpCategory").value;
-  const district = document.getElementById("inpDistrict").value.trim();
+  let district = document.getElementById("inpDistrict").value.trim();
   const appointType = document.getElementById("inpAppointType").value;
   const pinfl = document.getElementById("inpPinfl").value.trim();
   const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase();
@@ -564,6 +620,11 @@ function handleCandidateFormSubmit(e) {
   let birthPlace = document.getElementById("inpBirthPlace").value.trim();
   let currentJob = document.getElementById("inpCurrentJob").value.trim();
   const jobSince = document.getElementById("inpJobSince").value.trim();
+
+  // 🆕 Марказий аппарат учун district бўш бўлиши мумкин
+  if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") {
+    district = "";
+  }
 
   fio = cleanText(latToCyr(fio));
   birthPlace = cleanText(latToCyr(birthPlace));
@@ -962,4 +1023,4 @@ async function handleUserCreateSubmit(e) {
   showToast(`✅ ${login} яратилди`, "success");
 }
 
-console.log("✅ 08-candidates.js юкланди (v10.2)");
+console.log("✅ 08-candidates.js юкланди (v10.3 — Central Office тўғри ишлайди)");
