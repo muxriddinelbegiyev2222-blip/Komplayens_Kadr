@@ -126,7 +126,7 @@ function exportFototablitsaWord(recordType = "current") {
     rows += `
       <tr>
         <td style="text-align:center;font-weight:bold;">${i + 1}.</td>
-        <td style="text-align:center;"><img src="${c.photo}" width="85" height="110" /></td>
+        <td style="text-align:center;"><img src="${c.photo}" width="95" height="120" style="display:block;margin:0 auto;" /></td>
         <td style="text-align:center;">
           <b>${c.fio}</b><br/>
           ${c.birthDate} йил, ${c.birthPlace}<br/>
