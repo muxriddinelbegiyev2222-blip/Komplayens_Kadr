@@ -1,17 +1,30 @@
 // =========================================================================
-// 08-CANDIDATES.JS — Номзодлар CRUD + Drag&Drop расм
-// «КОМПЛАЕНС-КАДР» v10.1
+// 08-CANDIDATES.JS — Номзодлар CRUD
+// «КОМПЛАЕНС-КАДР» v10.2 — Марказий аппарат + Тизим ташкилотлари
 // =========================================================================
 
 // =========================================================================
 // 1. РАСМ УЧУН ГЛОБАЛ ЎЗГАРУВЧИЛАР
 // =========================================================================
 
-let currentPhotoDataUrl = null;       // Номзод формаси учун
-let currentEditPhotoDataUrl = null;   // Таҳрир модали учун
+let currentPhotoDataUrl = null;
+let currentEditPhotoDataUrl = null;
 
 // =========================================================================
-// 2. ЛОТИН → КИРИЛЛ
+// 2. МАТННИ ТОЗАЛАШ
+// =========================================================================
+
+function cleanText(text) {
+  if (!text) return text;
+  let r = String(text);
+  r = r.trim();
+  r = r.replace(/\s+/g, " ");
+  r = r.replace(/^[,;:\-\s]+/, "").replace(/[,;:\-\s]+$/, "");
+  return r;
+}
+
+// =========================================================================
+// 3. ЛОТИН → КИРИЛЛ
 // =========================================================================
 
 function latToCyr(text) {
@@ -48,10 +61,9 @@ function latToCyr(text) {
 }
 
 // =========================================================================
-// 3. РАСМ DRAG & DROP ФУНКЦИЯЛАРИ
+// 4. РАСМ DRAG & DROP
 // =========================================================================
 
-// --- Drag Over ---
 function handlePhotoDragOver(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -59,7 +71,6 @@ function handlePhotoDragOver(e) {
   if (zone) zone.classList.add("drag-over");
 }
 
-// --- Drag Leave ---
 function handlePhotoDragLeave(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -67,7 +78,6 @@ function handlePhotoDragLeave(e) {
   if (zone) zone.classList.remove("drag-over");
 }
 
-// --- Drop ---
 async function handlePhotoDrop(e, zoneId) {
   e.preventDefault();
   e.stopPropagation();
@@ -78,7 +88,6 @@ async function handlePhotoDrop(e, zoneId) {
   const dt = e.dataTransfer;
   if (!dt) return;
 
-  // 1. Files
   if (dt.files && dt.files.length > 0) {
     const file = dt.files[0];
     if (file.type && file.type.startsWith("image/")) {
@@ -87,7 +96,6 @@ async function handlePhotoDrop(e, zoneId) {
     }
   }
 
-  // 2. Items (баъзи браузерларда files бўш бўлади)
   if (dt.items && dt.items.length > 0) {
     for (let i = 0; i < dt.items.length; i++) {
       const item = dt.items[i];
@@ -101,7 +109,6 @@ async function handlePhotoDrop(e, zoneId) {
     }
   }
 
-  // 3. HTML (Word, браузер)
   const html = dt.getData("text/html");
   if (html) {
     const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
@@ -117,7 +124,6 @@ async function handlePhotoDrop(e, zoneId) {
     }
   }
 
-  // 4. URL
   const url = dt.getData("text/uri-list") || dt.getData("text/plain");
   if (url) {
     const trimmed = url.trim();
@@ -132,7 +138,6 @@ async function handlePhotoDrop(e, zoneId) {
   }
 }
 
-// --- Файлдан расм юклаш ---
 async function loadPhotoFromFile(file, zoneId) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -148,7 +153,6 @@ async function loadPhotoFromFile(file, zoneId) {
   });
 }
 
-// --- URL дан расм юклаш ---
 async function loadPhotoFromUrl(url, zoneId) {
   try {
     const response = await fetch(url, { mode: "cors" });
@@ -179,22 +183,18 @@ async function loadPhotoFromUrl(url, zoneId) {
   }
 }
 
-// --- Расм превью кўрсатиш ---
 function showPhotoPreview(dataUrl, zoneId) {
   const zone = document.getElementById(zoneId);
   if (!zone) return;
 
-  // Саклаш
   if (zoneId === "editCandPhotoDropZone") {
     currentEditPhotoDataUrl = dataUrl;
   } else {
     currentPhotoDataUrl = dataUrl;
   }
 
-  // Zone class
   zone.classList.add("has-photo");
 
-  // Ички контент
   const contentArea = zone.querySelector(".drop-zone-content");
   const previewImg = zone.querySelector(".drop-zone-preview");
   const clearBtn = zone.querySelector(".drop-zone-clear");
@@ -211,7 +211,6 @@ function showPhotoPreview(dataUrl, zoneId) {
   }
 }
 
-// --- Расмни тозалаш ---
 function clearPhoto(zoneId) {
   const zone = document.getElementById(zoneId);
   if (!zone) return;
@@ -236,14 +235,12 @@ function clearPhoto(zoneId) {
   if (clearBtn) clearBtn.classList.add("hidden");
 }
 
-// --- Файл танлаш тугмаси ---
 function triggerPhotoFileSelect(zoneId) {
   const inputId = zoneId === "editCandPhotoDropZone" ? "editCandPhotoFile" : "inpPhotoFile";
   const input = document.getElementById(inputId);
   if (input) input.click();
 }
 
-// --- Файл input ўзгарганда ---
 async function handlePhotoFileInput(e, zoneId) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
@@ -252,14 +249,11 @@ async function handlePhotoFileInput(e, zoneId) {
     return;
   }
   await loadPhotoFromFile(file, zoneId);
-  // Input ни тозалаш
   e.target.value = "";
 }
 
-// --- Ctrl+V Paste хук ---
 function setupPhotoPasteListener() {
   document.addEventListener("paste", (e) => {
-    // Фақат форма ёки модал очиқ бўлса ишлайди
     const editModal = document.getElementById("editCandidateModal");
     const editModalOpen = editModal && !editModal.classList.contains("hidden");
 
@@ -287,7 +281,7 @@ function setupPhotoPasteListener() {
 }
 
 // =========================================================================
-// 4. АҚЛЛИ САРЛАВҲА
+// 5. АҚЛЛИ САРЛАВҲА
 // =========================================================================
 
 function getOrganizationFromCategory(category) {
@@ -302,43 +296,80 @@ function getPositionFromCategory(category) {
   if (category.includes("ДКП туман")) return "филиали раҳбари";
   if (category.includes("КА ҳудудий")) return "бошлиғи";
   if (category.includes("ДКП ҳудудий")) return "бошлиғи";
-  if (category.includes("КА марказий")) return "Марказий аппарати ходими";
-  if (category.includes("ДКП марказий")) return "Марказий аппарати ходими";
+  if (category.includes("КА марказий")) return "ходими";
+  if (category.includes("ДКП марказий")) return "ходими";
   if (category.includes("Комплаенс")) return "комплаенс ходими";
   if (category.includes("Собиқ")) return "собиқ ходими бўйича";
   return "";
 }
 
 function buildDistrictHeading(region, district, category) {
+  region = cleanText(region);
+  district = cleanText(district);
+
+  // ============ СОБИҚ ХОДИМЛАР ============
   if (category && category.includes("Собиқ")) {
+    if (region === "Кадастр агентлиги Марказий аппарати") {
+      return "Кадастр агентлиги Марказий аппарати собиқ ходими бўйича";
+    }
+    if (region === "Давлат кадастрлари палатаси Марказий аппарати") {
+      return "Давлат кадастрлари палатаси Марказий аппарати собиқ ходими бўйича";
+    }
+    if (region === "Тизим ташкилотлари") {
+      return "Тизим ташкилоти собиқ ходими бўйича";
+    }
     const org = getOrganizationFromCategory(category);
-    return `${org} ${region || ""} собиқ ходими бўйича`.trim();
+    return cleanText(`${org} ${region || ""} собиқ ходими бўйича`);
   }
 
+  // ============ 🆕 КА МАРКАЗИЙ АППАРАТИ ============
+  if (region === "Кадастр агентлиги Марказий аппарати") {
+    if (category && category.includes("Комплаенс")) {
+      return "Кадастр агентлиги Марказий аппарати комплаенс ходими лавозимига";
+    }
+    return "Кадастр агентлиги Марказий аппарати ходими лавозимига";
+  }
+
+  // ============ 🆕 ДКП МАРКАЗИЙ АППАРАТИ ============
+  if (region === "Давлат кадастрлари палатаси Марказий аппарати") {
+    if (category && category.includes("Комплаенс")) {
+      return "Давлат кадастрлари палатаси Марказий аппарати комплаенс ходими лавозимига";
+    }
+    return "Давлат кадастрлари палатаси Марказий аппарати ходими лавозимига";
+  }
+
+  // ============ 🆕 ТИЗИМ ТАШКИЛОТЛАРИ ============
+  if (region === "Тизим ташкилотлари") {
+    if (district) {
+      return cleanText(`Тизим ташкилоти ${district} лавозимига`);
+    }
+    return "Тизим ташкилоти ходими лавозимига";
+  }
+
+  // ============ СТАНДАРТ ҲУДУДЛАР ============
   const org = getOrganizationFromCategory(category);
   const regionPart = region ? `${org} ${region} бошқармаси` : org;
   const posFromCategory = getPositionFromCategory(category);
 
-  let cleanDistrict = (district || "").trim();
-  cleanDistrict = latToCyr(cleanDistrict);
+  const districtCyr = latToCyr(district);
 
-  if (!cleanDistrict) {
+  if (!districtCyr) {
     if (posFromCategory) {
-      return `${regionPart} ${posFromCategory} лавозимига`;
+      return cleanText(`${regionPart} ${posFromCategory} лавозимига`);
     }
-    return `${regionPart} лавозимига`;
+    return cleanText(`${regionPart} лавозимига`);
   }
 
   const positionWords = /бўлими|бўлим|бошлиғи|бошлиқ|филиали|филиал|раҳбари|раҳбар|мутахассиси|мутахассис|ходими|ходим|аппарати/i;
-  const hasPosition = positionWords.test(cleanDistrict);
+  const hasPosition = positionWords.test(districtCyr);
 
   if (hasPosition) {
-    return `${regionPart} ${cleanDistrict} лавозимига`;
+    return cleanText(`${regionPart} ${districtCyr} лавозимига`);
   } else {
     if (posFromCategory) {
-      return `${regionPart} ${cleanDistrict} ${posFromCategory} лавозимига`;
+      return cleanText(`${regionPart} ${districtCyr} ${posFromCategory} лавозимига`);
     }
-    return `${regionPart} ${cleanDistrict} лавозимига`;
+    return cleanText(`${regionPart} ${districtCyr} лавозимига`);
   }
 }
 
@@ -385,7 +416,6 @@ function setupHeadingFieldTracking() {
     }
   });
 
-  // 📷 Расм paste listener
   setupPhotoPasteListener();
 }
 
@@ -400,7 +430,7 @@ function getFinalHeading() {
 }
 
 // =========================================================================
-// 5. ВАЛИДАЦИЯ
+// 6. ВАЛИДАЦИЯ
 // =========================================================================
 
 function validateDate(dateStr, fieldName) {
@@ -473,7 +503,7 @@ function validateCandidateForm() {
 }
 
 // =========================================================================
-// 6. PINFL ДУБЛИКАТ
+// 7. PINFL ДУБЛИКАТ
 // =========================================================================
 
 function checkPinflDuplicate() {
@@ -504,7 +534,7 @@ function checkPinflDuplicate() {
 }
 
 // =========================================================================
-// 7. НОМЗОД ҚЎШИШ
+// 8. НОМЗОД ҚЎШИШ
 // =========================================================================
 
 function handleCandidateFormSubmit(e) {
@@ -535,16 +565,13 @@ function handleCandidateFormSubmit(e) {
   let currentJob = document.getElementById("inpCurrentJob").value.trim();
   const jobSince = document.getElementById("inpJobSince").value.trim();
 
-  // Автоконвертация
-  fio = latToCyr(fio);
-  birthPlace = latToCyr(birthPlace);
-  currentJob = latToCyr(currentJob);
+  fio = cleanText(latToCyr(fio));
+  birthPlace = cleanText(latToCyr(birthPlace));
+  currentJob = cleanText(latToCyr(currentJob));
 
-  // 📷 Расмни олиш (Drag&Drop ёки файлдан)
   let photoDataUrl = currentPhotoDataUrl;
 
   if (!photoDataUrl) {
-    // Аватар ясаш
     const parts = fio.split(" ");
     const init = ((parts[0] ? parts[0][0] : "Х") + (parts[1] ? parts[1][0] : "А")).toUpperCase();
     photoDataUrl = makeAvatarSvg(init, "#4a6fa5");
@@ -622,14 +649,11 @@ function handleCandidateFormSubmit(e) {
   saveState();
   renderAll();
 
-  // Формани тозалаш
   e.target.reset();
 
-  // Расмни тозалаш
   currentPhotoDataUrl = null;
   clearPhoto("inpPhotoDropZone");
 
-  // Сарлавҳа превьюни тозалаш
   const headingField = document.getElementById("inpDistrictHeading");
   if (headingField) {
     headingField.value = "";
@@ -646,7 +670,7 @@ function handleCandidateFormSubmit(e) {
 }
 
 // =========================================================================
-// 8. ТАҲРИРЛАШ
+// 9. ТАҲРИРЛАШ
 // =========================================================================
 
 function editCandidate(id) {
@@ -656,7 +680,6 @@ function editCandidate(id) {
 
   activeCandidateId = id;
 
-  // Майдонларни тўлдириш
   setValueIfExists("editCandFio", c.fio);
   setValueIfExists("editCandPinfl", c.pinfl);
   setValueIfExists("editCandPassSeries", c.passSeries);
@@ -676,7 +699,6 @@ function editCandidate(id) {
   const appSel = document.getElementById("editCandAppointType");
   if (appSel) appSel.value = c.appointType;
 
-  // 📷 Расмни кўрсатиш
   currentEditPhotoDataUrl = c.photo || null;
   const photoZone = document.getElementById("editCandPhotoDropZone");
   if (photoZone && c.photo) {
@@ -693,7 +715,6 @@ function editCandidate(id) {
     currentEditPhotoDataUrl = c.photo || null;
   }
 
-  // Таҳрир тарихи
   const histEl = document.getElementById("editHistoryBlock");
   if (histEl) {
     if (c.editHistory && c.editHistory.length > 0) {
@@ -739,12 +760,10 @@ function saveEditedCandidate() {
   const newCategory = document.getElementById("editCandCategory").value;
   const newAppointType = document.getElementById("editCandAppointType").value;
 
-  // Автоконвертация
-  newFio = latToCyr(newFio);
-  newBirthPlace = latToCyr(newBirthPlace);
-  newCurrentJob = latToCyr(newCurrentJob);
+  newFio = cleanText(latToCyr(newFio));
+  newBirthPlace = cleanText(latToCyr(newBirthPlace));
+  newCurrentJob = cleanText(latToCyr(newCurrentJob));
 
-  // Валидация
   const fioErr = validateFIO(newFio);
   if (fioErr) { alert(fioErr); return; }
   if (!/^\d{14}$/.test(newPinfl)) { alert("ПИНФЛ 14 рақам!"); return; }
@@ -789,7 +808,6 @@ function saveEditedCandidate() {
     }
   });
 
-  // 📷 Расм ўзгарганми?
   if (currentEditPhotoDataUrl && currentEditPhotoDataUrl !== c.photo) {
     changes.push({
       at: now.dateTime, by: `${editorName} (${editor})`,
@@ -812,7 +830,6 @@ function saveEditedCandidate() {
   c.appointType = newAppointType;
   c.districtHeading = newDistrict;
 
-  // 📷 Расмни сақлаш
   if (currentEditPhotoDataUrl) {
     c.photo = currentEditPhotoDataUrl;
   }
@@ -840,7 +857,7 @@ function closeEditCandidateModal() {
 }
 
 // =========================================================================
-// 9. ЎЧИРИШ
+// 10. ЎЧИРИШ
 // =========================================================================
 
 function confirmDeleteCandidate(id) {
@@ -861,7 +878,7 @@ function confirmDeleteCandidate(id) {
 }
 
 // =========================================================================
-// 10. ИЦ + БОШЛИҚҚА ЮБОРИШ
+// 11. ИЦ + БОШЛИҚҚА ЮБОРИШ
 // =========================================================================
 
 function quickSaveItsRow(id, notify = false) {
@@ -905,7 +922,7 @@ function bulkSendCleanToBoss() {
 }
 
 // =========================================================================
-// 11. ФОЙДАЛАНУВЧИ
+// 12. ФОЙДАЛАНУВЧИ
 // =========================================================================
 
 function deleteUser(idx) {
@@ -945,4 +962,4 @@ async function handleUserCreateSubmit(e) {
   showToast(`✅ ${login} яратилди`, "success");
 }
 
-console.log("✅ 08-candidates.js юкланди (v10.1 — Drag&Drop расм)");
+console.log("✅ 08-candidates.js юкланди (v10.2)");
