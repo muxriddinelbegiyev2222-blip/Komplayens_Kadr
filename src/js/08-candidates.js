@@ -1,6 +1,6 @@
 // =========================================================================
 // 08-CANDIDATES.JS — Номзодлар CRUD (Қўшиш + Таҳрирлаш + Ўчириш)
-// «КОМПЛАЕНС-КАДР» v9.0
+// «КОМПЛАЕНС-КАДР» v9.1 — Ҳудудга "бошқармаси" автоматик
 // =========================================================================
 
 // =========================================================================
@@ -17,17 +17,14 @@ function checkPinflDuplicate() {
 
   if (val.length === 14) {
     const dup = appState.candidates.find(c => c.pinfl === val);
-
     box.classList.remove("hidden");
 
     if (dup) {
       box.className = "p-2.5 rounded-lg bg-red-50 border-2 border-red-400 text-red-950 text-xs";
-      box.innerHTML = `
-        ⚠️ <b>ДИҚҚАТ! ПИНФЛ ДУБЛИКАТИ:</b><br/>
+      box.innerHTML = `⚠️ <b>ДИҚҚАТ! ПИНФЛ ДУБЛИКАТИ:</b><br/>
         Ушбу шахс (<b>${dup.fio}</b>) базада мавжуд!<br/>
         Реестр: <b>${dup.reestrNo}</b> (${dup.region})<br/>
-        Якуний натижа: <b>${getFinalResultPlainText(dup)}</b>
-      `;
+        Якуний натижа: <b>${getFinalResultPlainText(dup)}</b>`;
     } else {
       box.className = "p-2.5 rounded-lg bg-emerald-50 border-2 border-emerald-400 text-emerald-950 text-xs";
       box.innerHTML = `✅ <b>ПИНФЛ тоза:</b> Аввал хулоса берилмаган.`;
@@ -42,19 +39,70 @@ function checkPinflDuplicate() {
 }
 
 // =========================================================================
+// 🆕 ҲУДУД НОМИНИ ТЎЛИҚ ҚИЛИШ
+// "Жиззах вилояти" → "Кадастр агентлиги Жиззах вилояти бошқармаси"
+// =========================================================================
+
+function buildDistrictHeading(region, district, category) {
+  if (!region) return "";
+
+  // Ҳудуд турини аниқлаш
+  const isRegion = region.includes("вилояти") || region.includes("Республикаси");
+  const isCity = region.includes("шаҳри");
+
+  // Асосий ҳудуд номи
+  let regionPart = `Кадастр агентлиги ${region}`;
+
+  // Агар вилоят бўлса — "бошқармаси" қўшиш
+  if (isRegion) {
+    regionPart += " бошқармаси";
+  } else if (isCity) {
+    regionPart += " шаҳар бошқармаси";
+  }
+
+  // Агар district киритилган бўлса — қўшиш
+  const districtPart = district ? district.trim() : "";
+
+  // Category дан лавозим номини аниқлаш
+  let positionPart = "";
+  if (category) {
+    if (category.includes("КА туман")) positionPart = "бўлими бошлиғи";
+    else if (category.includes("ДКП туман")) positionPart = "филиали раҳбари";
+    else if (category.includes("КА ҳудудий")) positionPart = "бошлиғи";
+    else if (category.includes("ДКП ҳудудий")) positionPart = "бошлиғи";
+    else if (category.includes("КА марказий")) positionPart = "Марказий аппарати ходими";
+    else if (category.includes("ДКП марказий")) positionPart = "Марказий аппарати ходими";
+    else if (category.includes("Комплаенс")) positionPart = "комплаенс ходими";
+  }
+
+  // Тўлиқ сарлавҳа
+  if (districtPart) {
+    // Агар district да "бошлиғи" ёки "филиали" аллақачон бор бўлса — такрорламаймиз
+    const hasPosition = districtPart.includes("бошлиғи") ||
+                        districtPart.includes("филиали") ||
+                        districtPart.includes("раҳбари");
+    if (hasPosition) {
+      return `${regionPart} ${districtPart} лавозимига`;
+    } else {
+      return `${regionPart} ${districtPart} ${positionPart} лавозимига`;
+    }
+  }
+
+  return `${regionPart} ${positionPart} лавозимига`;
+}
+
+// =========================================================================
 // ЯНГИ НОМЗОД ҚЎШИШ
 // =========================================================================
 
 function handleCandidateFormSubmit(e) {
   e.preventDefault();
 
-  // Рухсат текшируви
   if (!hasPermission("add_candidate")) {
     alert("Рухсат йўқ! Фақат Кадрлар ва Коррупция бўлими номзод қўшади.");
     return;
   }
 
-  // Майдонларни ўқиш
   const recordType = document.getElementById("inpRecordType").value;
   const region = document.getElementById("inpRegion").value;
   const category = document.getElementById("inpCategory").value;
@@ -70,44 +118,46 @@ function handleCandidateFormSubmit(e) {
   const jobSince = document.getElementById("inpJobSince").value.trim();
   const fileInput = document.getElementById("inpPhotoFile");
 
-  // Валидация
   if (pinfl.length !== 14) {
     alert("ПИНФЛ аниқ 14 та рақамдан иборат бўлиши шарт!");
     return;
   }
-
+  if (!/^\d{14}$/.test(pinfl)) {
+    alert("ПИНФЛ фақат рақамлардан иборат бўлиши керак!");
+    return;
+  }
   if (!fio || !region || !district || !currentJob) {
     alert("Барча мажбурий майдонларни тўлдиринг!");
     return;
   }
+  // Паспорт серияси текшируви
+  if (!/^[A-Z]{2}$/.test(passSeries)) {
+    alert("Паспорт серияси иккита катта ҳарфдан иборат бўлиши керак! (Масалан: AD, AB)");
+    return;
+  }
 
-  // Расмни тайёрлаш
   const finishCreate = (photoDataUrl) => {
     const now = getNow();
-
-    // Реестр рақами
     const num = String(appState.candidates.length + 1).padStart(2, "0");
     const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-";
     const reestrNo = `${prefix}${now.year}/${now.month}-${num}`;
 
-    // Янги номзод объекти
+    // 🆕 Ҳудуд сарлавҳасини тўғри ясаш
+    const districtHeading = buildDistrictHeading(region, district, category);
+
     const newCand = {
       id: "CAND-" + Date.now(),
-
-      // Реестр
       reestrNo: reestrNo,
       createdAt: now.date,
-      createdTime: now.time,                    // 🆕 Вақт
-      createdBy: currentUser?.login || "unknown", // 🆕 Ким
+      createdTime: now.time,
+      createdBy: currentUser?.login || "unknown",
       createdByName: currentUser?.name || "",
       year: now.year,
       month: now.month,
-
-      // Асосий маълумотлар
       recordType,
       region,
       category,
-      districtHeading: `Кадастр агентлиги ${region} ${district} лавозимига`,
+      districtHeading,
       appointType,
       fio,
       birthDate,
@@ -118,20 +168,14 @@ function handleCandidateFormSubmit(e) {
       currentJob,
       jobSince,
       photo: photoDataUrl,
-
-      // Жараён
       itsChecked: false,
       sudlanganStatus: "clean",
       sudlanganText: "муқаддам судланмаган",
       workflowStage: "admin_review",
-
-      // Маълумотнома
       eduText: "миллати ўзбек, оилали, маълумоти олий.",
       para2: "Номзод анъанавий ислом динига эътиқод қилади, намоз амалларини бажармайди, диний амалларни умумэътироф этилган меъёрларини бажаради (ҳайит, хатм, худоий, жанозаларда қатнашади), динга мутаассибларча эътиқод қилиши кузатилмаган, турли ДЭО ва бошқа қўпорувчи кучларга алоқадорлиги ва уларни ғояларини қўллаб-қувватлаши қайд этилмаган.",
       para3: "Иш жойидан ижобий томондан тавсифланиб, қораловчи ёки обрўсизлантирувчи маълумотлар олинмади.\nХусусан, номзод ўзига юклатилган функционал мажбуриятларни бажаришда коррупцион ҳаракатлари кузатилмаган, унга нисбатан шу мазмунда ариза ва шикоятлар келиб тушмаган.",
       para4: "Номзод берилган топшириқларни ўз вақтида бажаришга ҳаракат қилади, ўз устида ишловчи, камтарин ходим сифатида меҳнат жамоасида ҳурматга эга.\nМутахассис сифатида етарли малака ва тажрибага эга, фуқаролар билан муносабатда муомала маданиятига риоя этади, ўзгаларни тинглашни ва ҳурмат қилишни билади, ўз фикрини етказа олади.",
-
-      // 🆕 Жараён вақтлари (бошланғичда бўш)
       korrupsiyaViewedAt: "",
       sentToBossAt: "",
       sentToBossTime: "",
@@ -142,22 +186,18 @@ function handleCandidateFormSubmit(e) {
       bossReturnedAt: "",
       bossReturnReason: "",
       approvedDate: "",
-
-      // 🆕 Таҳрир тарихи
       lastEditedAt: "",
       lastEditedBy: "",
       editHistory: []
     };
 
-    // Базага қўшиш
     appState.candidates.unshift(newCand);
 
-    // Audit log
     if (typeof logCandidateAdded === "function") {
       logCandidateAdded(newCand);
     }
 
-    // 🔔 Уведомления
+    // 🔔 Уведомления: фақат Коррупция + Раҳбарга
     if (typeof addNotification === "function") {
       addNotification({
         type: "new_candidate",
@@ -169,28 +209,20 @@ function handleCandidateFormSubmit(e) {
       });
     }
 
-    // Сақлаш
     saveState();
     renderAll();
-
-    // Формани тозалаш
     e.target.reset();
-    const dupBox = document.getElementById("pinflDuplicateBox");
-    if (dupBox) dupBox.classList.add("hidden");
+    document.getElementById("pinflDuplicateBox").classList.add("hidden");
 
-    // Суб-таб
     if (recordType === "former") {
       switchTab("former");
-    } else {
-      if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") {
-        switchSubTab("new");
-      }
+    } else if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") {
+      switchSubTab("new");
     }
 
     showToast(`✅ Янги номзод қўшилди! (${reestrNo})`, "success");
   };
 
-  // Расмни юклаш
   if (fileInput && fileInput.files && fileInput.files[0]) {
     const reader = new FileReader();
     reader.onload = ev => finishCreate(ev.target.result);
@@ -203,7 +235,7 @@ function handleCandidateFormSubmit(e) {
 }
 
 // =========================================================================
-// 🆕 НОМЗОДНИ ТАҲРИРЛАШ (фақат Коррупция бўлими)
+// НОМЗОДНИ ТАҲРИРЛАШ (фақат Коррупция бўлими)
 // =========================================================================
 
 function editCandidate(id) {
@@ -211,7 +243,6 @@ function editCandidate(id) {
     alert("Рухсат йўқ! Фақат Коррупцияга қарши курашиш бўлими таҳрирлай олади.");
     return;
   }
-
   const c = appState.candidates.find(x => x.id === id);
   if (!c) {
     alert("Номзод топилмади!");
@@ -219,8 +250,6 @@ function editCandidate(id) {
   }
 
   activeCandidateId = id;
-
-  // Модал майдонларини тўлдириш
   setValueIfExists("editCandFio", c.fio);
   setValueIfExists("editCandPinfl", c.pinfl);
   setValueIfExists("editCandPassSeries", c.passSeries);
@@ -231,7 +260,6 @@ function editCandidate(id) {
   setValueIfExists("editCandJobSince", c.jobSince);
   setValueIfExists("editCandDistrict", c.districtHeading);
 
-  // Селектлар
   const regionSel = document.getElementById("editCandRegion");
   if (regionSel) regionSel.value = c.region;
 
@@ -241,7 +269,6 @@ function editCandidate(id) {
   const appSel = document.getElementById("editCandAppointType");
   if (appSel) appSel.value = c.appointType;
 
-  // Таҳрир тарихини кўрсатиш (агар бўлса)
   const histEl = document.getElementById("editHistoryBlock");
   if (histEl) {
     if (c.editHistory && c.editHistory.length > 0) {
@@ -262,19 +289,17 @@ function editCandidate(id) {
     }
   }
 
-  // Модални очиш
   const modal = document.getElementById("editCandidateModal");
   if (modal) modal.classList.remove("hidden");
 }
 
-// -------------------- ЁРДАМЧИ --------------------
 function setValueIfExists(id, val) {
   const el = document.getElementById(id);
   if (el) el.value = val || "";
 }
 
 // =========================================================================
-// 🆕 ТАҲРИРНИ САҚЛАШ
+// ТАҲРИРНИ САҚЛАШ (🔕 Уведомления ЮБОРИЛМАЙДИ!)
 // =========================================================================
 
 function saveEditedCandidate() {
@@ -286,7 +311,6 @@ function saveEditedCandidate() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
 
-  // Янги қийматларни ўқиш
   const newFio = document.getElementById("editCandFio").value.trim();
   const newPinfl = document.getElementById("editCandPinfl").value.trim();
   const newPassSeries = document.getElementById("editCandPassSeries").value.trim().toUpperCase();
@@ -300,20 +324,21 @@ function saveEditedCandidate() {
   const newCategory = document.getElementById("editCandCategory").value;
   const newAppointType = document.getElementById("editCandAppointType").value;
 
-  // Валидация
   if (!newFio || newPinfl.length !== 14) {
     alert("Ф.И.Ш. ва ПИНФЛ (14 рақам) тўғри киритинг!");
     return;
   }
+  if (!/^\d{14}$/.test(newPinfl)) {
+    alert("ПИНФЛ фақат рақамлардан иборат бўлиши керак!");
+    return;
+  }
 
-  // PINFL дубликатини текшириш (ўзидан ташқари)
   const dup = appState.candidates.find(x => x.pinfl === newPinfl && x.id !== c.id);
   if (dup) {
     alert(`⚠️ Бу ПИНФЛ бошқа номзодда бор!\n${dup.fio} (${dup.reestrNo})`);
     return;
   }
 
-  // Таҳрир тарихини ёзиш
   const changes = [];
   const now = getNow();
   const editor = currentUser?.login || "unknown";
@@ -350,7 +375,6 @@ function saveEditedCandidate() {
     return;
   }
 
-  // Янгилаш
   c.fio = newFio;
   c.pinfl = newPinfl;
   c.passSeries = newPassSeries;
@@ -362,28 +386,26 @@ function saveEditedCandidate() {
   c.region = newRegion;
   c.category = newCategory;
   c.appointType = newAppointType;
-  c.districtHeading = `Кадастр агентлиги ${newRegion} ${newDistrict || newCategory} лавозимига`;
 
-  // Таҳрир тарихини сақлаш
+  // 🆕 Ҳудуд сарлавҳасини қайта ясаш
+  c.districtHeading = buildDistrictHeading(newRegion, newDistrict, newCategory);
+
   if (!Array.isArray(c.editHistory)) c.editHistory = [];
   c.editHistory = c.editHistory.concat(changes);
   c.lastEditedAt = now.dateTime;
   c.lastEditedBy = editor;
 
-  // Audit log
-  if (typeof logCandidateEdited === "function") {
-    logCandidateEdited(c, changes);
+  // 🔕 Audit log ёзилади (керак), лекин уведомления ЮБОРИЛМАЙДИ
+  if (typeof addAuditLog === "function") {
+    addAuditLog("CANDIDATE_EDITED", `${c.id} | ${c.fio} | Ўзгаришлар: ${changes.map(ch => ch.field).join(", ")}`);
   }
 
-  // Сақлаш
   saveState();
   renderAll();
   closeEditCandidateModal();
-
   showToast(`✅ Таҳрир сақланди (${changes.length} та ўзгариш)`, "success");
 }
 
-// -------------------- МОДАЛНИ ЁПИШ --------------------
 function closeEditCandidateModal() {
   const modal = document.getElementById("editCandidateModal");
   if (modal) modal.classList.add("hidden");
@@ -391,7 +413,7 @@ function closeEditCandidateModal() {
 }
 
 // =========================================================================
-// 🆕 НОМЗОДНИ ЎЧИРИШ
+// НОМЗОДНИ ЎЧИРИШ (🔕 Уведомления ЮБОРИЛМАЙДИ!)
 // =========================================================================
 
 function confirmDeleteCandidate(id) {
@@ -399,38 +421,27 @@ function confirmDeleteCandidate(id) {
     alert("Рухсат йўқ! Фақат Коррупцияга қарши курашиш бўлими ўчира олади.");
     return;
   }
-
   const c = appState.candidates.find(x => x.id === id);
   if (!c) return;
 
-  // 2 та тасдиқлаш
-  if (!confirm(`⚠️ ДИҚҚАТ!\n\n«${c.fio}» (${c.reestrNo}) номзодини ЎЧИРМОҚЧИМИСИЗ?\n\nБу амални ортга қайтариб бўлмайди!`)) {
-    return;
+  if (!confirm(`⚠️ ДИҚҚАТ!\n\n«${c.fio}» (${c.reestrNo}) номзодини ЎЧИРМОҚЧИМИСИЗ?\n\nБу амални ортга қайтариб бўлмайди!`)) return;
+  if (!confirm(`❌ ЯНА БИР МАРТА ТАСДИҚЛАНГ!\n\n${c.fio}\nРеестр: ${c.reestrNo}\n\nҲақиқатан ўчирилсинми?`)) return;
+
+  // 🔕 Audit log ёзилади, уведомления ЮБОРИЛМАЙДИ
+  if (typeof addAuditLog === "function") {
+    addAuditLog("CANDIDATE_DELETED", `${c.id} | ${c.fio} | ${c.region} | Ўчирилди`);
   }
 
-  if (!confirm(`❌ ЯНА БИР МАРТА ТАСДИҚЛАНГ!\n\n${c.fio}\nРеестр: ${c.reestrNo}\n\nҲақиқатан ўчирилсинми?`)) {
-    return;
-  }
-
-  // Audit log
-  if (typeof logCandidateDeleted === "function") {
-    logCandidateDeleted(c);
-  }
-
-  // Ўчириш
   const idx = appState.candidates.findIndex(x => x.id === id);
-  if (idx !== -1) {
-    appState.candidates.splice(idx, 1);
-  }
+  if (idx !== -1) appState.candidates.splice(idx, 1);
 
   saveState();
   renderAll();
-
   showToast(`🗑 «${c.fio}» ўчирилди`, "warning");
 }
 
 // =========================================================================
-// ИЦ НАТИЖАСИНИ САҚЛАШ (quickSaveItsRow)
+// ИЦ НАТИЖАСИНИ САҚЛАШ
 // =========================================================================
 
 function quickSaveItsRow(id, notify = false) {
@@ -438,13 +449,11 @@ function quickSaveItsRow(id, notify = false) {
     alert("Рухсат йўқ! Фақат Коррупция бўлими ИЦ кирита олади.");
     return;
   }
-
   const c = appState.candidates.find(x => x.id === id);
   if (!c) return;
 
   const selEl = document.getElementById(`itsSel_${id}`);
   const txtEl = document.getElementById(`itsTxt_${id}`);
-
   if (!selEl || !txtEl) {
     alert("Майдонлар топилмади!");
     return;
@@ -455,28 +464,23 @@ function quickSaveItsRow(id, notify = false) {
 
   c.sudlanganStatus = sel;
   c.itsChecked = true;
-
   if (sel === "clean") {
     c.sudlanganText = txt || "муқаддам судланмаган";
   } else {
     c.sudlanganText = txt.includes("судланган") ? txt : `муқаддам судланган (${txt || "ЖК моддаси аниқланди"})`;
   }
 
-  // Audit log
   if (typeof logITSChecked === "function") {
     logITSChecked(c, sel, c.sudlanganText);
   }
 
   saveState();
   renderAll();
-
-  if (notify) {
-    showToast(`✅ ${c.fio} — ИЦ сақланди`, "success");
-  }
+  if (notify) showToast(`✅ ${c.fio} — ИЦ сақланди`, "success");
 }
 
 // =========================================================================
-// БОШЛИҚҚА ЮБОРИШ (биттада тоза чиққанларни)
+// БОШЛИҚҚА ЮБОРИШ
 // =========================================================================
 
 function bulkSendCleanToBoss() {
@@ -486,12 +490,9 @@ function bulkSendCleanToBoss() {
   }
 
   let count = 0;
-
   appState.candidates.forEach(c => {
     if (c.workflowStage === "admin_review" && c.sudlanganStatus === "clean" && c.itsChecked) {
-      if (typeof logSentToBoss === "function") {
-        logSentToBoss(c, "Бўлим бошлиғи");
-      }
+      if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи");
       c.workflowStage = "boss_review";
       count++;
     }
@@ -504,12 +505,11 @@ function bulkSendCleanToBoss() {
 
   saveState();
   renderAll();
-
   showToast(`📤 ${count} нафар номзод Бўлим бошлиғига юборилди`, "success");
 }
 
 // =========================================================================
-// ФОЙДАЛАНУВЧИ ЎЧИРИШ
+// ФОЙДАЛАНУВЧИ ЎЧИРИШ (🔕 Уведомления ЮБОРИЛМАЙДИ)
 // =========================================================================
 
 function deleteUser(idx) {
@@ -517,20 +517,14 @@ function deleteUser(idx) {
     alert("Рухсат йўқ!");
     return;
   }
-
   const u = appState.users[idx];
   if (!u) return;
-
   if (u.login === "admin") {
     alert("Асосий админни ўчириб бўлмайди!");
     return;
   }
+  if (!confirm(`«${u.name}» (${u.login}) фойдаланувчисини ўчирмоқчимисиз?`)) return;
 
-  if (!confirm(`«${u.name}» (${u.login}) фойдаланувчисини ўчирмоқчимисиз?`)) {
-    return;
-  }
-
-  // Audit log
   if (typeof addAuditLog === "function") {
     addAuditLog("USER_DELETE", `${u.login} ўчирилди`);
   }
@@ -538,7 +532,6 @@ function deleteUser(idx) {
   appState.users.splice(idx, 1);
   saveState();
   renderUsersTable();
-
   showToast(`🗑 ${u.name} ўчирилди`, "warning");
 }
 
@@ -548,7 +541,6 @@ function deleteUser(idx) {
 
 async function handleUserCreateSubmit(e) {
   e.preventDefault();
-
   if (!hasPermission("create_user")) {
     alert("Рухсат йўқ!");
     return;
@@ -559,39 +551,27 @@ async function handleUserCreateSubmit(e) {
   const login = document.getElementById("newUserLogin").value.trim();
   const pass = document.getElementById("newUserPass").value.trim();
 
-  // Валидация
   if (!name || !login || !pass) {
     alert("Барча майдонларни тўлдиринг!");
     return;
   }
-
   if (appState.users.some(u => u.login === login)) {
     alert("❌ Бу логин банд!");
     return;
   }
-
   if (pass.length < 6) {
     alert("Парол камида 6 та белгидан иборат бўлиши керак!");
     return;
   }
 
-  // Паролни хешлаш
   const passHash = await hashPassword(pass);
-
   if (!passHash) {
     alert("Парол хешлашда хато!");
     return;
   }
 
-  // Янги фойдаланувчи
-  appState.users.push({
-    login,
-    passHash,
-    name,
-    role
-  });
+  appState.users.push({ login, passHash, name, role });
 
-  // Audit log
   if (typeof addAuditLog === "function") {
     addAuditLog("USER_CREATE", `${login} (${ROLE_NAMES[role] || role}) яратилди`);
   }
@@ -599,9 +579,7 @@ async function handleUserCreateSubmit(e) {
   saveState();
   renderUsersTable();
   e.target.reset();
-
   showToast(`✅ Фойдаланувчи (${login}) яратилди`, "success");
 }
 
-// -------------------- ЛОГ ----------
-console.log("✅ 08-candidates.js юкланди");
+console.log("✅ 08-candidates.js юкланди (v9.1 — бошқармаси + ҳудуд)");
