@@ -1,10 +1,269 @@
 // =========================================================================
-// 08-CANDIDATES.JS — Номзодлар CRUD (Қўшиш + Таҳрирлаш + Ўчириш)
-// «КОМПЛАЕНС-КАДР» v9.1 — Ҳудудга "бошқармаси" автоматик
+// 08-CANDIDATES.JS — Номзодлар CRUD
+// «КОМПЛАЕНС-КАДР» v10.0 — Ақлли сарлавҳа + Қўлда тузатиш
 // =========================================================================
 
 // =========================================================================
-// PINFL ДУБЛИКАТ ТЕКШИРУВИ
+// 1. ЛОТИН → КИРИЛЛ
+// =========================================================================
+
+function latToCyr(text) {
+  if (!text) return text;
+
+  // Агар матнда 50%+ кирилл бўлса — тегишмаймиз
+  const cyrCount = (text.match(/[А-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length;
+  const allLetters = (text.match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length;
+  if (cyrCount > allLetters / 2) return text;
+
+  let r = text;
+
+  // Диграфлар
+  r = r.replace(/sh/gi, m => m[0] === "S" ? "Ш" : "ш");
+  r = r.replace(/ch/gi, m => m[0] === "C" ? "Ч" : "ч");
+  r = r.replace(/yo/gi, m => m[0] === "Y" ? "Ё" : "ё");
+  r = r.replace(/yu/gi, m => m[0] === "Y" ? "Ю" : "ю");
+  r = r.replace(/ya/gi, m => m[0] === "Y" ? "Я" : "я");
+  r = r.replace(/ts/gi, m => m[0] === "T" ? "Ц" : "ц");
+
+  // O', G'
+  r = r.replace(/[oO]['ʻ`‘’ʼ]/g, m => m[0] === "O" ? "Ў" : "ў");
+  r = r.replace(/[gG]['ʻ`‘’ʼ]/g, m => m[0] === "G" ? "Ғ" : "ғ");
+
+  // Оддий ҳарфлар
+  const map = {
+    "a":"а","b":"б","d":"д","e":"е","f":"ф","g":"г","h":"ҳ","i":"и","j":"ж",
+    "k":"к","l":"л","m":"м","n":"н","o":"о","p":"п","q":"қ","r":"р","s":"с",
+    "t":"т","u":"у","v":"в","x":"х","y":"й","z":"з",
+    "A":"А","B":"Б","D":"Д","E":"Е","F":"Ф","G":"Г","H":"Ҳ","I":"И","J":"Ж",
+    "K":"К","L":"Л","M":"М","N":"Н","O":"О","P":"П","Q":"Қ","R":"Р","S":"С",
+    "T":"Т","U":"У","V":"В","X":"Х","Y":"Й","Z":"З",
+    "c":"к","C":"К","w":"в","W":"В"
+  };
+
+  r = r.replace(/[a-zA-Z]/g, ch => map[ch] || ch);
+  return r;
+}
+
+// =========================================================================
+// 2. ТАШКИЛОТ ВА ЛАВОЗИМНИ АНИҚЛАШ
+// =========================================================================
+
+// Категориядан ташкилотни олиш
+function getOrganizationFromCategory(category) {
+  if (!category) return "Кадастр агентлиги";
+
+  // ДКП (Давлат кадастрлари палатаси)
+  if (category.includes("ДКП")) {
+    return "Давлат кадастрлари палатаси";
+  }
+
+  // КА ва бошқалар (Кадастр агентлиги)
+  return "Кадастр агентлиги";
+}
+
+// Категориядан лавозимни олиш
+function getPositionFromCategory(category) {
+  if (!category) return "";
+
+  if (category.includes("КА туман")) return "бўлими бошлиғи";
+  if (category.includes("ДКП туман")) return "филиали раҳбари";
+  if (category.includes("КА ҳудудий")) return "бошлиғи";
+  if (category.includes("ДКП ҳудудий")) return "бошлиғи";
+  if (category.includes("КА марказий")) return "Марказий аппарати ходими";
+  if (category.includes("ДКП марказий")) return "Марказий аппарати ходими";
+  if (category.includes("Комплаенс")) return "комплаенс ходими";
+  if (category.includes("Собиқ")) return "собиқ ходими бўйича";
+
+  return "";
+}
+
+// =========================================================================
+// 3. АҚЛЛИ САРЛАВҲА ЯСАШ
+// =========================================================================
+
+function buildDistrictHeading(region, district, category) {
+  // Собиқ ходимлар — махсус
+  if (category && category.includes("Собиқ")) {
+    const org = getOrganizationFromCategory(category);
+    return `${org} ${region || ""} собиқ ходими бўйича`.trim();
+  }
+
+  // Ташкилот
+  const org = getOrganizationFromCategory(category);
+
+  // Ҳудуд қисми
+  const regionPart = region ? `${org} ${region} бошқармаси` : org;
+
+  // Лавозим (category дан)
+  const posFromCategory = getPositionFromCategory(category);
+
+  // District
+  let cleanDistrict = (district || "").trim();
+  cleanDistrict = latToCyr(cleanDistrict);
+
+  // Агар district бўш бўлса — фақат ҳудуд + лавозим
+  if (!cleanDistrict) {
+    if (posFromCategory) {
+      return `${regionPart} ${posFromCategory} лавозимига`;
+    }
+    return `${regionPart} лавозимига`;
+  }
+
+  // District да аллақачон лавозим сўзи борми?
+  const positionWords = /бўлими|бўлим|бошлиғи|бошлиқ|филиали|филиал|раҳбари|раҳбар|мутахассиси|мутахассис|ходими|ходим|аппарати/i;
+  const hasPosition = positionWords.test(cleanDistrict);
+
+  if (hasPosition) {
+    // District да лавозим бор
+    return `${regionPart} ${cleanDistrict} лавозимига`;
+  } else {
+    // District да лавозим йўқ — category дан қўшамиз
+    if (posFromCategory) {
+      return `${regionPart} ${cleanDistrict} ${posFromCategory} лавозимига`;
+    }
+    return `${regionPart} ${cleanDistrict} лавозимига`;
+  }
+}
+
+// =========================================================================
+// 4. САРЛАВҲА ПРЕВЬЮСИ (реал-тайм)
+// =========================================================================
+
+function updateHeadingPreview() {
+  const region = document.getElementById("inpRegion")?.value || "";
+  const category = document.getElementById("inpCategory")?.value || "";
+  const district = document.getElementById("inpDistrict")?.value.trim() || "";
+
+  const heading = buildDistrictHeading(region, district, category);
+
+  const field = document.getElementById("inpDistrictHeading");
+  if (field) {
+    // Агар фойдаланувчи қўлда таҳрирлаган бўлса — автоматик ўчирилади
+    if (field.dataset.manualEdited === "true") {
+      console.log("⏸ Қўлда таҳрирланган — автоматик янгилаш ўчирилди");
+      return;
+    }
+    field.value = heading;
+  }
+}
+
+function setupHeadingFieldTracking() {
+  const field = document.getElementById("inpDistrictHeading");
+  if (!field) return;
+
+  // Фойдаланувчи қўлда ёзса — белгилаш
+  field.addEventListener("input", () => {
+    if (!field.dataset.tracking) {
+      field.dataset.tracking = "1";
+      field.dataset.manualEdited = "true";
+    }
+  });
+
+  // Region/Category ўзгарганда — таҳрир ҳолатини тозалаш
+  ["inpRegion", "inpCategory", "inpDistrict"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", () => {
+        field.dataset.manualEdited = "false";
+        field.dataset.tracking = "";
+        updateHeadingPreview();
+      });
+      el.addEventListener("input", () => {
+        if (el.id === "inpDistrict") {
+          if (field.dataset.manualEdited !== "true") {
+            updateHeadingPreview();
+          }
+        }
+      });
+    }
+  });
+}
+
+function getFinalHeading() {
+  const manual = document.getElementById("inpDistrictHeading")?.value.trim() || "";
+  if (manual) return manual;
+
+  const region = document.getElementById("inpRegion")?.value || "";
+  const category = document.getElementById("inpCategory")?.value || "";
+  const district = document.getElementById("inpDistrict")?.value.trim() || "";
+  return buildDistrictHeading(region, district, category);
+}
+
+// =========================================================================
+// 5. ВАЛИДАЦИЯ
+// =========================================================================
+
+function validateDate(dateStr, fieldName) {
+  if (!dateStr) return `${fieldName} бўш`;
+  const digits = dateStr.replace(/\D/g, "");
+  if (digits.length < 8) return `${fieldName} тўлиқ эмас (кк.оо.йййй)`;
+
+  const dd = parseInt(digits.substring(0, 2));
+  const mm = parseInt(digits.substring(2, 4));
+  const yyyy = parseInt(digits.substring(4, 8));
+
+  if (dd < 1 || dd > 31) return `${fieldName}: кун 01-31`;
+  if (mm < 1 || mm > 12) return `${fieldName}: ОЙ 01-12 бўлиши керак! (Киритилди: ${mm})`;
+  if (yyyy < 1900 || yyyy > 2030) return `${fieldName}: йил 1900-2030`;
+
+  const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (dd > daysInMonth[mm - 1]) return `${fieldName}: бу ойда ${daysInMonth[mm - 1]} кун`;
+
+  return null;
+}
+
+function validateFIO(fio) {
+  if (!fio || fio.length < 3) return "Ф.И.Ш. жуда қисқа";
+  if (/^\d+$/.test(fio)) return "Ф.И.Ш. фақат рақамлардан иборат бўлмаслиги керак";
+  if (fio.length > 100) return "Ф.И.Ш. жуда узун";
+  return null;
+}
+
+function validateCurrentJob(job) {
+  if (!job || job.length < 5) return "Лавозим жуда қисқа";
+  if (/^\d+$/.test(job)) return "Лавозим фақат рақамлардан иборат бўлмаслиги керак";
+  return null;
+}
+
+function validateCandidateForm() {
+  const errors = [];
+
+  const fio = document.getElementById("inpFio").value.trim();
+  const pinfl = document.getElementById("inpPinfl").value.trim();
+  const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase();
+  const passNum = document.getElementById("inpPassNum").value.trim();
+  const birthDate = document.getElementById("inpBirthDate").value.trim();
+  const jobSince = document.getElementById("inpJobSince").value.trim();
+  const currentJob = document.getElementById("inpCurrentJob").value.trim();
+  const district = document.getElementById("inpDistrict").value.trim();
+  const heading = document.getElementById("inpDistrictHeading")?.value.trim() || "";
+
+  const fioErr = validateFIO(fio);
+  if (fioErr) errors.push(fioErr);
+
+  if (pinfl.length !== 14) errors.push("ПИНФЛ 14 та рақам");
+  else if (!/^\d{14}$/.test(pinfl)) errors.push("ПИНФЛ фақат рақамлар");
+
+  if (!/^[A-Z]{2}$/.test(passSeries)) errors.push("Паспорт серияси 2 та катта ҳарф (AD, AB)");
+  if (!/^\d{7}$/.test(passNum)) errors.push("Паспорт рақами 7 та рақам");
+
+  const bdErr = validateDate(birthDate, "Туғилган сана");
+  if (bdErr) errors.push(bdErr);
+
+  const jsErr = validateDate(jobSince, "Иш санаси");
+  if (jsErr) errors.push(jsErr);
+
+  const jobErr = validateCurrentJob(currentJob);
+  if (jobErr) errors.push(jobErr);
+
+  if (!district || district.length < 3) errors.push("Туман/шаҳар номи киритилиши шарт");
+  if (!heading || heading.length < 20) errors.push("Тўлиқ сарлавҳа 20+ белгидан иборат бўлиши керак");
+
+  return errors;
+}
+
+// =========================================================================
+// 6. PINFL ДУБЛИКАТ
 // =========================================================================
 
 function checkPinflDuplicate() {
@@ -18,88 +277,37 @@ function checkPinflDuplicate() {
   if (val.length === 14) {
     const dup = appState.candidates.find(c => c.pinfl === val);
     box.classList.remove("hidden");
-
     if (dup) {
       box.className = "p-2.5 rounded-lg bg-red-50 border-2 border-red-400 text-red-950 text-xs";
-      box.innerHTML = `⚠️ <b>ДИҚҚАТ! ПИНФЛ ДУБЛИКАТИ:</b><br/>
-        Ушбу шахс (<b>${dup.fio}</b>) базада мавжуд!<br/>
-        Реестр: <b>${dup.reestrNo}</b> (${dup.region})<br/>
-        Якуний натижа: <b>${getFinalResultPlainText(dup)}</b>`;
+      box.innerHTML = `⚠️ <b>ПИНФЛ ДУБЛИКАТИ:</b> <b>${dup.fio}</b> (${dup.reestrNo})`;
     } else {
       box.className = "p-2.5 rounded-lg bg-emerald-50 border-2 border-emerald-400 text-emerald-950 text-xs";
-      box.innerHTML = `✅ <b>ПИНФЛ тоза:</b> Аввал хулоса берилмаган.`;
+      box.innerHTML = `✅ <b>ПИНФЛ тоза</b>`;
     }
   } else if (val.length > 0 && val.length < 14) {
     box.classList.remove("hidden");
     box.className = "p-2.5 rounded-lg bg-amber-50 border-2 border-amber-400 text-amber-950 text-xs";
-    box.innerHTML = `⚠️ ПИНФЛ <b>${val.length}</b> та рақам — 14 та бўлиши керак.`;
+    box.innerHTML = `⚠️ ПИНФЛ: <b>${val.length}</b> / 14`;
   } else {
     box.classList.add("hidden");
   }
 }
 
 // =========================================================================
-// 🆕 ҲУДУД НОМИНИ ТЎЛИҚ ҚИЛИШ
-// "Жиззах вилояти" → "Кадастр агентлиги Жиззах вилояти бошқармаси"
-// =========================================================================
-
-function buildDistrictHeading(region, district, category) {
-  if (!region) return "";
-
-  // Ҳудуд турини аниқлаш
-  const isRegion = region.includes("вилояти") || region.includes("Республикаси");
-  const isCity = region.includes("шаҳри");
-
-  // Асосий ҳудуд номи
-  let regionPart = `Кадастр агентлиги ${region}`;
-
-  // Агар вилоят бўлса — "бошқармаси" қўшиш
-  if (isRegion) {
-    regionPart += " бошқармаси";
-  } else if (isCity) {
-    regionPart += " шаҳар бошқармаси";
-  }
-
-  // Агар district киритилган бўлса — қўшиш
-  const districtPart = district ? district.trim() : "";
-
-  // Category дан лавозим номини аниқлаш
-  let positionPart = "";
-  if (category) {
-    if (category.includes("КА туман")) positionPart = "бўлими бошлиғи";
-    else if (category.includes("ДКП туман")) positionPart = "филиали раҳбари";
-    else if (category.includes("КА ҳудудий")) positionPart = "бошлиғи";
-    else if (category.includes("ДКП ҳудудий")) positionPart = "бошлиғи";
-    else if (category.includes("КА марказий")) positionPart = "Марказий аппарати ходими";
-    else if (category.includes("ДКП марказий")) positionPart = "Марказий аппарати ходими";
-    else if (category.includes("Комплаенс")) positionPart = "комплаенс ходими";
-  }
-
-  // Тўлиқ сарлавҳа
-  if (districtPart) {
-    // Агар district да "бошлиғи" ёки "филиали" аллақачон бор бўлса — такрорламаймиз
-    const hasPosition = districtPart.includes("бошлиғи") ||
-                        districtPart.includes("филиали") ||
-                        districtPart.includes("раҳбари");
-    if (hasPosition) {
-      return `${regionPart} ${districtPart} лавозимига`;
-    } else {
-      return `${regionPart} ${districtPart} ${positionPart} лавозимига`;
-    }
-  }
-
-  return `${regionPart} ${positionPart} лавозимига`;
-}
-
-// =========================================================================
-// ЯНГИ НОМЗОД ҚЎШИШ
+// 7. НОМЗОД ҚЎШИШ
 // =========================================================================
 
 function handleCandidateFormSubmit(e) {
   e.preventDefault();
 
   if (!hasPermission("add_candidate")) {
-    alert("Рухсат йўқ! Фақат Кадрлар ва Коррупция бўлими номзод қўшади.");
+    alert("Рухсат йўқ!");
+    return;
+  }
+
+  const errors = validateCandidateForm();
+  if (errors.length > 0) {
+    alert("⚠️ ХАТОЛАРНИ ТУЗАТИНГ:\n\n• " + errors.join("\n• "));
     return;
   }
 
@@ -111,30 +319,17 @@ function handleCandidateFormSubmit(e) {
   const pinfl = document.getElementById("inpPinfl").value.trim();
   const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase();
   const passNum = document.getElementById("inpPassNum").value.trim();
-  const fio = document.getElementById("inpFio").value.trim();
+  let fio = document.getElementById("inpFio").value.trim();
   const birthDate = document.getElementById("inpBirthDate").value.trim();
-  const birthPlace = document.getElementById("inpBirthPlace").value.trim();
-  const currentJob = document.getElementById("inpCurrentJob").value.trim();
+  let birthPlace = document.getElementById("inpBirthPlace").value.trim();
+  let currentJob = document.getElementById("inpCurrentJob").value.trim();
   const jobSince = document.getElementById("inpJobSince").value.trim();
   const fileInput = document.getElementById("inpPhotoFile");
 
-  if (pinfl.length !== 14) {
-    alert("ПИНФЛ аниқ 14 та рақамдан иборат бўлиши шарт!");
-    return;
-  }
-  if (!/^\d{14}$/.test(pinfl)) {
-    alert("ПИНФЛ фақат рақамлардан иборат бўлиши керак!");
-    return;
-  }
-  if (!fio || !region || !district || !currentJob) {
-    alert("Барча мажбурий майдонларни тўлдиринг!");
-    return;
-  }
-  // Паспорт серияси текшируви
-  if (!/^[A-Z]{2}$/.test(passSeries)) {
-    alert("Паспорт серияси иккита катта ҳарфдан иборат бўлиши керак! (Масалан: AD, AB)");
-    return;
-  }
+  // 🆕 Автоконвертация
+  fio = latToCyr(fio);
+  birthPlace = latToCyr(birthPlace);
+  currentJob = latToCyr(currentJob);
 
   const finishCreate = (photoDataUrl) => {
     const now = getNow();
@@ -142,8 +337,8 @@ function handleCandidateFormSubmit(e) {
     const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-";
     const reestrNo = `${prefix}${now.year}/${now.month}-${num}`;
 
-    // 🆕 Ҳудуд сарлавҳасини тўғри ясаш
-    const districtHeading = buildDistrictHeading(region, district, category);
+    // 🆕 ЯКУНИЙ САРЛАВҲА
+    const districtHeading = getFinalHeading();
 
     const newCand = {
       id: "CAND-" + Date.now(),
@@ -183,6 +378,7 @@ function handleCandidateFormSubmit(e) {
       sentToBossByName: "",
       bossViewedAt: "",
       bossApprovedAt: "",
+      bossApprovedBy: "",
       bossReturnedAt: "",
       bossReturnReason: "",
       approvedDate: "",
@@ -193,11 +389,8 @@ function handleCandidateFormSubmit(e) {
 
     appState.candidates.unshift(newCand);
 
-    if (typeof logCandidateAdded === "function") {
-      logCandidateAdded(newCand);
-    }
+    if (typeof logCandidateAdded === "function") logCandidateAdded(newCand);
 
-    // 🔔 Уведомления: фақат Коррупция + Раҳбарга
     if (typeof addNotification === "function") {
       addNotification({
         type: "new_candidate",
@@ -211,16 +404,24 @@ function handleCandidateFormSubmit(e) {
 
     saveState();
     renderAll();
-    e.target.reset();
-    document.getElementById("pinflDuplicateBox").classList.add("hidden");
 
-    if (recordType === "former") {
-      switchTab("former");
-    } else if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") {
-      switchSubTab("new");
+    // Формани тозалаш
+    e.target.reset();
+
+    // Превьюни тозалаш
+    const headingField = document.getElementById("inpDistrictHeading");
+    if (headingField) {
+      headingField.value = "";
+      headingField.dataset.manualEdited = "false";
+      headingField.dataset.tracking = "";
     }
 
-    showToast(`✅ Янги номзод қўшилди! (${reestrNo})`, "success");
+    document.getElementById("pinflDuplicateBox").classList.add("hidden");
+
+    if (recordType === "former") switchTab("former");
+    else if (currentRole === ROLES.KORRUPSIYA && typeof switchSubTab === "function") switchSubTab("new");
+
+    showToast(`✅ Номзод қўшилди! (${reestrNo})`, "success");
   };
 
   if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -235,19 +436,13 @@ function handleCandidateFormSubmit(e) {
 }
 
 // =========================================================================
-// НОМЗОДНИ ТАҲРИРЛАШ (фақат Коррупция бўлими)
+// 8. ТАҲРИРЛАШ
 // =========================================================================
 
 function editCandidate(id) {
-  if (!hasPermission("edit_candidate")) {
-    alert("Рухсат йўқ! Фақат Коррупцияга қарши курашиш бўлими таҳрирлай олади.");
-    return;
-  }
+  if (!hasPermission("edit_candidate")) { alert("Рухсат йўқ!"); return; }
   const c = appState.candidates.find(x => x.id === id);
-  if (!c) {
-    alert("Номзод топилмади!");
-    return;
-  }
+  if (!c) return;
 
   activeCandidateId = id;
   setValueIfExists("editCandFio", c.fio);
@@ -262,10 +457,8 @@ function editCandidate(id) {
 
   const regionSel = document.getElementById("editCandRegion");
   if (regionSel) regionSel.value = c.region;
-
   const catSel = document.getElementById("editCandCategory");
   if (catSel) catSel.value = c.category;
-
   const appSel = document.getElementById("editCandAppointType");
   if (appSel) appSel.value = c.appointType;
 
@@ -284,9 +477,7 @@ function editCandidate(id) {
           `).join("")}
         </div>
       `;
-    } else {
-      histEl.classList.add("hidden");
-    }
+    } else histEl.classList.add("hidden");
   }
 
   const modal = document.getElementById("editCandidateModal");
@@ -298,46 +489,45 @@ function setValueIfExists(id, val) {
   if (el) el.value = val || "";
 }
 
-// =========================================================================
-// ТАҲРИРНИ САҚЛАШ (🔕 Уведомления ЮБОРИЛМАЙДИ!)
-// =========================================================================
-
 function saveEditedCandidate() {
-  if (!hasPermission("edit_candidate")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
-
+  if (!hasPermission("edit_candidate")) { alert("Рухсат йўқ!"); return; }
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
 
-  const newFio = document.getElementById("editCandFio").value.trim();
+  let newFio = document.getElementById("editCandFio").value.trim();
   const newPinfl = document.getElementById("editCandPinfl").value.trim();
   const newPassSeries = document.getElementById("editCandPassSeries").value.trim().toUpperCase();
   const newPassNum = document.getElementById("editCandPassNum").value.trim();
   const newBirthDate = document.getElementById("editCandBirthDate").value.trim();
-  const newBirthPlace = document.getElementById("editCandBirthPlace").value.trim();
-  const newCurrentJob = document.getElementById("editCandCurrentJob").value.trim();
+  let newBirthPlace = document.getElementById("editCandBirthPlace").value.trim();
+  let newCurrentJob = document.getElementById("editCandCurrentJob").value.trim();
   const newJobSince = document.getElementById("editCandJobSince").value.trim();
   const newDistrict = document.getElementById("editCandDistrict").value.trim();
   const newRegion = document.getElementById("editCandRegion").value;
   const newCategory = document.getElementById("editCandCategory").value;
   const newAppointType = document.getElementById("editCandAppointType").value;
 
-  if (!newFio || newPinfl.length !== 14) {
-    alert("Ф.И.Ш. ва ПИНФЛ (14 рақам) тўғри киритинг!");
-    return;
-  }
-  if (!/^\d{14}$/.test(newPinfl)) {
-    alert("ПИНФЛ фақат рақамлардан иборат бўлиши керак!");
-    return;
-  }
+  // Автоконвертация
+  newFio = latToCyr(newFio);
+  newBirthPlace = latToCyr(newBirthPlace);
+  newCurrentJob = latToCyr(newCurrentJob);
+
+  // Валидация
+  const fioErr = validateFIO(newFio);
+  if (fioErr) { alert(fioErr); return; }
+  if (!/^\d{14}$/.test(newPinfl)) { alert("ПИНФЛ 14 рақам!"); return; }
+  if (!/^[A-Z]{2}$/.test(newPassSeries)) { alert("Паспорт серияси 2 та катта ҳарф!"); return; }
+  if (!/^\d{7}$/.test(newPassNum)) { alert("Паспорт рақами 7 та рақам!"); return; }
+
+  const bdErr = validateDate(newBirthDate, "Туғилган сана");
+  if (bdErr) { alert(bdErr); return; }
+  const jsErr = validateDate(newJobSince, "Иш санаси");
+  if (jsErr) { alert(jsErr); return; }
+  const jobErr = validateCurrentJob(newCurrentJob);
+  if (jobErr) { alert(jobErr); return; }
 
   const dup = appState.candidates.find(x => x.pinfl === newPinfl && x.id !== c.id);
-  if (dup) {
-    alert(`⚠️ Бу ПИНФЛ бошқа номзодда бор!\n${dup.fio} (${dup.reestrNo})`);
-    return;
-  }
+  if (dup) { alert(`⚠️ ПИНФЛ бошқа номзодда: ${dup.fio}`); return; }
 
   const changes = [];
   const now = getNow();
@@ -355,25 +545,19 @@ function saveEditedCandidate() {
     { field: "Иш санаси", old: c.jobSince, new: newJobSince },
     { field: "Ҳудуд", old: c.region, new: newRegion },
     { field: "Йўналиш", old: c.category, new: newCategory },
-    { field: "Тайинлов", old: c.appointType, new: newAppointType }
+    { field: "Сарлавҳа", old: c.districtHeading, new: newDistrict }
   ];
 
   fieldsToCheck.forEach(f => {
     if (f.old !== f.new) {
       changes.push({
-        at: now.dateTime,
-        by: `${editorName} (${editor})`,
-        field: f.field,
-        oldValue: f.old || "",
-        newValue: f.new || ""
+        at: now.dateTime, by: `${editorName} (${editor})`,
+        field: f.field, oldValue: f.old || "", newValue: f.new || ""
       });
     }
   });
 
-  if (changes.length === 0) {
-    alert("Ҳеч қандай ўзгариш киритилмаган.");
-    return;
-  }
+  if (changes.length === 0) { alert("Ўзгариш йўқ."); return; }
 
   c.fio = newFio;
   c.pinfl = newPinfl;
@@ -386,24 +570,21 @@ function saveEditedCandidate() {
   c.region = newRegion;
   c.category = newCategory;
   c.appointType = newAppointType;
-
-  // 🆕 Ҳудуд сарлавҳасини қайта ясаш
-  c.districtHeading = buildDistrictHeading(newRegion, newDistrict, newCategory);
+  c.districtHeading = newDistrict;
 
   if (!Array.isArray(c.editHistory)) c.editHistory = [];
   c.editHistory = c.editHistory.concat(changes);
   c.lastEditedAt = now.dateTime;
   c.lastEditedBy = editor;
 
-  // 🔕 Audit log ёзилади (керак), лекин уведомления ЮБОРИЛМАЙДИ
   if (typeof addAuditLog === "function") {
-    addAuditLog("CANDIDATE_EDITED", `${c.id} | ${c.fio} | Ўзгаришлар: ${changes.map(ch => ch.field).join(", ")}`);
+    addAuditLog("CANDIDATE_EDITED", `${c.id} | ${c.fio} | ${changes.map(ch => ch.field).join(", ")}`);
   }
 
   saveState();
   renderAll();
   closeEditCandidateModal();
-  showToast(`✅ Таҳрир сақланди (${changes.length} та ўзгариш)`, "success");
+  showToast(`✅ Таҳрир сақланди (${changes.length} та)`, "success");
 }
 
 function closeEditCandidateModal() {
@@ -413,24 +594,17 @@ function closeEditCandidateModal() {
 }
 
 // =========================================================================
-// НОМЗОДНИ ЎЧИРИШ (🔕 Уведомления ЮБОРИЛМАЙДИ!)
+// 9. ЎЧИРИШ
 // =========================================================================
 
 function confirmDeleteCandidate(id) {
-  if (!hasPermission("delete_candidate")) {
-    alert("Рухсат йўқ! Фақат Коррупцияга қарши курашиш бўлими ўчира олади.");
-    return;
-  }
+  if (!hasPermission("delete_candidate")) { alert("Рухсат йўқ!"); return; }
   const c = appState.candidates.find(x => x.id === id);
   if (!c) return;
+  if (!confirm(`⚠️ «${c.fio}» ЎЧИРИЛСИНМИ?`)) return;
+  if (!confirm(`❌ ЯНА БИР МАРТА ТАСДИҚЛАНГ!`)) return;
 
-  if (!confirm(`⚠️ ДИҚҚАТ!\n\n«${c.fio}» (${c.reestrNo}) номзодини ЎЧИРМОҚЧИМИСИЗ?\n\nБу амални ортга қайтариб бўлмайди!`)) return;
-  if (!confirm(`❌ ЯНА БИР МАРТА ТАСДИҚЛАНГ!\n\n${c.fio}\nРеестр: ${c.reestrNo}\n\nҲақиқатан ўчирилсинми?`)) return;
-
-  // 🔕 Audit log ёзилади, уведомления ЮБОРИЛМАЙДИ
-  if (typeof addAuditLog === "function") {
-    addAuditLog("CANDIDATE_DELETED", `${c.id} | ${c.fio} | ${c.region} | Ўчирилди`);
-  }
+  if (typeof addAuditLog === "function") addAuditLog("CANDIDATE_DELETED", `${c.id} | ${c.fio}`);
 
   const idx = appState.candidates.findIndex(x => x.id === id);
   if (idx !== -1) appState.candidates.splice(idx, 1);
@@ -441,54 +615,35 @@ function confirmDeleteCandidate(id) {
 }
 
 // =========================================================================
-// ИЦ НАТИЖАСИНИ САҚЛАШ
+// 10. ИЦ + БОШЛИҚҚА ЮБОРИШ
 // =========================================================================
 
 function quickSaveItsRow(id, notify = false) {
-  if (!hasPermission("edit_its")) {
-    alert("Рухсат йўқ! Фақат Коррупция бўлими ИЦ кирита олади.");
-    return;
-  }
+  if (!hasPermission("edit_its")) { alert("Рухсат йўқ!"); return; }
   const c = appState.candidates.find(x => x.id === id);
   if (!c) return;
 
   const selEl = document.getElementById(`itsSel_${id}`);
   const txtEl = document.getElementById(`itsTxt_${id}`);
-  if (!selEl || !txtEl) {
-    alert("Майдонлар топилмади!");
-    return;
-  }
+  if (!selEl || !txtEl) return;
 
   const sel = selEl.value;
   const txt = txtEl.value.trim();
 
   c.sudlanganStatus = sel;
   c.itsChecked = true;
-  if (sel === "clean") {
-    c.sudlanganText = txt || "муқаддам судланмаган";
-  } else {
-    c.sudlanganText = txt.includes("судланган") ? txt : `муқаддам судланган (${txt || "ЖК моддаси аниқланди"})`;
-  }
+  if (sel === "clean") c.sudlanganText = txt || "муқаддам судланмаган";
+  else c.sudlanganText = txt.includes("судланган") ? txt : `муқаддам судланган (${txt || "ЖК моддаси аниқланди"})`;
 
-  if (typeof logITSChecked === "function") {
-    logITSChecked(c, sel, c.sudlanganText);
-  }
+  if (typeof logITSChecked === "function") logITSChecked(c, sel, c.sudlanganText);
 
   saveState();
   renderAll();
   if (notify) showToast(`✅ ${c.fio} — ИЦ сақланди`, "success");
 }
 
-// =========================================================================
-// БОШЛИҚҚА ЮБОРИШ
-// =========================================================================
-
 function bulkSendCleanToBoss() {
-  if (!hasPermission("send_to_boss")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
-
+  if (!hasPermission("send_to_boss")) { alert("Рухсат йўқ!"); return; }
   let count = 0;
   appState.candidates.forEach(c => {
     if (c.workflowStage === "admin_review" && c.sudlanganStatus === "clean" && c.itsChecked) {
@@ -497,89 +652,51 @@ function bulkSendCleanToBoss() {
       count++;
     }
   });
-
-  if (count === 0) {
-    showToast("Юбориш учун тоза чиққан номзод йўқ", "warning");
-    return;
-  }
-
+  if (count === 0) { showToast("Тоза чиққан номзод йўқ", "warning"); return; }
   saveState();
   renderAll();
-  showToast(`📤 ${count} нафар номзод Бўлим бошлиғига юборилди`, "success");
+  showToast(`📤 ${count} нафар юборилди`, "success");
 }
 
 // =========================================================================
-// ФОЙДАЛАНУВЧИ ЎЧИРИШ (🔕 Уведомления ЮБОРИЛМАЙДИ)
+// 11. ФОЙДАЛАНУВЧИ
 // =========================================================================
 
 function deleteUser(idx) {
-  if (!hasPermission("delete_user")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
+  if (!hasPermission("delete_user")) { alert("Рухсат йўқ!"); return; }
   const u = appState.users[idx];
   if (!u) return;
-  if (u.login === "admin") {
-    alert("Асосий админни ўчириб бўлмайди!");
-    return;
-  }
-  if (!confirm(`«${u.name}» (${u.login}) фойдаланувчисини ўчирмоқчимисиз?`)) return;
-
-  if (typeof addAuditLog === "function") {
-    addAuditLog("USER_DELETE", `${u.login} ўчирилди`);
-  }
-
+  if (u.login === "admin") { alert("Асосий админ ўчирилмайди!"); return; }
+  if (!confirm(`«${u.name}» ўчирилсинми?`)) return;
+  if (typeof addAuditLog === "function") addAuditLog("USER_DELETE", `${u.login}`);
   appState.users.splice(idx, 1);
   saveState();
   renderUsersTable();
   showToast(`🗑 ${u.name} ўчирилди`, "warning");
 }
 
-// =========================================================================
-// ФОЙДАЛАНУВЧИ ЯРАТИШ
-// =========================================================================
-
 async function handleUserCreateSubmit(e) {
   e.preventDefault();
-  if (!hasPermission("create_user")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
+  if (!hasPermission("create_user")) { alert("Рухсат йўқ!"); return; }
 
   const name = document.getElementById("newUserName").value.trim();
   const role = document.getElementById("newUserRole").value;
   const login = document.getElementById("newUserLogin").value.trim();
   const pass = document.getElementById("newUserPass").value.trim();
 
-  if (!name || !login || !pass) {
-    alert("Барча майдонларни тўлдиринг!");
-    return;
-  }
-  if (appState.users.some(u => u.login === login)) {
-    alert("❌ Бу логин банд!");
-    return;
-  }
-  if (pass.length < 6) {
-    alert("Парол камида 6 та белгидан иборат бўлиши керак!");
-    return;
-  }
+  if (!name || !login || !pass) { alert("Барча майдонларни тўлдиринг!"); return; }
+  if (appState.users.some(u => u.login === login)) { alert("Логин банд!"); return; }
+  if (pass.length < 6) { alert("Парол 6+ белги!"); return; }
 
   const passHash = await hashPassword(pass);
-  if (!passHash) {
-    alert("Парол хешлашда хато!");
-    return;
-  }
+  if (!passHash) { alert("Хешлаш хато!"); return; }
 
   appState.users.push({ login, passHash, name, role });
-
-  if (typeof addAuditLog === "function") {
-    addAuditLog("USER_CREATE", `${login} (${ROLE_NAMES[role] || role}) яратилди`);
-  }
-
+  if (typeof addAuditLog === "function") addAuditLog("USER_CREATE", `${login} (${role})`);
   saveState();
   renderUsersTable();
   e.target.reset();
-  showToast(`✅ Фойдаланувчи (${login}) яратилди`, "success");
+  showToast(`✅ ${login} яратилди`, "success");
 }
 
-console.log("✅ 08-candidates.js юкланди (v9.1 — бошқармаси + ҳудуд)");
+console.log("✅ 08-candidates.js юкланди (v10.0 — Ақлли сарлавҳа + Қўлда тузатиш)");
