@@ -1,65 +1,48 @@
 /* =========================================================================
-   «КОМПЛАЕНС-КАДР» v9.0 — Асосий стиллар
-   Кадастр агентлиги — расмий, майин дизайн
+   «КОМПЛАЕНС-КАДР» v10.1 — Асосий стиллар
    ========================================================================= */
 
-/* -------------------- ШРИФТЛАР -------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* -------------------- ЎЗГАРУВЧИЛАР -------------------- */
 :root {
-  /* Фон ва карточкалар */
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
   --bg-header: #0f2942;
   --bg-sidebar: #f1f5f9;
-
-  /* Матн */
   --text-main: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
   --text-inverse: #f8fafc;
-
-  /* Чегаралар */
   --border-col: #e2e8f0;
   --border-strong: #cbd5e1;
-
-  /* Ранг акцентлар */
   --accent-blue: #4a6fa5;
   --accent-blue-dark: #1e3a5f;
   --accent-green: #059669;
   --accent-amber: #d97706;
   --accent-red: #dc2626;
   --accent-purple: #7c3aed;
-
-  /* Соялар */
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
   --shadow-xl: 0 20px 48px rgba(15, 23, 42, 0.18);
 }
 
-/* -------------------- ТУНГИ РЕЖИМ -------------------- */
 body.dark-mode {
   --bg-main: #0b1120;
   --bg-card: #1e293b;
   --bg-header: #050b14;
   --bg-sidebar: #0f172a;
-
   --text-main: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --text-inverse: #0f172a;
-
   --border-col: #334155;
   --border-strong: #475569;
-
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
-/* -------------------- АСОСИЙ -------------------- */
 * {
   box-sizing: border-box;
 }
@@ -82,34 +65,29 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* -------------------- СКРОЛЛБАР -------------------- */
+/* СКРОЛЛБАР */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
-
 ::-webkit-scrollbar-track {
   background: var(--bg-main);
   border-radius: 5px;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 5px;
   border: 2px solid var(--bg-main);
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
-
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) var(--bg-main);
 }
 
-/* -------------------- САРЛАВҲА ВА МАТН -------------------- */
+/* САРЛАВҲА */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-main);
   font-weight: 700;
@@ -134,7 +112,7 @@ a:hover {
 }
 
 /* =========================================================================
-   РАСМИЙ ҲУЖЖАТ ЖАДВАЛИ (A4, Word/Excel учун)
+   РАСМИЙ ҲУЖЖАТ ЖАДВАЛИ
    ========================================================================= */
 
 .doc-serif {
@@ -144,6 +122,7 @@ a:hover {
 .official-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-family: 'Times New Roman', Times, serif;
   background: #ffffff;
   color: #000000;
@@ -157,6 +136,8 @@ a:hover {
   vertical-align: middle;
   font-size: 14px;
   line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .official-table thead th {
@@ -173,7 +154,6 @@ a:hover {
   background-color: rgba(74, 111, 165, 0.05);
 }
 
-/* Тунги режимда расмий жадвал */
 body.dark-mode .official-table {
   background-color: #1e293b;
   color: #f1f5f9;
@@ -195,7 +175,7 @@ body.dark-mode .official-table tbody tr:hover {
 }
 
 /* =========================================================================
-   АСОСИЙ КАРТОЧКАЛАР
+   КАРТОЧКАЛАР
    ========================================================================= */
 
 .dark-card {
@@ -245,24 +225,155 @@ body.dark-mode .dark-card {
 }
 
 /* =========================================================================
+   🆕 РАСМ DRAG & DROP ЗОНАСИ
+   ========================================================================= */
+
+.photo-drop-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #f8fafc;
+  user-select: none;
+}
+
+.photo-drop-zone:hover {
+  border-color: var(--accent-blue);
+  background: #eff6ff;
+}
+
+.photo-drop-zone.drag-over {
+  border-color: #3b82f6;
+  border-style: solid;
+  background: #dbeafe;
+  transform: scale(1.02);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.photo-drop-zone.has-photo {
+  padding: 8px;
+  border-style: solid;
+  border-color: var(--accent-green);
+  background: #f0fdf4;
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.drop-zone-content .drop-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.drop-zone-content .drop-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.drop-zone-content .drop-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.drop-zone-content .drop-file-btn {
+  margin-top: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.drop-zone-content .drop-file-btn:hover {
+  background: var(--accent-blue-dark);
+}
+
+.drop-zone-preview {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+.drop-zone-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(220, 38, 38, 0.9);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone-clear:hover {
+  background: #b91c1c;
+}
+
+body.dark-mode .photo-drop-zone {
+  background: #0f172a;
+  border-color: #475569;
+}
+
+body.dark-mode .photo-drop-zone:hover {
+  background: #1e293b;
+  border-color: var(--accent-blue);
+}
+
+body.dark-mode .photo-drop-zone.drag-over {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+}
+
+body.dark-mode .photo-drop-zone.has-photo {
+  background: #064e3b;
+  border-color: #10b981;
+}
+
+body.dark-mode .drop-zone-content .drop-text {
+  color: #cbd5e1;
+}
+
+/* =========================================================================
    АНИМАЦИЯЛАР
    ========================================================================= */
 
-/* Судланганлик огоҳлантириши */
 @keyframes pulseDanger {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
 }
 
 .sudlangan-alert-pulse {
   animation: pulseDanger 1.8s infinite;
 }
 
-/* Realtime dot */
 .realtime-dot {
   display: inline-block;
   width: 8px;
@@ -275,17 +386,29 @@ body.dark-mode .dark-card {
 }
 
 @keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Тугма hover */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 button {
   transition: all 0.2s ease;
   font-family: inherit;
@@ -300,7 +423,6 @@ button:disabled {
   opacity: 0.5;
 }
 
-/* Input focus */
 input:focus,
 select:focus,
 textarea:focus {
@@ -309,7 +431,6 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.15);
 }
 
-/* Тунги режимда input */
 body.dark-mode input,
 body.dark-mode select,
 body.dark-mode textarea {
@@ -325,55 +446,58 @@ body.dark-mode textarea:focus {
   box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.25);
 }
 
-/* Тунги режимда option */
 body.dark-mode select option {
   background-color: #1e293b;
   color: #f1f5f9;
 }
 
-/* =========================================================================
-   МОДАЛ ОЙНАЛАР
-   ========================================================================= */
-
-/* Модал backdrop */
+/* МОДАЛЛАР */
 [id$="Modal"]:not(.hidden),
 #loginOverlay:not(.hidden),
 #notificationPanel:not(.hidden) {
   animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Модал ойна (ички) */
 [id$="Modal"] > div:not(.hidden) {
   animation: slideUp 0.25s ease;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+#notificationPanel {
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.2s ease;
 }
 
 /* =========================================================================
-   ТУГМАЛАР (hover-effektlar)
+   HEADER
    ========================================================================= */
 
-button:not(:disabled):hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+header {
+  background: linear-gradient(180deg, #0f2942 0%, #0a1929 100%) !important;
+  border-bottom: 2px solid #4a6fa5 !important;
+}
+
+body.dark-mode header {
+  background: linear-gradient(180deg, #050b14 0%, #0a1120 100%) !important;
+  border-bottom-color: #1e3a5f !important;
+}
+
+body.dark-mode .bg-slate-800\/95 {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+}
+
+#currentRoleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px !important;
+  background: rgba(74, 111, 165, 0.12);
+  border: 1px solid rgba(74, 111, 165, 0.3);
+  border-radius: 8px;
+  color: #c7d2fe !important;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-size: 11px !important;
 }
 
 /* =========================================================================
@@ -381,38 +505,18 @@ button:not(:disabled):hover {
    ========================================================================= */
 
 @media (max-width: 768px) {
-  body {
-    font-size: 14px;
-  }
-
-  .official-table {
-    font-size: 12px;
-  }
-
-  .official-table th,
-  .official-table td {
+  body { font-size: 14px; }
+  .official-table { font-size: 12px; }
+  .official-table th, .official-table td {
     padding: 5px 6px;
     font-size: 12px;
   }
-
-  .a4-sheet {
-    width: 100%;
-    padding: 10mm;
-  }
-
-  header .flex-wrap {
-    row-gap: 8px;
-  }
+  .a4-sheet { width: 100%; padding: 10mm; }
 }
 
 @media (max-width: 480px) {
-  body {
-    font-size: 13px;
-  }
-
-  .official-table {
-    font-size: 11px;
-  }
+  body { font-size: 13px; }
+  .official-table { font-size: 11px; }
 }
 
 /* =========================================================================
@@ -420,19 +524,11 @@ button:not(:disabled):hover {
    ========================================================================= */
 
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 12mm 14mm 12mm 18mm;
-  }
+  @page { size: A4 portrait; margin: 12mm 14mm 12mm 18mm; }
 
-  body * {
-    visibility: hidden !important;
-  }
+  body * { visibility: hidden !important; }
 
-  #docModal,
-  #docModal * {
-    visibility: visible !important;
-  }
+  #docModal, #docModal * { visibility: visible !important; }
 
   #docModal {
     position: absolute !important;
@@ -446,9 +542,7 @@ button:not(:disabled):hover {
     backdrop-filter: none !important;
   }
 
-  .no-print {
-    display: none !important;
-  }
+  .no-print { display: none !important; }
 
   .a4-sheet {
     width: 100% !important;
@@ -469,193 +563,14 @@ button:not(:disabled):hover {
    ЁРДАМЧИ КЛАССЛАР
    ========================================================================= */
 
-/* Чегаралар */
-.border-official {
-  border: 2px solid var(--accent-blue-dark);
+.no-transform, .no-transform * { transform: none !important; }
+.no-shadow { box-shadow: none !important; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
 }
-
-/* Ранг матни */
-.text-official-blue {
-  color: var(--accent-blue-dark);
-}
-
-.text-official-green {
-  color: var(--accent-green);
-}
-
-.text-official-red {
-  color: var(--accent-red);
-}
-
-/* Нафас оладиган оралиқ */
-.spacing-relaxed {
-  padding: 1.25rem;
-  line-height: 1.7;
-}
-
-/* Badge ранглари */
-.badge-status-new {
-  background: rgba(74, 111, 165, 0.15);
-  color: #1e3a5f;
-  border: 1px solid #4a6fa5;
-}
-
-.badge-status-in-process {
-  background: rgba(217, 119, 6, 0.15);
-  color: #92400e;
-  border: 1px solid #d97706;
-}
-
-.badge-status-approved {
-  background: rgba(5, 150, 105, 0.15);
-  color: #065f46;
-  border: 1px solid #059669;
-}
-
-.badge-status-danger {
-  background: rgba(220, 38, 38, 0.15);
-  color: #991b1b;
-  border: 1px solid #dc2626;
-}
-
-/* =========================================================================
-   ХОС КЛАССЛАР
-   ========================================================================= */
-
-/* Сана ва вақт кўрсаткичи */
-.timestamp-small {
-  font-size: 10px;
-  font-family: 'Courier New', monospace;
-  color: var(--text-muted);
-  letter-spacing: -0.02em;
-}
-
-/* Жараён тарихи блок */
-.timeline-block {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  background-color: var(--bg-sidebar);
-  border: 1px solid var(--border-col);
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-.timeline-block .timeline-title {
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 4px;
-}
-
-.timeline-block .timeline-item {
-  color: var(--text-secondary);
-  padding: 1px 0;
-}
-
-/* =========================================================================
-   РОЛ БАННЕР (роль кўрсаткичи)
-   ========================================================================= */
-
-#currentRoleLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px !important;
-  background: rgba(74, 111, 165, 0.12);
-  border: 1px solid rgba(74, 111, 165, 0.3);
-  border-radius: 8px;
-  color: #c7d2fe !important;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  font-size: 11px !important;
-}
-
-/* =========================================================================
-   HEADER ЯХШИЛАШ
-   ========================================================================= */
-
-header {
-  background: linear-gradient(180deg, #0f2942 0%, #0a1929 100%) !important;
-  border-bottom: 2px solid #4a6fa5 !important;
-}
-
-/* =========================================================================
-   SCROLLABLE БЛОКЛАР
-   ========================================================================= */
-
-.scroll-area {
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-/* =========================================================================
-   СУБ-ТАБЛАР (Фототаблицада)
-   ========================================================================= */
-
-#subtabNew,
-#subtabInProcess,
-#subtabApproved {
-  transition: all 0.2s ease;
-}
-
-#subtabNew.active,
-#subtabInProcess.active,
-#subtabApproved.active {
-  background-color: #1e3a5f !important;
-  color: white !important;
-  box-shadow: var(--shadow-md);
-}
-
-/* =========================================================================
-   УВЕДОМЛЕНИЯ ПАНЕЛИ
-   ========================================================================= */
-
-#notificationPanel {
-  backdrop-filter: blur(10px);
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* =========================================================================
-   ТУНГИ РЕЖИМДА ҚЎШИМЧА
-   ========================================================================= */
-
-body.dark-mode header {
-  background: linear-gradient(180deg, #050b14 0%, #0a1120 100%) !important;
-  border-bottom-color: #1e3a5f !important;
-}
-
-body.dark-mode .bg-slate-800\/95 {
-  background-color: rgba(15, 23, 42, 0.95) !important;
-}
-
-/* =========================================================================
-   ФОКУС ЭЛЕМЕНТЛАР
-   ========================================================================= */
-
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
-}
-
-/* =========================================================================
-   ТУГМА ҲОЛАТЛАРИ
-   ========================================================================= */
 
 .btn-loading {
   position: relative;
@@ -666,10 +581,8 @@ button:focus-visible {
 .btn-loading::after {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
+  top: 50%; left: 50%;
+  width: 16px; height: 16px;
   margin: -8px 0 0 -8px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
@@ -677,49 +590,5 @@ button:focus-visible {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* =========================================================================
-   ГЛОБАЛ СПИННЕР
-   ========================================================================= */
-
-#globalLoadingSpinner {
-  animation: fadeIn 0.2s ease;
-}
-
-#globalLoadingSpinner .animate-spin {
-  animation: spin 0.8s linear infinite;
-}
-
-/* =========================================================================
-   ОХИРГИ ТЕКШИРУВ ВА CLEANUP
-   ========================================================================= */
-
-/* Ҳеч қандай трансформациялар бўлмаслиги учун */
-.no-transform,
-.no-transform * {
-  transform: none !important;
-}
-
-/* Ҳеч қандай соя бўлмаслиги учун */
-.no-shadow {
-  box-shadow: none !important;
-}
-
-/* Flex center ёрдамчи */
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Grid auto fit */
-.grid-auto {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
+#globalLoadingSpinner { animation: fadeIn 0.2s ease; }
+#globalLoadingSpinner .animate-spin { animation: spin 0.8s linear infinite; }
