@@ -1,7 +1,6 @@
 // =========================================================================
 // 07-RENDER.JS — Барча жадвалларни чизиш
-// «КОМПЛАЕНС-КАДР» v9.0
-// 3 та суб-таб: 🆕 Янги | ⏳ Бошлиқда | ✅ Тугатилган
+// «КОМПЛАЕНС-КАДР» v10.1 — Тўғирланган colspan + Drag&Drop учун
 // =========================================================================
 
 // =========================================================================
@@ -37,11 +36,10 @@ function renderAll() {
     updateNotificationBadge();
   }
 
-  // Filter селектларини тўлдириш (агар бўш бўлса)
+  // Filter селектларини тўлдириш
   populateRegionSelects();
 }
 
-// -------------------- KPI ЁРДАМЧИ --------------------
 function setKpi(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
@@ -54,24 +52,21 @@ function setKpi(id, val) {
 function renderSubtabsCounters() {
   const all = appState.candidates || [];
 
-  // 🆕 Янги (admin_review)
   const newCount = all.filter(c => c.recordType === "current" && c.workflowStage === "admin_review").length;
   const newBadge = document.getElementById("subtabNewCount");
   if (newBadge) newBadge.textContent = newCount;
 
-  // ⏳ Бошлиқда (boss_review)
   const inProcCount = all.filter(c => c.recordType === "current" && c.workflowStage === "boss_review").length;
   const inProcBadge = document.getElementById("subtabInProcessCount");
   if (inProcBadge) inProcBadge.textContent = inProcCount;
 
-  // ✅ Тугатилган (approved)
   const apprCount = all.filter(c => c.recordType === "current" && c.workflowStage === "approved").length;
   const apprBadge = document.getElementById("subtabApprovedCount");
   if (apprBadge) apprBadge.textContent = apprCount;
 }
 
 // =========================================================================
-// 1. DASHBOARD
+// 1. DASHBOARD (13 USTUN)
 // =========================================================================
 
 function renderDashboardTable() {
@@ -95,7 +90,6 @@ function renderDashboardTable() {
     const appr = list.filter(c => c.workflowStage === "approved").length;
     const sud = list.filter(c => c.sudlanganStatus === "sudlangan").length;
 
-    // Клик учун функция (Dashboard Detail)
     const onclick = (type) => `onclick="openDashboardDetail('${reg}', '${type}')" class="cursor-pointer hover:bg-blue-50 transition"`;
 
     html += `
@@ -120,26 +114,15 @@ function renderDashboardTable() {
   tbody.innerHTML = html;
 }
 
-// -------------------- DASHBOARD КЛИК --------------------
 function openDashboardDetail(region, type) {
-  // Фототаблицага ўтиш
-  if (typeof switchTab === "function") {
-    switchTab("fototablitsa");
-  }
+  if (typeof switchTab === "function") switchTab("fototablitsa");
 
-  // Ҳудуд фильтрини танлаш
   setTimeout(() => {
     const regionFilter = document.getElementById("fotoRegionFilter");
-    if (regionFilter) {
-      regionFilter.value = region === "ALL" ? "ALL" : region;
-    }
+    if (regionFilter) regionFilter.value = region === "ALL" ? "ALL" : region;
 
-    // Суб-табни танлаш (type бўйича)
-    if (type === "approved" && typeof switchSubTab === "function") {
-      switchSubTab("approved");
-    } else if ((type === "in_process" || type === "sudlangan") && typeof switchSubTab === "function") {
-      switchSubTab("in_process");
-    }
+    if (type === "approved" && typeof switchSubTab === "function") switchSubTab("approved");
+    else if ((type === "in_process" || type === "sudlangan") && typeof switchSubTab === "function") switchSubTab("in_process");
 
     if (typeof renderAll === "function") renderAll();
   }, 100);
@@ -165,7 +148,7 @@ function getDetailTitle(type) {
 }
 
 // =========================================================================
-// 2. ФОТОТАБЛИЦА (3 та суб-таб)
+// 2. ФОТОТАБЛИЦА (5 USTUN — ТЎҒИРЛАНДИ!)
 // =========================================================================
 
 function renderFototablitsaTable() {
@@ -178,7 +161,6 @@ function renderFototablitsaTable() {
   const regFilter = regFilterEl ? regFilterEl.value : "ALL";
   const catFilter = catFilterEl ? catFilterEl.value : "ALL";
 
-  // Суб-таб бўйича фильтр
   let workflowFilter = [];
   if (currentSubTab === "new") {
     workflowFilter = ["admin_review"];
@@ -188,7 +170,6 @@ function renderFototablitsaTable() {
     workflowFilter = ["approved"];
   }
 
-  // HR учун махсус: "Янги" ва "Бошлиқда" — иккаласи "Ўрганишда"
   if (currentRole === ROLES.KADR) {
     if (currentSubTab === "in_process") {
       workflowFilter = ["admin_review", "boss_review"];
@@ -205,17 +186,17 @@ function renderFototablitsaTable() {
 
   if (filtered.length === 0) {
     const subtabNames = {
-  new: "🆕 Янги келганлар",
-  in_process: "⏳ Тасдиқлаш жараёнида",
-  approved: "✅ Ўрганиб чиқилган"
-};
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500 font-bold">
+      new: "🆕 Янги келганлар",
+      in_process: "⏳ Тасдиқлаш жараёнида",
+      approved: "✅ Ўрганиб чиқилган"
+    };
+    // ✅ 5 USTUN учун colspan="5"
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500 font-bold">
       ${subtabNames[currentSubTab] || ""} бўлимида ёзувлар топилмади
     </td></tr>`;
     return;
   }
 
-  // Гуруҳлаш (districtHeading + appointType)
   const groups = {};
   filtered.forEach(c => {
     const key = `${c.districtHeading}|||${c.appointType}`;
@@ -228,11 +209,12 @@ function renderFototablitsaTable() {
 
   Object.keys(groups).forEach(key => {
     const [heading, appType] = key.split("|||");
+    // ✅ 5 USTUN учун colspan="5"
     html += `
       <tr>
-        <td colspan="6" class="text-center font-bold py-2 bg-slate-50" style="font-size:15px;">
+        <td colspan="5" class="text-center font-bold py-2 bg-slate-50" style="font-size:14px;">
           <span class="text-blue-950">${heading}</span>
-          <span class="text-red-600"> ${appType || ""}</span>
+          <span class="text-red-600"> ${appType ? " " + appType : ""}</span>
         </td>
       </tr>
     `;
@@ -245,14 +227,11 @@ function renderFototablitsaTable() {
   tbody.innerHTML = html;
 }
 
-// -------------------- БИТТА НОМЗОД ҚАТОРИ --------------------
 function renderCandidateRow(c, counter) {
-  // Киритилган вақт
   const createdInfo = c.createdTime
     ? `<div class="text-[10px] text-slate-500 font-mono mt-0.5">🕐 ${c.createdAt} ${c.createdTime}</div>`
     : `<div class="text-[10px] text-slate-500 font-mono mt-0.5">🕐 ${c.createdAt}</div>`;
 
-  // Жараён вақтлари (фақат коррупция/раҳбар учун)
   let timelineHtml = "";
   if (currentRole === ROLES.KORRUPSIYA || currentRole === ROLES.RAHBAR) {
     const steps = [];
@@ -276,7 +255,7 @@ function renderCandidateRow(c, counter) {
     <tr>
       <td class="text-center font-bold">${counter}.</td>
       <td class="text-center">
-        <img src="${c.photo}" alt="Фото" style="width:80px;height:100px;object-fit:cover;margin:0 auto;border:1px solid #334155;" />
+        <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
       </td>
       <td class="text-center">
         <div class="font-bold text-sm">${c.fio}</div>
@@ -297,14 +276,14 @@ function renderCandidateRow(c, counter) {
 }
 
 // =========================================================================
-// АМАЛ ТУГМАЛАРИ (РОЛ БЎЙИЧА)
+// РОЛ БЎЙИЧА АМАЛ ТУГМАЛАРИ
 // =========================================================================
 
 function renderActionCell(c) {
   const resultBadge = getFinalResultBadge(c);
   const isSudlangan = c.sudlanganStatus === "sudlangan";
 
-  // ==================== КАДРЛАР ====================
+  // КАДРЛАР
   if (currentRole === ROLES.KADR) {
     if (c.workflowStage === "approved") {
       return `
@@ -317,7 +296,6 @@ function renderActionCell(c) {
         </div>
       `;
     }
-    // admin_review ёки boss_review — иккаласи "Ўрганиш жараёнида" кўринади
     return `
       <div class="space-y-1 text-center">
         ${resultBadge}
@@ -326,7 +304,7 @@ function renderActionCell(c) {
     `;
   }
 
-  // ==================== КОРРУПСИЯ БЎЛИМИ ====================
+  // КОРРУПСИЯ
   if (currentRole === ROLES.KORRUPSIYA) {
     let stageInfo = "";
     if (c.workflowStage === "admin_review") {
@@ -350,7 +328,7 @@ function renderActionCell(c) {
           <button onclick="openEditorModal('${c.id}')" class="flex-1 py-1.5 px-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] cursor-pointer">
             ✍️ Таҳрир
           </button>
-          <button onclick="editCandidate('${c.id}')" class="py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] cursor-pointer" title="Ходим маълумотини таҳрирлаш">
+          <button onclick="editCandidate('${c.id}')" class="py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] cursor-pointer" title="Маълумотни таҳрирлаш">
             ✏️
           </button>
           <button onclick="confirmDeleteCandidate('${c.id}')" class="py-1.5 px-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] cursor-pointer" title="Ўчириш">
@@ -364,7 +342,7 @@ function renderActionCell(c) {
     `;
   }
 
-  // ==================== РАҲБАР ====================
+  // РАҲБАР
   if (currentRole === ROLES.RAHBAR) {
     if (c.workflowStage === "admin_review") {
       return `
@@ -406,7 +384,7 @@ function renderActionCell(c) {
     `;
   }
 
-  // ==================== КУЗАТУВЧИ ====================
+  // КУЗАТУВЧИ
   if (currentRole === ROLES.KUZATUVCHI) {
     if (c.workflowStage !== "approved") {
       return `
@@ -431,7 +409,7 @@ function renderActionCell(c) {
 }
 
 // =========================================================================
-// 3. СОБИҚ ХОДИМЛАР
+// 3. СОБИҚ ХОДИМЛАР (5 USTUN — ТЎҒИРЛАНДИ!)
 // =========================================================================
 
 function renderFormerTable() {
@@ -448,7 +426,8 @@ function renderFormerTable() {
   });
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`;
+    // ✅ ТЎҒИРЛАНДИ: colspan="5" (6 эмас)
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`;
     return;
   }
 
@@ -461,9 +440,8 @@ function renderFormerTable() {
       <tr>
         <td class="text-center font-bold">${i + 1}.</td>
         <td class="text-center">
-          <td class="text-center">
-  <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
-</td>
+          <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
+        </td>
         <td class="text-center">
           <div class="font-bold text-sm">${c.fio}</div>
           <div class="mt-1 text-xs">${c.birthDate} йил, ${c.birthPlace}</div>
@@ -483,7 +461,7 @@ function renderFormerTable() {
 }
 
 // =========================================================================
-// 4. ИЦ ЖАДВАЛИ
+// 4. ИЦ ЖАДВАЛИ (9 USTUN)
 // =========================================================================
 
 function renderItsTable() {
@@ -503,6 +481,7 @@ function renderItsTable() {
   });
 
   if (list.length === 0) {
+    // ✅ 9 USTUN
     tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`;
     return;
   }
@@ -551,7 +530,7 @@ function renderItsTable() {
 }
 
 // =========================================================================
-// 5. СУДЛАНГАНЛАР
+// 5. СУДЛАНГАНЛАР (7 USTUN)
 // =========================================================================
 
 function renderNegativeTable() {
@@ -587,7 +566,7 @@ function renderNegativeTable() {
 }
 
 // =========================================================================
-// 6. ЯГОНА БАЗА
+// 6. ЯГОНА БАЗА (7 USTUN)
 // =========================================================================
 
 function renderDatabaseTable() {
@@ -659,7 +638,7 @@ function renderDatabaseTable() {
 }
 
 // =========================================================================
-// 7. ФОЙДАЛАНУВЧИЛАР
+// 7. ФОЙДАЛАНУВЧИЛАР (5 USTUN)
 // =========================================================================
 
 function renderUsersTable() {
@@ -689,6 +668,11 @@ function renderUsersTable() {
 }
 
 // =========================================================================
+// 8. АУДИТ-ЛОГ (6 USTUN) — 03-audit.js да
+// =========================================================================
+// renderAuditTable() 03-audit.js да
+
+// =========================================================================
 // ЁРДАМЧИ ФУНКЦИЯЛАР
 // =========================================================================
 
@@ -703,9 +687,9 @@ function getFinalResultPlainText(c) {
   return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
 }
 
-// -------------------- ҲУДУД СЕЛЕКТЛАРИНИ ТЎЛДИРИШ --------------------
 function populateRegionSelects() {
   const inpReg = document.getElementById("inpRegion");
+  const editReg = document.getElementById("editCandRegion");
   const fotoReg = document.getElementById("fotoRegionFilter");
   const formerReg = document.getElementById("formerRegionFilter");
   const dbReg = document.getElementById("dbRegionFilter");
@@ -713,9 +697,10 @@ function populateRegionSelects() {
   const allOpt = `<option value="ALL">Барча ҳудудлар (14 та)</option>` +
     REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
 
-  if (inpReg && inpReg.options.length === 0) {
-    inpReg.innerHTML = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
-  }
+  const singleOpts = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+
+  if (inpReg && inpReg.options.length === 0) inpReg.innerHTML = singleOpts;
+  if (editReg && editReg.options.length === 0) editReg.innerHTML = singleOpts;
 
   [fotoReg, formerReg, dbReg].forEach(el => {
     if (el && el.options.length === 0) {
@@ -723,7 +708,6 @@ function populateRegionSelects() {
     }
   });
 
-  // Санани кўрсатиш
   const dateLabel = document.getElementById("fotoCurrentDateLabel");
   if (dateLabel) {
     const now = getNow();
@@ -731,5 +715,4 @@ function populateRegionSelects() {
   }
 }
 
-// -------------------- ЛОГ ----------
-console.log("✅ 07-render.js юкланди");
+console.log("✅ 07-render.js юкланди (v10.1 — colspan тузатилди)");
