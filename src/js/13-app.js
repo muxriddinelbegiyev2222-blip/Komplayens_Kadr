@@ -1,6 +1,6 @@
 // =========================================================================
 // 13-APP.JS — Асосий инициализация ва Event Listeners
-// «КОМПЛАЕНС-КАДР» v9.0
+// «КОМПЛАЕНС-КАДР» v10.0
 // ЭНГ ОХИРГИ МОДУЛ — барча модулларни боғлайди
 // =========================================================================
 
@@ -9,7 +9,7 @@
 // =========================================================================
 
 async function initApp() {
-  console.log("🚀 «КОМПЛАЕНС-КАДР» v9.0 ишга тушмоқда...");
+  console.log("🚀 «КОМПЛАЕНС-КАДР» v10.0 ишга тушмоқда...");
   console.log("=".repeat(60));
 
   try {
@@ -18,15 +18,21 @@ async function initApp() {
     console.log(`📊 Стейт юкланди: ${appState.candidates.length} та номзод, ${appState.users.length} та фойдаланувчи`);
 
     // ============ 2. УВЕДОМЛЕНИЯЛАРНИ ЮКЛАШ ============
-    loadNotifications();
-    console.log(`🔔 Уведомлениялар: ${notificationsList.length} та`);
+    if (typeof loadNotifications === "function") {
+      loadNotifications();
+      console.log(`🔔 Уведомлениялар: ${notificationsList.length} та`);
+    }
 
-    // ============ 3. ПАРОЛЛАРНИ ХЕШЛАШ (биринчи ишга туширишда) ============
-    await migrateAllPasswords();
+    // ============ 3. ПАРОЛЛАРНИ ХЕШЛАШ ============
+    if (typeof migrateAllPasswords === "function") {
+      await migrateAllPasswords();
+    }
 
     // ============ 4. UI СОЗЛАМАЛАРИ ============
-    initUI();
-    console.log("🎨 UI созламалари тайёр");
+    if (typeof initUI === "function") {
+      initUI();
+      console.log("🎨 UI созламалари тайёр");
+    }
 
     // ============ 5. ҲУДУД СЕЛЕКТЛАРИНИ ТЎЛДИРИШ ============
     populateRegionSelects();
@@ -47,21 +53,29 @@ async function initApp() {
     const hasSession = checkSession();
 
     // ============ 9. REALTIME ИШГА ТУШИРИШ ============
-    initRealtime();
-    console.log("⚡ Realtime ишга тушди");
+    if (typeof initRealtime === "function") {
+      initRealtime();
+      console.log("⚡ Realtime ишга тушди");
+    }
 
     // ============ 10. D:\ ДИСКДАН АВТО-ТИКЛАШ ============
-    await autoLoadFromDDrive();
+    if (typeof autoLoadFromDDrive === "function") {
+      await autoLoadFromDDrive();
+    }
 
     // ============ 11. D:\ ДИСК ҲОЛАТИНИ ТЕКШИРИШ ============
-    await checkDDriveStatus();
+    if (typeof checkDDriveStatus === "function") {
+      await checkDDriveStatus();
+    }
 
     // ============ 12. БИРИНЧИ МАРТА RENDER ============
     renderAll();
     console.log("🖼 Жадваллар чизилди");
 
     // ============ 13. ОНЛАЙН БАЗАДАН ТОРТИШ ============
-    pullFromSupabase(false);
+    if (typeof pullFromSupabase === "function") {
+      pullFromSupabase(false);
+    }
 
     // ============ 14. ЛОГИН ОЙНАСИ ============
     if (hasSession && currentUser) {
@@ -70,14 +84,16 @@ async function initApp() {
       switchRole(currentUser.role);
       console.log(`✅ Автоматик кириш: ${currentUser.login}`);
 
-      showToast(`Хуш келибсиз, ${currentUser.name}!`, "success");
+      if (typeof showToast === "function") {
+        showToast(`Хуш келибсиз, ${currentUser.name}!`, "success");
+      }
     } else {
       // Логин ойнасини кўрсатиш
       showLoginScreen();
     }
 
     console.log("=".repeat(60));
-    console.log("✅ «КОМПЛАЕНС-КАДР» v9.0 тайёр!");
+    console.log("✅ «КОМПЛАЕНС-КАДР» v10.0 тайёр!");
 
   } catch (e) {
     console.error("❌ Инициализацияда хато:", e);
@@ -124,6 +140,9 @@ function setupAllEventListeners() {
   // ============ 5. СУБ-ТАБЛАР ============
   setupSubtabListeners();
 
+  // ============ 6. INPUT ФОРМАТЛАШ ============
+  setupInputFormattingListeners();
+
   console.log("✅ Барча event listener'лар боғланди");
 }
 
@@ -160,9 +179,6 @@ function setupLoginListeners() {
       }
     });
   }
-
-  // Логин ойнасида Escape босса — ёпилмайди (чиқиш учун)
-  // Бу қасддан — фойдаланувчи логин қилмагунча киролмайди
 }
 
 // =========================================================================
@@ -176,40 +192,16 @@ function setupCandidateFormListeners() {
     candForm.addEventListener("submit", handleCandidateFormSubmit);
   }
 
+  // 🆕 Сарлавҳа превьюси tracking
+  if (typeof setupHeadingFieldTracking === "function") {
+    setupHeadingFieldTracking();
+    console.log("📝 Сарлавҳа превьюси tracking ёқилди");
+  }
+
   // ПИНФЛ дубликат текшируви
   const pinflInput = document.getElementById("inpPinfl");
   if (pinflInput) {
     pinflInput.addEventListener("input", checkPinflDuplicate);
-  }
-
-  // Сана автоматик формат
-  const birthDate = document.getElementById("inpBirthDate");
-  if (birthDate) {
-    birthDate.addEventListener("input", (e) => {
-      let val = e.target.value.replace(/\D/g, "").substring(0, 8);
-      if (val.length >= 3 && val.length <= 4) {
-        val = val.substring(0, 2) + "." + val.substring(2);
-      } else if (val.length > 4) {
-        val = val.substring(0, 2) + "." + val.substring(2, 4) + "." + val.substring(4);
-      }
-      e.target.value = val;
-    });
-  }
-
-  // Паспорт серия — фақат катта ҳарфлар
-  const passSeries = document.getElementById("inpPassSeries");
-  if (passSeries) {
-    passSeries.addEventListener("input", (e) => {
-      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 2);
-    });
-  }
-
-  // Паспорт рақам — фақат рақамлар
-  const passNum = document.getElementById("inpPassNum");
-  if (passNum) {
-    passNum.addEventListener("input", (e) => {
-      e.target.value = e.target.value.replace(/\D/g, "").substring(0, 7);
-    });
   }
 }
 
@@ -287,10 +279,27 @@ function setupSubtabListeners() {
 }
 
 // =========================================================================
-// 6. ГЛОБАЛ ЁПИШ
+// 6. INPUT ФОРМАТЛАШ EVENT LISTENERS
 // =========================================================================
 
-// Модал ташқарисига босилганда ёпиш
+function setupInputFormattingListeners() {
+  // Номзод формаси
+  setupDateInput("inpBirthDate");
+  setupPinflInput("inpPinfl");
+  setupPassportInputs("inpPassSeries", "inpPassNum");
+
+  // Таҳрир модалида
+  setupDateInput("editCandBirthDate");
+  setupPinflInput("editCandPinfl");
+  setupPassportInputs("editCandPassSeries", "editCandPassNum");
+
+  console.log("✅ Input форматлаш созланди");
+}
+
+// =========================================================================
+// ГЛОБАЛ ЁПИШ (backdrop)
+// =========================================================================
+
 function setupModalBackdropClose() {
   document.addEventListener("click", (e) => {
     const modalIds = ["editorModal", "docModal", "editCandidateModal", "aboutModal"];
@@ -308,14 +317,13 @@ function setupModalBackdropClose() {
 }
 
 // =========================================================================
-// 7. ҚЎШИМЧА INIT ФУНКЦИЯЛАРИ (Ихтиёрий)
+// ЁРДАМЧИ: ДАСТУР ВЕРСИЯСИ
 // =========================================================================
 
-// Дастур версиясини кўрсатиш
 function showVersion() {
   console.log(`
 ╔══════════════════════════════════════════════════════╗
-║  «КОМПЛАЕНС-КАДР» v9.0                                ║
+║  «КОМПЛАЕНС-КАДР» v10.0                              ║
 ║  Кадастр агентлиги учун ягона комплаенс тизими       ║
 ║  ─────────────────────────────────────────────────   ║
 ║  Яратувчи: Elbegiyev Muxriddin                       ║
@@ -323,11 +331,20 @@ function showVersion() {
 ║  ─────────────────────────────────────────────────   ║
 ║  Модуллар: 13 та                                      ║
 ║  Функциялар: 90+ та                                   ║
+║  ─────────────────────────────────────────────────   ║
+║  🆕 v10.0 Янгиликлар:                                 ║
+║  • Ақлли сарлавҳа (ташкилот аниқлаш)                 ║
+║  • Қўлда тузатиш имконияти                           ║
+║  • Лотин → Кирилл автоконвертация                    ║
+║  • Сана валидацияси                                  ║
 ╚══════════════════════════════════════════════════════╝
   `);
 }
 
-// Дастур ҳолатини текшириш
+// =========================================================================
+// ЁРДАМЧИ: ДАСТУР ҲОЛАТИНИ ТЕКШИРИШ
+// =========================================================================
+
 function checkAppHealth() {
   const issues = [];
 
@@ -336,11 +353,13 @@ function checkAppHealth() {
   if (!appState || !Array.isArray(appState.users)) issues.push("❌ users массиви йўқ");
   if (!appState || !Array.isArray(appState.candidates)) issues.push("❌ candidates массиви йўқ");
 
-  // Функциялар
+  // Критик функциялар
   const criticalFunctions = [
     "performLogin", "doLogout", "switchRole", "switchTab",
     "renderAll", "openDocModal", "openEditorModal",
-    "pushToSupabase", "pullFromSupabase", "initRealtime"
+    "pushToSupabase", "pullFromSupabase", "initRealtime",
+    "buildDistrictHeading", "updateHeadingPreview", "getFinalHeading",
+    "latToCyr", "validateDate", "validateFIO"
   ];
 
   criticalFunctions.forEach(fn => {
@@ -353,7 +372,8 @@ function checkAppHealth() {
   const criticalElements = [
     "loginOverlay", "loginUsername", "loginPassword",
     "kpiTotal", "fototablitsaBody", "docModal",
-    "editorModal", "candidateForm"
+    "editorModal", "candidateForm",
+    "inpDistrictHeading", "inpDistrict", "inpRegion", "inpCategory"
   ];
 
   criticalElements.forEach(id => {
@@ -369,7 +389,6 @@ function checkAppHealth() {
 // ИШГА ТУШИРИШ
 // =========================================================================
 
-// DOM тайёр бўлганда ишга тушириш
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     setupModalBackdropClose();
@@ -389,8 +408,6 @@ if (document.readyState === "loading") {
 
 window.addEventListener("error", (e) => {
   console.error("❌ Глобал хато:", e.error || e.message);
-
-  // Фойдаланувчига кўрсатиш (фақат жиддий хатолар)
   if (e.error && e.error.message) {
     console.error("Хато тафсилоти:", e.error.message);
   }
@@ -405,8 +422,7 @@ window.addEventListener("unhandledrejection", (e) => {
 // =========================================================================
 
 window.addEventListener("beforeunload", (e) => {
-  // Фақат ўзгаришлар бўлса огоҳлантириш
-  // (керак бўлмаса — ўчиринг)
+  // Зарурат бўлса огоҳлантириш қўшиш мумкин
   // e.preventDefault();
   // e.returnValue = "";
 });
@@ -415,7 +431,7 @@ window.addEventListener("beforeunload", (e) => {
 // ЛОГ
 // =========================================================================
 
-console.log("✅ 13-app.js юкланди");
+console.log("✅ 13-app.js юкланди (v10.0)");
 console.log("🎯 Барча модуллар тайёр!");
 console.log("📋 01-config 02-crypto 03-audit 04-supabase");
 console.log("📋 05-auth 06-notifications 07-render 08-candidates");
