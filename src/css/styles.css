@@ -230,12 +230,12 @@ body.dark-mode .dark-card {
 
 .photo-drop-zone {
   border: 2px dashed var(--border-strong);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 8px;
+  padding: 8px;
   text-align: center;
   transition: all 0.2s ease;
   cursor: pointer;
-  min-height: 150px;
+  min-height: 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -244,7 +244,6 @@ body.dark-mode .dark-card {
   background: #f8fafc;
   user-select: none;
 }
-
 .photo-drop-zone:hover {
   border-color: var(--accent-blue);
   background: #eff6ff;
@@ -274,28 +273,28 @@ body.dark-mode .dark-card {
 }
 
 .drop-zone-content .drop-icon {
-  font-size: 32px;
+  font-size: 20px;
   line-height: 1;
 }
 
 .drop-zone-content .drop-text {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-secondary);
 }
 
 .drop-zone-content .drop-hint {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
 }
 
 .drop-zone-content .drop-file-btn {
-  margin-top: 6px;
-  padding: 4px 12px;
-  border-radius: 6px;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border-radius: 5px;
   background: var(--accent-blue);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   border: none;
   cursor: pointer;
@@ -308,8 +307,8 @@ body.dark-mode .dark-card {
 
 .drop-zone-preview {
   max-width: 100%;
-  max-height: 200px;
-  border-radius: 6px;
+  max-height: 110px;
+  border-radius: 5px;
   object-fit: cover;
   display: block;
   margin: 0 auto;
@@ -317,14 +316,14 @@ body.dark-mode .dark-card {
 
 .drop-zone-clear {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
   background: rgba(220, 38, 38, 0.9);
   color: #fff;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   border: none;
   cursor: pointer;
