@@ -1,9 +1,9 @@
 // =========================================================================
 // 01-CONFIG.JS — Константалар ва бошланғич ҳолат
-// «КОМПЛАЕНС-КАДР» v9.0
+// «КОМПЛАЕНС-КАДР» v10.2 — Марказий аппарат + Тизим ташкилотлари
 // =========================================================================
 
-// -------------------- 14 та ҲУДУД --------------------
+// -------------------- ҲУДУДЛАР (17 та) --------------------
 const REGIONS_14 = [
   "Жиззах вилояти",
   "Тошкент шаҳри",
@@ -18,7 +18,10 @@ const REGIONS_14 = [
   "Сурхондарё вилояти",
   "Сирдарё вилояти",
   "Хоразм вилояти",
-  "Қорақалпоғистон Республикаси"
+  "Қорақалпоғистон Республикаси",
+  "Кадастр агентлиги Марказий аппарати",
+  "Давлат кадастрлари палатаси Марказий аппарати",
+  "Тизим ташкилотлари"
 ];
 
 // -------------------- LOCALSTORAGE КАЛИТЛАРИ --------------------
@@ -29,7 +32,7 @@ const NOTIFICATIONS_KEY = "KOMPLAYENS_KADR_V90_NOTIFICATIONS";
 const SESSION_KEY = "KOMPLAYENS_KADR_V90_SESSION";
 const THEME_KEY = "KOMPLAYENS_KADR_V90_THEME";
 
-// -------------------- SUPABASE КАЛИТЛАРИ (Сизнинг) --------------------
+// -------------------- SUPABASE КАЛИТЛАРИ --------------------
 const DEFAULT_SUPABASE_URL = "https://kyihefutrwvukbaewzor.supabase.co";
 const DEFAULT_SUPABASE_KEY = "sb_publishable_3BO5cEP52JH4KNfGpWlylw_pM0_zg7N";
 
@@ -44,15 +47,15 @@ const ROLES = {
 const ROLE_NAMES = {
   kadr: "👤 Кадрлар бўлими (HR)",
   korrupsiya: "🛡️ Коррупцияга қарши курашиш бўлими",
-  rahbar: "✅ Бўлим бошлиғи (И.Зарипов)",
+  rahbar: "✅ Бўлим бошлиғи",
   kuzatuvchi: "👁 Раҳбар Кузатувчи"
 };
 
-// -------------------- WORKFLOW БОСҚИЧЛАРИ --------------------
+// -------------------- WORKFLOW --------------------
 const WORKFLOW = {
-  ADMIN_REVIEW: "admin_review",     // Коррупция бўлими ўрганмоқда
-  BOSS_REVIEW: "boss_review",        // Бошлиқ тасдиғида
-  APPROVED: "approved"                // Тасдиқланган
+  ADMIN_REVIEW: "admin_review",
+  BOSS_REVIEW: "boss_review",
+  APPROVED: "approved"
 };
 
 // -------------------- ЙЎНАЛИШЛАР (8 та) --------------------
@@ -71,47 +74,23 @@ const CATEGORIES = [
 let currentRole = null;
 let currentUser = null;
 let currentTab = "fototablitsa";
-let currentSubTab = "new";               // 🆕 Суб-таб: new | in_process | approved
+let currentSubTab = "new";
 let activeCandidateId = null;
 let dDriveFileHandle = null;
 let isLatinMode = false;
 let appState = null;
 
-// -------------------- БОШЛАНҒИЧ ҲОЛАТ (ДЕМО МАЪЛУМОТСИЗ!) --------------------
+// -------------------- БОШЛАНҒИЧ ҲОЛАТ --------------------
 const INITIAL_STATE = {
   version: 1,
   users: [
-    {
-      login: "admin",
-      passHash: null,
-      pass: "Komplayens2026!",
-      name: "Комплаенс Админ (Яратувчи)",
-      role: "korrupsiya"
-    },
-    {
-      login: "zaripov",
-      passHash: null,
-      pass: "Rahbar2026!",
-      name: "И.Зарипов — Бўлим бошлиғи",
-      role: "rahbar"
-    },
-    {
-      login: "kadr_jizzax",
-      passHash: null,
-      pass: "Kadr2026!",
-      name: "Кадрлар бўлими масъул ходими",
-      role: "kadr"
-    },
-    {
-      login: "rahbariyat",
-      passHash: null,
-      pass: "Kuzatuv2026!",
-      name: "Раҳбар Кузатувчи (Юқори раҳбарият)",
-      role: "kuzatuvchi"
-    }
+    { login: "admin", passHash: null, pass: "Komplayens2026!", name: "Комплаенс Админ (Яратувчи)", role: "korrupsiya" },
+    { login: "zaripov", passHash: null, pass: "Rahbar2026!", name: "Бўлим бошлиғи", role: "rahbar" },
+    { login: "kadr_jizzax", passHash: null, pass: "Kadr2026!", name: "Кадрлар бўлими масъул ходими", role: "kadr" },
+    { login: "rahbariyat", passHash: null, pass: "Kuzatuv2026!", name: "Раҳбар Кузатувчи", role: "kuzatuvchi" }
   ],
-  candidates: [],                    // 🆕 БЎШ — демо маълумот ЙЎҚ!
-  notifications: []                  // 🆕 Уведомления
+  candidates: [],
+  notifications: []
 };
 
 // -------------------- ҲОЛАТНИ ЮКЛАШ --------------------
@@ -143,12 +122,10 @@ function saveState() {
     console.warn("Local save warning:", e);
   }
 
-  // D:\ дискга авто-сақлаш (Electron)
   if (typeof autoWriteToDDrive === "function") {
     autoWriteToDDrive();
   }
 
-  // Supabase га юбориш
   if (typeof pushToSupabase === "function") {
     pushToSupabase();
   }
@@ -183,7 +160,7 @@ function makeAvatarSvg(initials, bg = "#4a6fa5") {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-// -------------------- ЁРДАМЧИ: TOAST ХАБАР --------------------
+// -------------------- ЁРДАМЧИ: TOAST --------------------
 function showToast(message, type = "info") {
   const colors = {
     success: "bg-emerald-600",
@@ -205,5 +182,4 @@ function showToast(message, type = "info") {
   }, 3000);
 }
 
-// -------------------- ЛОГ ----------
-console.log("✅ 01-config.js юкланди");
+console.log("✅ 01-config.js юкланди (v10.2 — 17 та ҳудуд)");
