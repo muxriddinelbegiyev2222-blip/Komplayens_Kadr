@@ -1,13 +1,8 @@
 // =========================================================================
-// 03-AUDIT.JS — Аудит-лог (ким нима қилди) + Юбориш журнали
-// «КОМПЛАЕНС-КАДР» v9.0
+// 03-AUDIT.JS — Аудит-лог + Журнал
+// «КОМПЛАЕНС-КАДР» v9.1 — Таҳрир/ўчиришда уведомления ЙЎҚ
 // =========================================================================
 
-// =========================================================================
-// АСОСИЙ ФУНКЦИЯЛАР
-// =========================================================================
-
-// -------------------- АУДИТ-ЛОГНИ ЮКЛАШ --------------------
 function loadAuditLog() {
   try {
     const raw = localStorage.getItem(AUDIT_LOG_KEY);
@@ -21,9 +16,7 @@ function loadAuditLog() {
   return [];
 }
 
-// -------------------- АУДИТ-ЛОГНИ САҚЛАШ --------------------
 function saveAuditLog(log) {
-  // Фақат 2000 та охирги ёзувни сақлаш (localStorage тўлиб қолмаслиги учун)
   const trimmed = log.slice(-2000);
   try {
     localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(trimmed));
@@ -32,12 +25,8 @@ function saveAuditLog(log) {
   }
 }
 
-// -------------------- ЛОГГА ЁЗУВ ҚЎШИШ --------------------
 function addAuditLog(action, details = "") {
-  if (!currentUser) {
-    console.warn("Audit: currentUser йўқ, ёзув қўшилмади");
-    return;
-  }
+  if (!currentUser) return;
 
   const log = loadAuditLog();
   const now = getNow();
@@ -57,13 +46,11 @@ function addAuditLog(action, details = "") {
   saveAuditLog(log);
 }
 
-// -------------------- АУДИТ-ЛОГНИ ТОЗАЛАШ (30 кундан эски) --------------------
 function clearAuditLog() {
   if (currentRole !== ROLES.KORRUPSIYA) {
     alert("Рухсат йўқ! Фақат Коррупцияга қарши курашиш бўлими тозалай олади.");
     return;
   }
-
   if (!confirm("Аудит-логдан 30 кундан эски ёзувларни ўчирмоқчимисиз?")) return;
 
   const log = loadAuditLog();
@@ -74,121 +61,78 @@ function clearAuditLog() {
   saveAuditLog(filtered);
   addAuditLog("AUDIT_CLEAR", `${removed} та эски ёзув ўчирилди`);
 
-  if (typeof renderAuditTable === "function") {
-    renderAuditTable();
-  }
-
+  if (typeof renderAuditTable === "function") renderAuditTable();
   alert(`✅ ${removed} та эски ёзув ўчирилди.`);
 }
 
-// =========================================================================
-// 🆕 ЖУРНАЛ ФУНКЦИЯЛАРИ — Номзод жараёни тарихи
-// =========================================================================
-
-// -------------------- БИТТА НОМЗОД УЧУН ТАРИХ --------------------
+// -------------------- ЖУРНАЛ --------------------
 function getCandidateHistory(candidateId) {
   const log = loadAuditLog();
-  return log.filter(x =>
-    x.details && x.details.includes(candidateId)
-  );
+  return log.filter(x => x.details && x.details.includes(candidateId));
 }
 
-// -------------------- 🆕 НОМЗОД ҚЎШИЛГАНДА --------------------
 function logCandidateAdded(candidate) {
   if (!candidate) return;
-  addAuditLog(
-    "CANDIDATE_ADDED",
-    `${candidate.id} | ${candidate.fio} | ${candidate.region} | ${candidate.category}`
-  );
+  addAuditLog("CANDIDATE_ADDED", `${candidate.id} | ${candidate.fio} | ${candidate.region} | ${candidate.category}`);
 }
 
-// -------------------- 🆕 КОРРУПЦИЯ БЎЛИМИ КЎРГАНДА --------------------
 function logKorrupsiyaViewed(candidate) {
   if (!candidate) return;
-  addAuditLog(
-    "KORRUPSIYA_VIEWED",
-    `${candidate.id} | ${candidate.fio} | Коррупция бўлими кўриб чиқди`
-  );
+  addAuditLog("KORRUPSIYA_VIEWED", `${candidate.id} | ${candidate.fio} | Коррупция бўлими кўриб чиқди`);
 }
 
-// -------------------- 🆕 ИЦ ТЕКШИРУВИ ЎЗГАРГАНДА --------------------
 function logITSChecked(candidate, status, text) {
   if (!candidate) return;
-  addAuditLog(
-    "ITS_CHECKED",
-    `${candidate.id} | ${candidate.fio} | Ҳолат: ${status} | ${text}`
-  );
+  addAuditLog("ITS_CHECKED", `${candidate.id} | ${candidate.fio} | Ҳолат: ${status} | ${text}`);
 }
 
-// -------------------- 🆕 БОШЛИҚҚА ЮБОРИЛГАНДА --------------------
 function logSentToBoss(candidate, bossName = "Бўлим бошлиғи") {
   if (!candidate) return;
-
   const now = getNow();
-
-  // Номзодга вақтни ёзиш
   candidate.sentToBossAt = now.date;
   candidate.sentToBossTime = now.time;
   candidate.sentToBossBy = currentUser?.login || "unknown";
   candidate.sentToBossByName = currentUser?.name || "Коррупция бўлими";
 
-  addAuditLog(
-    "SENT_TO_BOSS",
-    `${candidate.id} | ${candidate.fio} | ${bossName}га юборилди | ${now.dateTime}`
-  );
+  addAuditLog("SENT_TO_BOSS", `${candidate.id} | ${candidate.fio} | ${bossName}га юборилди | ${now.dateTime}`);
 
-  // 🔔 Уведомления
   if (typeof addNotification === "function") {
     addNotification({
       type: "sent_to_boss",
       candidateId: candidate.id,
       candidateName: candidate.fio,
-      message: "Бошлиққа юборилди",
+      message: "📤 Бошлиққа юборилди",
       detail: `${candidate.region} | ${candidate.category}`,
       forRoles: [ROLES.RAHBAR]
     });
   }
 }
 
-// -------------------- 🆕 БОШЛИҚ КЎРГАНДА --------------------
 function logBossViewed(candidate) {
   if (!candidate) return;
-
   const now = getNow();
   candidate.bossViewedAt = now.dateTime;
+  addAuditLog("BOSS_VIEWED", `${candidate.id} | ${candidate.fio} | Бошлиқ кўриб чиқди`);
 
-  addAuditLog(
-    "BOSS_VIEWED",
-    `${candidate.id} | ${candidate.fio} | Бошлиқ кўриб чиқди`
-  );
-
-  // 🔔 Уведомления
   if (typeof addNotification === "function") {
     addNotification({
       type: "boss_viewed",
       candidateId: candidate.id,
       candidateName: candidate.fio,
-      message: "Бошлиқ кўриб чиқди",
+      message: "👁 Бошлиқ кўриб чиқди",
       detail: `${candidate.region}`,
       forRoles: [ROLES.KORRUPSIYA]
     });
   }
 }
 
-// -------------------- 🆕 ТАСДИҚЛАНГАНДА --------------------
-function logApproved(candidate, bossName = "И.Зарипов") {
+function logApproved(candidate, bossName = "Бўлим бошлиғи") {
   if (!candidate) return;
-
   const now = getNow();
   candidate.bossApprovedAt = now.dateTime;
   candidate.approvedDate = now.date;
+  addAuditLog("APPROVED", `${candidate.id} | ${candidate.fio} | ${bossName} томонидан ТАСДИҚЛАНДИ`);
 
-  addAuditLog(
-    "APPROVED",
-    `${candidate.id} | ${candidate.fio} | ${bossName} томонидан ТАСДИҚЛАНДИ`
-  );
-
-  // 🔔 Уведомления: HR + Коррупция + Кузатувчи
   if (typeof addNotification === "function") {
     addNotification({
       type: "approved",
@@ -201,20 +145,13 @@ function logApproved(candidate, bossName = "И.Зарипов") {
   }
 }
 
-// -------------------- 🆕 ҚАЙТАРИЛГАНДА --------------------
 function logReturned(candidate, reason = "") {
   if (!candidate) return;
-
   const now = getNow();
   candidate.bossReturnedAt = now.dateTime;
   candidate.bossReturnReason = reason || "Изоҳ кўрсатилмаган";
+  addAuditLog("RETURNED", `${candidate.id} | ${candidate.fio} | Қайтарилди | Сабаб: ${candidate.bossReturnReason}`);
 
-  addAuditLog(
-    "RETURNED",
-    `${candidate.id} | ${candidate.fio} | Қайтарилди | Сабаб: ${candidate.bossReturnReason}`
-  );
-
-  // 🔔 Уведомления
   if (typeof addNotification === "function") {
     addNotification({
       type: "returned",
@@ -227,67 +164,34 @@ function logReturned(candidate, reason = "") {
   }
 }
 
-// -------------------- 🆕 НОМЗОД ТАҲРИРЛАНГАНДА --------------------
+// 🔕 Таҳрирлаш — Уведомления ЮБОРИЛМАЙДИ (фақат audit log)
 function logCandidateEdited(candidate, changes = []) {
   if (!candidate) return;
-
-  const changesText = changes
-    .map(ch => `${ch.field}: "${ch.oldValue}" → "${ch.newValue}"`)
-    .join(" | ");
-
-  addAuditLog(
-    "CANDIDATE_EDITED",
-    `${candidate.id} | ${candidate.fio} | Ўзгаришлар: ${changesText}`
-  );
-
-  // 🔔 Уведомления
-  if (typeof addNotification === "function") {
-    addNotification({
-      type: "candidate_edited",
-      candidateId: candidate.id,
-      candidateName: candidate.fio,
-      message: "✏️ Таҳрирланди",
-      detail: changesText.substring(0, 100),
-      forRoles: [ROLES.KORRUPSIYA]
-    });
-  }
+  const changesText = changes.map(ch => `${ch.field}: "${ch.oldValue}" → "${ch.newValue}"`).join(" | ");
+  addAuditLog("CANDIDATE_EDITED", `${candidate.id} | ${candidate.fio} | Ўзгаришлар: ${changesText}`);
+  // ❌ addNotification ЙЎҚ
 }
 
-// -------------------- 🆕 НОМЗОД ЎЧИРИЛГАНДА --------------------
+// 🔕 Ўчириш — Уведомления ЮБОРИЛМАЙДИ
 function logCandidateDeleted(candidate) {
   if (!candidate) return;
-
-  addAuditLog(
-    "CANDIDATE_DELETED",
-    `${candidate.id} | ${candidate.fio} | ${candidate.region} | Ўчирилди`
-  );
+  addAuditLog("CANDIDATE_DELETED", `${candidate.id} | ${candidate.fio} | ${candidate.region} | Ўчирилди`);
+  // ❌ addNotification ЙЎҚ
 }
 
-// =========================================================================
-// 🆕 БИТТА НОМЗОД УЧУН ТАРИХНИ ЧИЗИШ (Timeline)
-// =========================================================================
-
+// -------------------- TIMELINE --------------------
 function renderCandidateTimeline(candidateId) {
   const history = getCandidateHistory(candidateId);
-
   if (history.length === 0) {
     return `<div class="text-xs text-slate-500 italic p-2">Тарих мавжуд эмас</div>`;
   }
 
-  // Icon мап
   const icons = {
-    CANDIDATE_ADDED: "🆕",
-    KORRUPSIYA_VIEWED: "👁",
-    ITS_CHECKED: "🔍",
-    SENT_TO_BOSS: "📤",
-    BOSS_VIEWED: "✅",
-    APPROVED: "✅",
-    RETURNED: "↩️",
-    CANDIDATE_EDITED: "✏️",
-    CANDIDATE_DELETED: "🗑"
+    CANDIDATE_ADDED: "🆕", KORRUPSIYA_VIEWED: "👁", ITS_CHECKED: "🔍",
+    SENT_TO_BOSS: "📤", BOSS_VIEWED: "✅", APPROVED: "✅",
+    RETURNED: "↩️", CANDIDATE_EDITED: "✏️", CANDIDATE_DELETED: "🗑"
   };
 
-  // Rang мап
   const colors = {
     CANDIDATE_ADDED: "border-blue-400 bg-blue-50",
     KORRUPSIYA_VIEWED: "border-amber-400 bg-amber-50",
@@ -301,20 +205,12 @@ function renderCandidateTimeline(candidateId) {
   };
 
   let html = `<div class="space-y-2 text-xs">`;
-
   history.forEach(item => {
     const icon = icons[item.action] || "•";
     const color = colors[item.action] || "border-slate-300 bg-slate-50";
-
-    // Details дан фойдаланувчига тушунарли матн
-    let displayText = item.details || "";
-    // ID ни олиб ташлаш (CAND-xxx |)
-    displayText = displayText.replace(/CAND-\d+\s*\|\s*/g, "");
-    // Ф.И.Ш. ни олиб ташлаш (такрорланмасин)
-    const fioMatch = displayText.split("|");
-    if (fioMatch.length > 1) {
-      displayText = fioMatch.slice(1).join("|").trim();
-    }
+    let displayText = (item.details || "").replace(/CAND-\d+\s*\|\s*/g, "");
+    const parts = displayText.split("|");
+    if (parts.length > 1) displayText = parts.slice(1).join("|").trim();
 
     html += `
       <div class="p-2 rounded-lg border-l-4 ${color}">
@@ -329,48 +225,33 @@ function renderCandidateTimeline(candidateId) {
       </div>
     `;
   });
-
   html += `</div>`;
   return html;
 }
 
-// -------------------- АМАЛ НОМИ (ўзбекча) --------------------
 function formatActionName(action) {
   const names = {
-    LOGIN: "Тизимга кирди",
-    LOGOUT: "Тизимдан чиқди",
+    LOGIN: "Тизимга кирди", LOGOUT: "Тизимдан чиқди",
     CANDIDATE_ADDED: "Янги номзод қўшилди",
-    KORRUPSIYA_VIEWED: "Кўриб чиқилди",
-    ITS_CHECKED: "ИЦ текшируви",
-    SENT_TO_BOSS: "Бошлиққа юборилди",
-    BOSS_VIEWED: "Бошлиқ кўрди",
-    APPROVED: "Тасдиқланди",
-    RETURNED: "Қайтарилди",
-    CANDIDATE_EDITED: "Таҳрирланди",
-    CANDIDATE_DELETED: "Ўчирилди",
-    USER_CREATE: "Фойдаланувчи яратилди",
-    USER_DELETE: "Фойдаланувчи ўчирилди",
-    AUDIT_CLEAR: "Аудит тозаланди",
-    SUPABASE_CONFIG: "Supabase созламаси",
+    KORRUPSIYA_VIEWED: "Кўриб чиқилди", ITS_CHECKED: "ИЦ текшируви",
+    SENT_TO_BOSS: "Бошлиққа юборилди", BOSS_VIEWED: "Бошлиқ кўрди",
+    APPROVED: "Тасдиқланди", RETURNED: "Қайтарилди",
+    CANDIDATE_EDITED: "Таҳрирланди", CANDIDATE_DELETED: "Ўчирилди",
+    USER_CREATE: "Фойдаланувчи яратилди", USER_DELETE: "Фойдаланувчи ўчирилди",
+    AUDIT_CLEAR: "Аудит тозаланди", SUPABASE_CONFIG: "Supabase созламаси",
     REALTIME_RECONNECT: "Realtime қайта уланди",
     D_DRIVE_CONNECT: "D:\\ диск уланди",
-    BACKUP: "Захира нусха",
-    RESTORE: "Тикланди",
+    BACKUP: "Захира нусха", RESTORE: "Тикланди",
     ROLE_SWITCH: "Роль алмаштирилди"
   };
   return names[action] || action;
 }
 
-// =========================================================================
-// АУДИТ-ЛОГ ЖАДВАЛИНИ ЧИЗИШ
-// =========================================================================
-
 function renderAuditTable() {
   const tbody = document.getElementById("auditTableBody");
   if (!tbody) return;
 
-  const log = loadAuditLog().slice().reverse(); // Энг янги юқорида
-
+  const log = loadAuditLog().slice().reverse();
   if (log.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 font-bold">Аудит-лог бўш</td></tr>`;
     return;
@@ -388,10 +269,6 @@ function renderAuditTable() {
   `).join("");
 }
 
-// =========================================================================
-// ЖУРНАЛНИ EXCEL ГА ЭКСПОРТ
-// =========================================================================
-
 function exportAuditLogExcel() {
   const log = loadAuditLog();
   if (log.length === 0) {
@@ -401,21 +278,18 @@ function exportAuditLogExcel() {
 
   let rows = "";
   log.forEach((item, i) => {
-    rows += `
-      <tr>
-        <td style="text-align:center;">${i + 1}</td>
-        <td>${item.timestamp}</td>
-        <td>${item.userName || item.user}</td>
-        <td>${item.roleName || item.role}</td>
-        <td>${formatActionName(item.action)}</td>
-        <td>${(item.details || "").replace(/</g, "&lt;")}</td>
-      </tr>
-    `;
+    rows += `<tr>
+      <td style="text-align:center;">${i + 1}</td>
+      <td>${item.timestamp}</td>
+      <td>${item.userName || item.user}</td>
+      <td>${item.roleName || item.role}</td>
+      <td>${formatActionName(item.action)}</td>
+      <td>${(item.details || "").replace(/</g, "&lt;")}</td>
+    </tr>`;
   });
 
   const table = `<table><thead><tr>
-    <th>Т/р</th><th>Вақт</th><th>Фойдаланувчи</th>
-    <th>Роль</th><th>Амал</th><th>Тафсилот</th>
+    <th>Т/р</th><th>Вақт</th><th>Фойдаланувчи</th><th>Роль</th><th>Амал</th><th>Тафсилот</th>
   </tr></thead><tbody>${rows}</tbody></table>`;
 
   const now = getNow();
@@ -426,5 +300,4 @@ function exportAuditLogExcel() {
   );
 }
 
-// -------------------- ЛОГ ----------
-console.log("✅ 03-audit.js юкланди");
+console.log("✅ 03-audit.js юкланди (v9.1 — таҳрир/ўчиришда уведомления йўқ)");
