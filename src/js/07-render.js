@@ -205,10 +205,10 @@ function renderFototablitsaTable() {
 
   if (filtered.length === 0) {
     const subtabNames = {
-      new: "🆕 Янги келганлар",
-      in_process: "⏳ Ўрганиш жараёнида",
-      approved: "✅ Ўрганиб чиқилган"
-    };
+  new: "🆕 Янги келганлар",
+  in_process: "⏳ Тасдиқлаш жараёнида",
+  approved: "✅ Ўрганиб чиқилган"
+};
     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500 font-bold">
       ${subtabNames[currentSubTab] || ""} бўлимида ёзувлар топилмади
     </td></tr>`;
@@ -461,8 +461,9 @@ function renderFormerTable() {
       <tr>
         <td class="text-center font-bold">${i + 1}.</td>
         <td class="text-center">
-          <img src="${c.photo}" alt="Фото" style="width:80px;height:100px;object-fit:cover;margin:0 auto;border:1px solid #334155;" />
-        </td>
+          <td class="text-center">
+  <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
+</td>
         <td class="text-center">
           <div class="font-bold text-sm">${c.fio}</div>
           <div class="mt-1 text-xs">${c.birthDate} йил, ${c.birthPlace}</div>
