@@ -1,6 +1,6 @@
 // =========================================================================
 // 08-CANDIDATES.JS — CRUD + Image Resize + Full Date
-// «КОМПЛАЕНС-КАДР» v11.6
+// «КОМПЛАЕНС-КАДР» v11.7
 // =========================================================================
 
 let currentPhotoDataUrl = null;
@@ -134,7 +134,6 @@ function getPositionFromCategory(cat) {
   return "";
 }
 
-// 🆕 ТУМАН МАЙДОНИНИ ЯШИРИШ/КЎРСАТИШ ВА САНА БИЛАН ИШЛАШ
 function updateHeadingPreview() {
   const region = document.getElementById("inpRegion")?.value || "";
   const category = document.getElementById("inpCategory")?.value || "";
@@ -144,16 +143,9 @@ function updateHeadingPreview() {
   const distInput = document.getElementById("inpDistrict");
   const distLabel = document.getElementById("inpDistrictLabel");
   
-  // 🆕 ТУМАН КЕРАК БЎЛМАГАН ЛАВОЗИМЛАР РЎЙХАТИ
-  const noDistrictCategories = [
-    "ҳудудий бошқармаси бошлиғи",
-    "марказий аппарати",
-    "Комплаенс хизмати",
-    "Собиқ ходимлар"
-  ];
+  const noDistrictCategories = ["ҳудудий бошқармаси бошлиғи", "марказий аппарати", "Комплаенс хизмати", "Собиқ ходимлар"];
   const isNoDistrict = noDistrictCategories.some(c => category.includes(c));
 
-  // 🆕 Кадастр агентлиги/ДКП танланса ЁКИ туман керак бўлмаган лавозим танланса - Туман майдонини яшириш
   if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси" || isNoDistrict) {
     if (distWrapper) distWrapper.style.display = "none";
     if (distInput) distInput.value = "";
@@ -169,7 +161,6 @@ function updateHeadingPreview() {
   const field = document.getElementById("inpDistrictHeading");
   if (field && field.dataset.manualEdited !== "true") field.value = heading;
 
-  // 🆕 Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
   const jobSinceLabel = document.getElementById("inpJobSinceLabel");
   const recType = document.getElementById("inpRecordType")?.value;
   if (jobSinceLabel) {
@@ -201,7 +192,6 @@ function getFinalHeading() {
   return buildDistrictHeading(document.getElementById("inpRegion")?.value || "", document.getElementById("inpDistrict")?.value.trim() || "", document.getElementById("inpCategory")?.value || "");
 }
 
-// Валидация
 function validateDate(dateStr, fieldName) {
   if (!dateStr) return `${fieldName} бўш`; const digits = dateStr.replace(/\D/g, ""); if (digits.length < 8) return `${fieldName} тўлиқ эмас`;
   const dd = parseInt(digits.substring(0, 2)), mm = parseInt(digits.substring(2, 4)), yyyy = parseInt(digits.substring(4, 8));
@@ -234,7 +224,6 @@ function validateCandidateForm() {
   const jsErr = validateDate(jobSince, "Лавозимга қўйилган сана"); if (jsErr) errors.push(jsErr);
   const jobErr = validateCurrentJob(currentJob); if (jobErr) errors.push(jobErr);
   
-  // 🆕 ТУМАН КЕРАК БЎЛМАГАН ҲОЛАТЛАР УЧУН ВАЛИДАЦИЯНИ ЎТКАЗИБ ЮБОРИШ
   const noDistRegions = ["Кадастр агентлиги", "Давлат кадастрлари палатаси"]; 
   const noDistCategories = ["ҳудудий бошқармаси бошлиғи", "марказий аппарати", "Комплаенс хизмати", "Собиқ ходимлар"];
   const isNoDistCat = noDistCategories.some(c => category.includes(c));
@@ -269,7 +258,7 @@ function handleCandidateFormSubmit(e) {
   fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); 
   jobSince = jobSince.replace(/[^\d.]/g, "");
 
-  // 🆕 AVTOMATIK MATN GENERATSIYASI (Qaytarildi)
+  // 🆕 AVTOMATIK MATN GENERATSIYASI
   const autoPara2 = `У миллати ўзбек, маълумоти олий, оилали. Диний эътиқодига кўра ислом динига амал қилади. ДЭО (дарҳақиқат, экстремистик оқимларга) аъзо эмас.`;
   const autoPara3 = `Ҳозирда ${region} ${currentJob} лавозимида фаолият кўрсатиб келмоқда. Ўз вазифаларини бажаришда меҳнат интизомига қатъий риоя қилади, ўз ишига масъулиятли ва ташаббускор.`;
   const autoPara4 = `Шахсий ва бошқарув фазилатларига кўра, жамоада ўзаро ҳурмат ва ҳамжиҳатлик муҳитини ярата олади. Вазифаларни бажаришда тадбиркор ва изланувчан, юқори натижаларга эришишга интилади.`;
@@ -277,7 +266,7 @@ function handleCandidateFormSubmit(e) {
   let photoDataUrl = currentPhotoDataUrl || makeAvatarSvg(((fio.split(" ")[0] || "Х")[0] + (fio.split(" ")[1] || "А")[0]).toUpperCase(), "#4a6fa5");
   const now = getNow(); const num = String(appState.candidates.length + 1).padStart(2, "0"); const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-"; const reestrNo = `${prefix}${now.year}/${now.month}-${num}`; const heading = getFinalHeading();
   
-  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: autoPara2, para3: autoPara3, para4: autoPara4, korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
+  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: autoPara2, para3: autoPara3, para4: autoPara4, signerName: "I.Zaripov", signerPosition: "Korrupsiya bolimi boshlig'i", fullDocHtml: "", korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
   
   appState.candidates.unshift(newCand); if (typeof logCandidateAdded === "function") logCandidateAdded(newCand); if (typeof addNotification === "function") addNotification({ type: "new_candidate", candidateId: newCand.id, candidateName: newCand.fio, message: "🆕 Янги ходим киритилди", detail: `${newCand.region} | ${newCand.category}`, forRoles: [ROLES.KORRUPSIYA, ROLES.RAHBAR] });
   
@@ -298,6 +287,8 @@ function setValueIfExists(id, val) { const el = document.getElementById(id); if 
 function saveEditedCandidate() {
   if (!hasPermission("edit_candidate")) return alert("Рухсат йўқ!"); const c = appState.candidates.find(x => x.id === activeCandidateId); if (!c) return;
   let nFio = document.getElementById("editCandFio").value.trim(); const nPinfl = document.getElementById("editCandPinfl").value.trim(); const nPs = document.getElementById("editCandPassSeries").value.trim().toUpperCase(); const nPn = document.getElementById("editCandPassNum").value.trim(); const nBd = document.getElementById("editCandBirthDate").value.trim(); let nBp = document.getElementById("editCandBirthPlace").value.trim(); let nCj = document.getElementById("editCandCurrentJob").value.trim(); let nJs = document.getElementById("editCandJobSince").value.trim(); const nDist = document.getElementById("editCandDistrict").value.trim(); const nReg = document.getElementById("editCandRegion").value; const nCat = document.getElementById("editCandCategory").value; const nApp = document.getElementById("editCandAppointType").value;
+  const nSignerName = document.getElementById("editSignerName").value.trim();
+  const nSignerPosition = document.getElementById("editSignerPosition").value.trim();
   
   nFio = cleanText(latToCyr(nFio)); nBp = cleanText(latToCyr(nBp)); nCj = cleanText(latToCyr(nCj)); nJs = nJs.replace(/[^\d.]/g, "");
   
@@ -305,12 +296,13 @@ function saveEditedCandidate() {
   const dup = appState.candidates.find(x => x.pinfl === nPinfl && x.id !== c.id); if (dup) return alert(`⚠️ ПИНФЛ бошқа номзодда: ${dup.fio}`);
   
   const changes = []; const now = getNow(); const ed = currentUser?.login || "unknown"; const edN = currentUser?.name || "";
-  [{f:"Ф.И.Ш.",o:c.fio,n:nFio},{f:"ПИНФЛ",o:c.pinfl,n:nPinfl},{f:"Лавозим",o:c.currentJob,n:nCj},{f:"Иш вақти",o:c.jobSince,n:nJs},{f:"Ҳудуд",o:c.region,n:nReg},{f:"Сарлавҳа",o:c.districtHeading,n:nDist}].forEach(x => { if (x.o !== x.n) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: x.f, oldValue: x.o, newValue: x.n}); });
+  [{f:"Ф.И.Ш.",o:c.fio,n:nFio},{f:"ПИНФЛ",o:c.pinfl,n:nPinfl},{f:"Лавозим",o:c.currentJob,n:nCj},{f:"Иш вақти",o:c.jobSince,n:nJs},{f:"Ҳудуд",o:c.region,n:nReg},{f:"Сарлавҳа",o:c.districtHeading,n:nDist},{f:"Tasdiqlovchi",o:c.signerName,n:nSignerName}].forEach(x => { if (x.o !== x.n) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: x.f, oldValue: x.o, newValue: x.n}); });
   if (currentEditPhotoDataUrl && currentEditPhotoDataUrl !== c.photo) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: "Расм", oldValue: "[эски]", newValue: "[янги]"});
   
   if (changes.length === 0) return alert("Ўзгариш йўқ.");
   
   c.fio = nFio; c.pinfl = nPinfl; c.passSeries = nPs; c.passNum = nPn; c.birthDate = nBd; c.birthPlace = nBp; c.currentJob = nCj; c.jobSince = nJs; c.region = nReg; c.category = nCat; c.appointType = nApp; c.districtHeading = nDist; if (currentEditPhotoDataUrl) c.photo = currentEditPhotoDataUrl;
+  c.signerName = nSignerName; c.signerPosition = nSignerPosition;
   c.editHistory = (c.editHistory || []).concat(changes); c.lastEditedAt = now.dateTime; c.lastEditedBy = ed;
   if (typeof addAuditLog === "function") addAuditLog("CANDIDATE_EDITED", `${c.id} | ${c.fio}`);
   
