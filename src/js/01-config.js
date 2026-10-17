@@ -83,11 +83,14 @@ let appState = null;
 // -------------------- БОШЛАНҒИЧ ҲОЛАТ --------------------
 const INITIAL_STATE = {
   version: 1,
-  users: [
+   users: [
     { login: "admin", passHash: null, pass: "Komplayens2026!", name: "Комплаенс Админ (Яратувчи)", role: "korrupsiya" },
     { login: "zaripov", passHash: null, pass: "Rahbar2026!", name: "Бўлим бошлиғи", role: "rahbar" },
     { login: "kadr_jizzax", passHash: null, pass: "Kadr2026!", name: "Кадрлар бўлими масъул ходими", role: "kadr" },
-    { login: "rahbariyat", passHash: null, pass: "Kuzatuv2026!", name: "Раҳбар Кузатувчи", role: "kuzatuvchi" }
+    { login: "rahbariyat", passHash: null, pass: "Kuzatuv2026!", name: "Раҳбар Кузатувчи", role: "kuzatuvchi" },
+    { login: "Muxriddin", passHash: null, pass: "Muxriddin2026!", name: "Элбегиев Мухриддин", role: "korrupsiya" },
+    { login: "Bobur", passHash: null, pass: "Bobur2026!", name: "Нумонов Бобур", role: "kadr" },
+    { login: "kadastr", passHash: null, pass: "Kadastr2026!", name: "Зарипов Иззат", role: "rahbar" }
   ],
   candidates: [],
   notifications: []
