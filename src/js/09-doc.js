@@ -167,7 +167,7 @@ function buildOfficialMalumotnomaHtml(c) {
     // QR код текст: ПИНФЛ + Реестр + Сана
     const qrText = `PINFL: ${c.pinfl}\nReestr: ${c.reestrNo}\nTasdiqlandi: ${c.approvedDate}\nTasdiqlovchi: ${getApproverName(c)}`;
     // Google Chart API орқали QR генерация (Осон ва ишончли)
-    const qrUrl = `https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(qrText)}&choe=UTF-8`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}`;
     
     qrHtml = `
       <div style="text-align:center;">
