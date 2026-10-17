@@ -1,5 +1,5 @@
 // =========================================================================
-// 08-CANDIDATES.JS — CRUD + Image Resize
+// 08-CANDIDATES.JS — CRUD + Image Resize + Supabase User Create
 // =========================================================================
 
 let currentPhotoDataUrl = null;
@@ -21,27 +21,31 @@ function latToCyr(text) {
   return r.replace(/[a-zA-Z]/g, ch => map[ch] || ch);
 }
 
-// 🆕 Расмни 300x400 гача кичрайтириш
+// 🆕 Расмни 300x400 гача кичрайтириш ва Supabase Storage га юклаш
 async function loadPhotoFromFile(file, zoneId) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         const MAX_WIDTH = 300, MAX_HEIGHT = 400;
         let width = img.width, height = img.height;
-        if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-        } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-        }
+        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
         canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-        showPhotoPreview(dataUrl, zoneId);
-        resolve();
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        canvas.toBlob(async (blob) => {
+          if (typeof showToast === "function") showToast("⏳ Расм юкланмоқда...", "info");
+          if (typeof uploadPhotoToSupabase === "function") {
+            const url = await uploadPhotoToSupabase(blob, file.name);
+            if (url) { showPhotoPreview(url, zoneId); if (typeof showToast === "function") showToast("✅ Расм юкланди", "success"); } 
+            else { if (typeof showToast === "function") showToast("❌ Расм юклашда хато", "error"); }
+          } else {
+            showPhotoPreview(canvas.toDataURL("image/jpeg", 0.7), zoneId);
+          }
+          resolve();
+        }, "image/jpeg", 0.8);
       };
       img.src = e.target.result;
     };
@@ -87,7 +91,6 @@ function showPhotoPreview(dataUrl, zoneId) {
   zone.querySelector(".drop-zone-content").classList.add("hidden");
   const img = zone.querySelector(".drop-zone-preview"); img.src = dataUrl; img.classList.remove("hidden");
   zone.querySelector(".drop-zone-clear").classList.remove("hidden");
-  showToast("✅ Расм юкланди", "success");
 }
 function clearPhoto(zoneId) {
   const zone = document.getElementById(zoneId);
@@ -206,7 +209,7 @@ function handleCandidateFormSubmit(e) {
   const errors = validateCandidateForm(); if (errors.length > 0) return alert("⚠️ ХАТОЛАР:\n\n• " + errors.join("\n• "));
   const recordType = document.getElementById("inpRecordType").value; const region = document.getElementById("inpRegion").value; const category = document.getElementById("inpCategory").value; let district = document.getElementById("inpDistrict").value.trim(); const appointType = document.getElementById("inpAppointType").value; const pinfl = document.getElementById("inpPinfl").value.trim(); const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase(); const passNum = document.getElementById("inpPassNum").value.trim(); let fio = document.getElementById("inpFio").value.trim(); const birthDate = document.getElementById("inpBirthDate").value.trim(); let birthPlace = document.getElementById("inpBirthPlace").value.trim(); let currentJob = document.getElementById("inpCurrentJob").value.trim(); let jobSince = document.getElementById("inpJobSince").value.trim();
   if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") district = "";
-  fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); jobSince = jobSince.replace(/\D/g, "").substring(0, 4); // Фақат йил
+  fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); jobSince = jobSince.replace(/\D/g, "").substring(0, 4);
   let photoDataUrl = currentPhotoDataUrl || makeAvatarSvg(((fio.split(" ")[0] || "Х")[0] + (fio.split(" ")[1] || "А")[0]).toUpperCase(), "#4a6fa5");
   const now = getNow(); const num = String(appState.candidates.length + 1).padStart(2, "0"); const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-"; const reestrNo = `${prefix}${now.year}/${now.month}-${num}`; const heading = getFinalHeading();
   const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: "...", para3: "...", para4: "...", korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
@@ -264,14 +267,48 @@ function bulkSendCleanToBoss() {
 
 function deleteUser(idx) {
   if (!hasPermission("delete_user")) return alert("Рухсат йўқ!"); const u = appState.users[idx]; if (!u) return;
-  if (u.login === "admin") return alert("Асосий админ ўчирилмайди!"); if (!confirm(`«${u.name}» ўчирилсинми?`)) return;
+  if (u.login === "admin@komplayens.uz") return alert("Асосий админ ўчирилмайди!"); if (!confirm(`«${u.name}» ўчирилсинми?`)) return;
   if (typeof addAuditLog === "function") addAuditLog("USER_DELETE", `${u.login}`); appState.users.splice(idx, 1); saveState(); renderUsersTable(); showToast(`🗑 Ўчирилди`, "warning");
 }
 
 async function handleUserCreateSubmit(e) {
-  e.preventDefault(); if (!hasPermission("create_user")) return alert("Рухсат йўқ!");
-  const name = document.getElementById("newUserName").value.trim(); const role = document.getElementById("newUserRole").value; const login = document.getElementById("newUserLogin").value.trim(); const pass = document.getElementById("newUserPass").value.trim();
-  if (!name || !login || !pass) return alert("Барча майдонларни тўлдиринг!"); if (appState.users.some(u => u.login === login)) return alert("Логин банд!"); if (pass.length < 6) return alert("Парол 6+ белги!");
-  const passHash = await hashPassword(pass); if (!passHash) return alert("Хешлаш хато!");
-  appState.users.push({ login, passHash, name, role }); if (typeof addAuditLog === "function") addAuditLog("USER_CREATE", `${login} (${role})`); saveState(); renderUsersTable(); e.target.reset(); showToast(`✅ ${login} яратилди`, "success");
+  e.preventDefault();
+  if (!hasPermission("create_user")) return alert("Рухсат йўқ!");
+
+  const name = document.getElementById("newUserName").value.trim();
+  const role = document.getElementById("newUserRole").value;
+  const login = document.getElementById("newUserLogin").value.trim(); // Email!
+  const pass = document.getElementById("newUserPass").value.trim();
+
+  if (!name || !login || !pass) return alert("Барча майдонларни тўлдиринг!");
+  if (appState.users.some(u => u.login === login)) return alert("Логин банд!");
+  if (pass.length < 6) return alert("Парол 6+ белги!");
+  if (!login.includes("@")) return alert("Логин (Email) да @ белгиси бўлиши шарт!");
+
+  if (typeof initSupabaseClient !== "function" || !initSupabaseClient()) return alert("Интернет йўқ ёки Supabase уланмаган!");
+
+  try {
+    // Supabase RPC орқали user яратиш
+    const { data, error } = await supabaseClient.rpc('admin_create_user', {
+      new_email: login,
+      new_password: pass,
+      new_role: role,
+      new_name: name
+    });
+
+    if (error) throw error;
+
+    // Локал стейтга ҳам қўшиш (дарҳол кўриниши учун)
+    const passHash = await hashPassword(pass);
+    appState.users.push({ login, passHash, name, role });
+    if (typeof addAuditLog === "function") addAuditLog("USER_CREATE", `${login} (${role})`);
+    saveState();
+    renderUsersTable();
+    e.target.reset();
+    showToast(`✅ Фойдаланувчи (${login}) яратилди`, "success");
+
+  } catch (err) {
+    console.error("RPC xato:", err);
+    alert("❌ Хатолик: " + err.message + "\n(Supabase да admin_create_user функцияси ишга тушганини текширинг)");
+  }
 }
