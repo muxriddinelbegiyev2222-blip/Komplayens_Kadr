@@ -1,8 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
+
+// 1. Дастур менюсини ўчириш (кимдир менюдан кирмаслиги учун)
+Menu.setApplicationMenu(null);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -10,28 +13,34 @@ function createWindow() {
     height: 1000,
     minWidth: 1200,
     minHeight: 700,
-    title: 'KOMPLAYENS-KADR v7.0',
+    title: 'KOMPLAYENS-KADR v10.0',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: false // 2. DevTools ни тўлиқ блоклаш
     }
   });
 
   mainWindow.loadFile(path.join(__dirname, '../src/index.html'));
 
-  if (process.argv.includes('--dev')) {
-    mainWindow.webContents.openDevTools();
-  }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  // 3. F12 ва Ctrl+Shift+I ни блоклаш (ички ходим кирмаслиги учун)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (
+      input.key === 'F12' || 
+      (input.control && input.shift && input.key.toLowerCase() === 'i') ||
+      (input.control && input.shift && input.key.toLowerCase() === 'j') ||
+      (input.control && input.key.toLowerCase() === 'u')
+    ) {
+      event.preventDefault();
+    }
   });
+
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(() => {
   createWindow();
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -41,40 +50,24 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// D:\ diskka saqlash
+// D:\ дискка сақлаш
 ipcMain.handle('save-to-d-drive', async (event, data) => {
   try {
     const dPath = 'D:\\Komplayens_Kadr_Baza';
-    
-    if (!fs.existsSync(dPath)) {
-      fs.mkdirSync(dPath, { recursive: true });
-    }
-    
+    if (!fs.existsSync(dPath)) fs.mkdirSync(dPath, { recursive: true });
     const filePath = path.join(dPath, 'komplayens_kadr_baza.json');
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-    
     return { ok: true, path: filePath };
   } catch (e) {
-    // Agar D:\ yo'q bo'lsa, foydalanuvchi papkasiga saqlaymiz
-    try {
-      const fallbackPath = path.join(app.getPath('userData'), 'komplayens_kadr_baza.json');
-      fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf-8');
-      return { ok: true, path: fallbackPath };
-    } catch (err) {
-      return { ok: false, error: err.message };
-    }
+    return { ok: false, error: e.message };
   }
 });
 
-// D:\ diskdan o'qish
+// D:\ дискдан ўқиш
 ipcMain.handle('load-from-d-drive', async () => {
   try {
     const filePath = 'D:\\Komplayens_Kadr_Baza\\komplayens_kadr_baza.json';
-    
-    if (!fs.existsSync(filePath)) {
-      return { ok: false, error: 'Fayl topilmadi' };
-    }
-    
+    if (!fs.existsSync(filePath)) return { ok: false, error: 'Fayl topilmadi' };
     const data = fs.readFileSync(filePath, 'utf-8');
     return { ok: true, data: JSON.parse(data) };
   } catch (e) {
@@ -82,15 +75,13 @@ ipcMain.handle('load-from-d-drive', async () => {
   }
 });
 
-// JSON fayl tanlash
+// JSON файл танлаш
 ipcMain.handle('select-json-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: [{ name: 'JSON', extensions: ['json'] }]
   });
-  
   if (result.canceled) return { ok: false };
-  
   try {
     const data = fs.readFileSync(result.filePaths[0], 'utf-8');
     return { ok: true, data: JSON.parse(data) };
