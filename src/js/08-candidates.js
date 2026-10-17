@@ -159,6 +159,13 @@ function updateHeadingPreview() {
   const heading = buildDistrictHeading(region, district, category); 
   const field = document.getElementById("inpDistrictHeading");
   if (field && field.dataset.manualEdited !== "true") field.value = heading;
+
+  // 🆕 Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
+  const jobSinceLabel = document.getElementById("inpJobSinceLabel");
+  const recType = document.getElementById("inpRecordType")?.value;
+  if (jobSinceLabel) {
+    jobSinceLabel.textContent = (recType === "former") ? "Собиқ лавозимдан бўшатилган вақти *" : "Лавозимга қўйилган вақти *";
+  }
 }
 
 function buildDistrictHeading(region, district, category) {
