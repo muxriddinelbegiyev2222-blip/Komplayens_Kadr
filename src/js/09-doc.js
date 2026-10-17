@@ -1,10 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v10.5
-// =========================================================================
-
-// =========================================================================
-// АДМИН ТАҲРИР ОЙНАСИ
+// «КОМПЛАЕНС-КАДР» v10.6 (Тўлиқ тузатилган)
 // =========================================================================
 
 function openEditorModal(id) {
@@ -134,7 +130,7 @@ function sendToBossForApproval() {
 }
 
 // =========================================================================
-// A4 МАЪЛУМОТНОМА ГЕНЕРАТОРИ (QR КОД БИЛАН)
+// A4 ҲУЖЖАТ ГЕНЕРАТОРИ (QR КОД БИЛАН)
 // =========================================================================
 
 function getSignerName(candidate) {
@@ -161,16 +157,13 @@ function buildOfficialMalumotnomaHtml(c) {
     ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>`
     : `${c.sudlanganText}`;
 
-  // 🆕 QR КОД УЧУН МАЪЛУМОТ (Агар тасдиқланган бўлса)
   let qrHtml = "";
   if (c.workflowStage === "approved") {
-    // QR код текст: ПИНФЛ + Реестр + Сана
     const qrText = `PINFL: ${c.pinfl}\nReestr: ${c.reestrNo}\nTasdiqlandi: ${c.approvedDate}\nTasdiqlovchi: ${getApproverName(c)}`;
-    // Google Chart API орқали QR генерация (Осон ва ишончли)
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}`;
     
     qrHtml = `
-      <div style="text-align:center;">
+      <div style="text-align:center;margin-top:5px;">
         <img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" />
         <div style="font-size:7pt;color:#475569;">Ҳужжат ҳақиқийлиги</div>
       </div>
@@ -192,7 +185,7 @@ function buildOfficialMalumotnomaHtml(c) {
   return `
     <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
       <div style="text-align:center;font-weight:bold;font-size:14pt;line-height:1.35;margin-bottom:14pt;">
-        ${c.districtHeading.replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>
+        ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>
         ${c.fio} бўйича<br/>
         МАЪЛУМОТНОМА
       </div>
@@ -225,73 +218,93 @@ function buildOfficialMalumotnomaHtml(c) {
   `;
 }
 
+// =========================================================================
+// ҲУЖЖАТНИ ОЧИШ (Бошлиқ учун ҳам ишлайди)
+// =========================================================================
+
 function openDocModal(id) {
-  const c = appState.candidates.find(x => x.id === id);
-  if (!c) return;
+  try {
+    const c = appState.candidates.find(x => x.id === id);
+    if (!c) {
+      alert("Номзод топилмади!");
+      return;
+    }
 
-  if ((currentRole === ROLES.KUZATUVCHI || currentRole === ROLES.KADR) && c.workflowStage !== "approved") {
-    alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
-    return;
-  }
+    if ((currentRole === ROLES.KUZATUVCHI || currentRole === ROLES.KADR) && c.workflowStage !== "approved") {
+      alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
+      return;
+    }
 
-  activeCandidateId = id;
+    activeCandidateId = id;
 
-  const content = document.getElementById("a4InnerContent");
-  if (content) content.innerHTML = buildOfficialMalumotnomaHtml(c);
-
-  const reestrInfo = document.getElementById("docModalReestrInfo");
-  if (reestrInfo) {
-    reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
-  }
-
-  const badge = document.getElementById("docModalStatusBadge");
-  if (badge) {
-    if (c.workflowStage === "approved") {
-      badge.textContent = "✓ Ўрганиб чиқилди";
-      badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+    const content = document.getElementById("a4InnerContent");
+    if (content) {
+      content.innerHTML = buildOfficialMalumotnomaHtml(c);
     } else {
-      badge.textContent = "⏳ Ўрганиш жараёнида";
-      badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
+      alert("Хато: a4InnerContent топилмади!");
+      return;
     }
-  }
 
-  const bossPanel = document.getElementById("bossActionPanel");
-  const warnBox = document.getElementById("bossSudlanganWarningBox");
-  const chk = document.getElementById("chkBossConfirmSudlangan");
-  const btnApprove = document.getElementById("btnBossFinalApprove");
+    const reestrInfo = document.getElementById("docModalReestrInfo");
+    if (reestrInfo) {
+      reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
+    }
 
-  if (currentRole === ROLES.RAHBAR && c.workflowStage === "boss_review") {
-    if (bossPanel) bossPanel.classList.remove("hidden");
-
-    if (!c.bossViewedAt) {
-      if (typeof logBossViewed === "function") {
-        logBossViewed(c);
+    const badge = document.getElementById("docModalStatusBadge");
+    if (badge) {
+      if (c.workflowStage === "approved") {
+        badge.textContent = "✓ Ўрганиб чиқилди";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+      } else {
+        badge.textContent = "⏳ Ўрганиш жараёнида";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
       }
-      saveState();
     }
 
-    if (c.sudlanganStatus === "sudlangan") {
-      if (warnBox) warnBox.classList.remove("hidden");
-      const warnText = document.getElementById("bossSudlanganWarningText");
-      if (warnText) warnText.textContent = `ИЦ Маълумоти: ${c.sudlanganText}`;
-      if (chk) chk.checked = false;
-      if (btnApprove) {
-        btnApprove.disabled = true;
-        btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
+    const bossPanel = document.getElementById("bossActionPanel");
+    const warnBox = document.getElementById("bossSudlanganWarningBox");
+    const chk = document.getElementById("chkBossConfirmSudlangan");
+    const btnApprove = document.getElementById("btnBossFinalApprove");
+
+    if (currentRole === ROLES.RAHBAR && c.workflowStage === "boss_review") {
+      if (bossPanel) bossPanel.classList.remove("hidden");
+
+      if (!c.bossViewedAt) {
+        if (typeof logBossViewed === "function") logBossViewed(c);
+        saveState();
+      }
+
+      if (c.sudlanganStatus === "sudlangan") {
+        if (warnBox) warnBox.classList.remove("hidden");
+        const warnText = document.getElementById("bossSudlanganWarningText");
+        if (warnText) warnText.textContent = `ИЦ Маълумоти: ${c.sudlanganText}`;
+        if (chk) chk.checked = false;
+        if (btnApprove) {
+          btnApprove.disabled = true;
+          btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
+        }
+      } else {
+        if (warnBox) warnBox.classList.add("hidden");
+        if (btnApprove) {
+          btnApprove.disabled = false;
+          btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
+        }
       }
     } else {
-      if (warnBox) warnBox.classList.add("hidden");
-      if (btnApprove) {
-        btnApprove.disabled = false;
-        btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
-      }
+      if (bossPanel) bossPanel.classList.add("hidden");
     }
-  } else {
-    if (bossPanel) bossPanel.classList.add("hidden");
-  }
 
-  const modal = document.getElementById("docModal");
-  if (modal) modal.classList.remove("hidden");
+    const modal = document.getElementById("docModal");
+    if (modal) {
+      modal.classList.remove("hidden");
+    } else {
+      alert("Хато: docModal топилмади! index.html ни текширинг.");
+    }
+    
+  } catch (error) {
+    console.error("Open Doc Modal Error:", error);
+    alert("Ҳужжатни очишда хато юз берди: " + error.message);
+  }
 }
 
 function toggleBossApproveButton() {
@@ -372,7 +385,7 @@ function closeDocModal() {
 }
 
 // =========================================================================
-// A4 ПРИНТЕР ВА НУСХАЛАШ
+// ПРИНТЕР ВА НУСХАЛАШ
 // =========================================================================
 
 function printCurrentDocA4() {
@@ -417,4 +430,4 @@ function copyDocText() {
   });
 }
 
-console.log("✅ 09-doc.js юкланди (v10.5 — QR код билан)");
+console.log("✅ 09-doc.js юкланди (v10.6 — Тўлиқ тузатилган + QR)");
