@@ -113,4 +113,160 @@ function setupLoginListeners() {
 
   if (loginPass) {
     loginPass.addEventListener("keydown", (e) => {
-      if (e.key === "
+      if (e.key === "Enter") { e.preventDefault(); performLogin(); }
+    });
+  }
+
+  if (loginUser) {
+    loginUser.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); if (loginPass) loginPass.focus(); }
+    });
+  }
+}
+
+function setupCandidateFormListeners() {
+  const candForm = document.getElementById("candidateForm");
+  if (candForm) candForm.addEventListener("submit", handleCandidateFormSubmit);
+
+  if (typeof setupHeadingFieldTracking === "function") {
+    setupHeadingFieldTracking();
+    console.log("📝 Сарлавҳа превьюси tracking ёқилди");
+  }
+
+  const pinflInput = document.getElementById("inpPinfl");
+  if (pinflInput) pinflInput.addEventListener("input", checkPinflDuplicate);
+
+  // 🆕 Сўров тури ўзгарганда сарлавҳа/лейбл янгиланиши (safety net)
+  const recTypeSel = document.getElementById("inpRecordType");
+  if (recTypeSel && typeof updateHeadingPreview === "function") {
+    recTypeSel.addEventListener("change", () => {
+      try { updateHeadingPreview(); } catch (e) { console.error("updateHeadingPreview error:", e); }
+    });
+  }
+}
+
+function setupUserFormListeners() {
+  const userForm = document.getElementById("userCreateForm");
+  if (userForm) userForm.addEventListener("submit", handleUserCreateSubmit);
+}
+
+function setupFilterListeners() {
+  const filters = [
+    "fotoRegionFilter","fotoCategoryFilter","formerRegionFilter",
+    "dbRegionFilter","dbCategoryFilter","dbYearFilter","dbMonthFilter","dbStatusFilter"
+  ];
+
+  filters.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => { if (typeof renderAll === "function") renderAll(); });
+  });
+
+  const searchInput = document.getElementById("dbSearchInput");
+  if (searchInput) searchInput.addEventListener("input", () => { if (typeof renderAll === "function") renderAll(); });
+
+  const itsFilter = document.getElementById("itsFilterStatus");
+  if (itsFilter) itsFilter.addEventListener("change", () => { if (typeof renderAll === "function") renderAll(); });
+}
+
+function setupSubtabListeners() {
+  const subtabNew = document.getElementById("subtabNew");
+  const subtabInProcess = document.getElementById("subtabInProcess");
+  const subtabApproved = document.getElementById("subtabApproved");
+
+  if (subtabNew) subtabNew.addEventListener("click", () => switchSubTab("new"));
+  if (subtabInProcess) subtabInProcess.addEventListener("click", () => switchSubTab("in_process"));
+  if (subtabApproved) subtabApproved.addEventListener("click", () => switchSubTab("approved"));
+}
+
+function setupInputFormattingListeners() {
+  setupDateInput("inpBirthDate");
+  setupPinflInput("inpPinfl");
+  setupPassportInputs("inpPassSeries", "inpPassNum");
+
+  setupDateInput("editCandBirthDate");
+  setupPinflInput("editCandPinfl");
+  setupPassportInputs("editCandPassSeries", "editCandPassNum");
+
+  console.log("✅ Input форматлаш созланди");
+}
+
+function setupModalBackdropClose() {
+  document.addEventListener("click", (e) => {
+    const modalIds = ["editorModal", "docModal", "editCandidateModal", "aboutModal"];
+    modalIds.forEach(id => {
+      const modal = document.getElementById(id);
+      if (modal && !modal.classList.contains("hidden") && e.target === modal) {
+        if (id === "editorModal" && typeof closeEditorModal === "function") closeEditorModal();
+        if (id === "docModal" && typeof closeDocModal === "function") closeDocModal();
+        if (id === "editCandidateModal" && typeof closeEditCandidateModal === "function") closeEditCandidateModal();
+        if (id === "aboutModal" && typeof closeAboutModal === "function") closeAboutModal();
+      }
+    });
+  });
+}
+
+function showVersion() {
+  console.log(`
+╔══════════════════════════════════════════════════════╗
+║  «КОМПЛАЕНС-КАДР» v11.6                              ║
+║  Кадастр агентлиги учун ягона комплаенс тизими       ║
+║  ─────────────────────────────────────────────────   ║
+║  Яратувчи: Elbegiyev Muxriddin                       ║
+║  Алоқа:    +998 33 911 22 22                         ║
+╚══════════════════════════════════════════════════════╝
+  `);
+}
+
+function checkAppHealth() {
+  const issues = [];
+  if (!appState) issues.push("❌ appState юкланмаган");
+  if (!appState || !Array.isArray(appState.users)) issues.push("❌ users массиви йўқ");
+  if (!appState || !Array.isArray(appState.candidates)) issues.push("❌ candidates массиви йўқ");
+
+  const criticalFunctions = [
+    "performLogin","doLogout","switchRole","switchTab","renderAll",
+    "openDocModal","openEditorModal","pushToSupabase","pullFromSupabase","initRealtime",
+    "buildDistrictHeading","updateHeadingPreview","getFinalHeading",
+    "latToCyr","validateDate","validateFIO"
+  ];
+  criticalFunctions.forEach(fn => {
+    if (typeof window[fn] !== "function") issues.push(`❌ Функция йўқ: ${fn}()`);
+  });
+
+  const criticalElements = [
+    "loginOverlay","loginUsername","loginPassword","kpiTotal","fototablitsaBody",
+    "docModal","editorModal","candidateForm","inpDistrictHeading","inpDistrict","inpRegion","inpCategory"
+  ];
+  criticalElements.forEach(id => {
+    if (!document.getElementById(id)) issues.push(`❌ DOM элемент йўқ: #${id}`);
+  });
+
+  return issues;
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    setupModalBackdropClose();
+    showVersion();
+    initApp();
+  });
+} else {
+  setupModalBackdropClose();
+  showVersion();
+  initApp();
+}
+
+window.addEventListener("error", (e) => {
+  console.error("❌ Глобал хато:", e.error || e.message);
+  if (e.error && e.error.message) console.error("Хато тафсилоти:", e.error.message);
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("❌ Ушланмаган Promise:", e.reason);
+});
+
+window.addEventListener("beforeunload", (e) => {
+  // зарурат бўлса
+});
+
+console.log("✅ 13-app.js юкланди (v11.6)");
