@@ -1,6 +1,6 @@
 // =========================================================================
 // 08-CANDIDATES.JS — CRUD + Image Resize + Full Date
-// «КОМПЛАЕНС-КАДР» v11.5
+// «КОМПЛАЕНС-КАДР» v11.6
 // =========================================================================
 
 let currentPhotoDataUrl = null;
@@ -144,8 +144,17 @@ function updateHeadingPreview() {
   const distInput = document.getElementById("inpDistrict");
   const distLabel = document.getElementById("inpDistrictLabel");
   
-  // 🆕 Кадастр агентлиги ёки ДКП танланса - Туман майдонини яшириш
-  if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") {
+  // 🆕 ТУМАН КЕРАК БЎЛМАГАН ЛАВОЗИМЛАР РЎЙХАТИ
+  const noDistrictCategories = [
+    "ҳудудий бошқармаси бошлиғи",
+    "марказий аппарати",
+    "Комплаенс хизмати",
+    "Собиқ ходимлар"
+  ];
+  const isNoDistrict = noDistrictCategories.some(c => category.includes(c));
+
+  // 🆕 Кадастр агентлиги/ДКП танланса ЁКИ туман керак бўлмаган лавозим танланса - Туман майдонини яшириш
+  if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси" || isNoDistrict) {
     if (distWrapper) distWrapper.style.display = "none";
     if (distInput) distInput.value = "";
   } else {
@@ -160,7 +169,7 @@ function updateHeadingPreview() {
   const field = document.getElementById("inpDistrictHeading");
   if (field && field.dataset.manualEdited !== "true") field.value = heading;
 
-  // 🆕 Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
+  // Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
   const jobSinceLabel = document.getElementById("inpJobSinceLabel");
   const recType = document.getElementById("inpRecordType")?.value;
   if (jobSinceLabel) {
@@ -204,7 +213,19 @@ function validateFIO(fio) { if (!fio || fio.length < 3) return "Ф.И.Ш. қис
 function validateCurrentJob(job) { if (!job || job.length < 5) return "Лавозим қисқа"; if (/^\d+$/.test(job)) return "Лавозим рақам бўлмаслиги керак"; return null; }
 
 function validateCandidateForm() {
-  const errors = []; const fio = document.getElementById("inpFio").value.trim(); const pinfl = document.getElementById("inpPinfl").value.trim(); const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase(); const passNum = document.getElementById("inpPassNum").value.trim(); const birthDate = document.getElementById("inpBirthDate").value.trim(); const jobSince = document.getElementById("inpJobSince").value.trim(); const currentJob = document.getElementById("inpCurrentJob").value.trim(); const district = document.getElementById("inpDistrict").value.trim(); const heading = document.getElementById("inpDistrictHeading")?.value.trim() || "";
+  const errors = []; 
+  const fio = document.getElementById("inpFio").value.trim(); 
+  const pinfl = document.getElementById("inpPinfl").value.trim(); 
+  const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase(); 
+  const passNum = document.getElementById("inpPassNum").value.trim(); 
+  const birthDate = document.getElementById("inpBirthDate").value.trim(); 
+  const jobSince = document.getElementById("inpJobSince").value.trim(); 
+  const currentJob = document.getElementById("inpCurrentJob").value.trim(); 
+  const district = document.getElementById("inpDistrict").value.trim(); 
+  const heading = document.getElementById("inpDistrictHeading")?.value.trim() || "";
+  const category = document.getElementById("inpCategory")?.value || "";
+  const selReg = document.getElementById("inpRegion")?.value;
+
   const fErr = validateFIO(fio); if (fErr) errors.push(fErr);
   if (pinfl.length !== 14 || !/^\d{14}$/.test(pinfl)) errors.push("ПИНФЛ 14 рақам бўлиши керак");
   if (!/^[A-Z]{2}$/.test(passSeries)) errors.push("Паспорт серияси 2 та катта ҳарф");
@@ -213,8 +234,14 @@ function validateCandidateForm() {
   const jsErr = validateDate(jobSince, "Лавозимга қўйилган сана"); if (jsErr) errors.push(jsErr);
   const jobErr = validateCurrentJob(currentJob); if (jobErr) errors.push(jobErr);
   
-  const noDist = ["Кадастр агентлиги", "Давлат кадастрлари палатаси"]; const selReg = document.getElementById("inpRegion")?.value;
-  if (!noDist.includes(selReg) && (!district || district.length < 3)) errors.push(selReg === "Тизим ташкилотлари" ? "Ташкилот номи шарт" : "Туман/шаҳар номи шарт");
+  // 🆕 ТУМАН КЕРАК БЎЛМАГАН ҲОЛАТЛАР УЧУН ВАЛИДАЦИЯНИ ЎТКАЗИБ ЮБОРИШ
+  const noDistRegions = ["Кадастр агентлиги", "Давлат кадастрлари палатаси"]; 
+  const noDistCategories = ["ҳудудий бошқармаси бошлиғи", "марказий аппарати", "Комплаенс хизмати", "Собиқ ходимлар"];
+  const isNoDistCat = noDistCategories.some(c => category.includes(c));
+
+  if (!noDistRegions.includes(selReg) && !isNoDistCat && (!district || district.length < 3)) {
+    errors.push(selReg === "Тизим ташкилотлари" ? "Ташкилот номи шарт" : "Туман/шаҳар номи шарт");
+  }
   
   if (!heading || heading.length < 20) errors.push("Тўлиқ сарлавҳа 20+ белги");
   return errors;
@@ -240,8 +267,6 @@ function handleCandidateFormSubmit(e) {
   if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") district = "";
   
   fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); 
-  // 🆕 jobSince энди Кун.Ой.Йил шаклида (масалан: 15.01.2026)
-  // Тозалаш: фақат рақам ва нуқта қолади
   jobSince = jobSince.replace(/[^\d.]/g, "");
 
   let photoDataUrl = currentPhotoDataUrl || makeAvatarSvg(((fio.split(" ")[0] || "Х")[0] + (fio.split(" ")[1] || "А")[0]).toUpperCase(), "#4a6fa5");
