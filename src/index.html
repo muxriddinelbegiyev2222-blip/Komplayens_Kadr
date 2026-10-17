@@ -3,14 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» v11.6 — Кадастр агентлиги комплаенс тизими</title>
+  <title>«КОМПЛАЕНС-КАДР» v11.7 — Кадастр агентлиги комплаенс тизими</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <!-- QR yaratish uchun kutubxona (Bazaga tushishi uchun) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Hujjat varog'i uchun maxsus sozlama */
+    .a4-sheet {
+      width: 210mm;
+      height: 297mm;
+      background: white;
+      margin: 0 auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    @media print {
+      .a4-sheet { box-shadow: none; margin: 0; height: auto; overflow: visible; }
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 transition-colors">
 
@@ -22,7 +40,7 @@
           <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">КК</div>
           <div>
             <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.6</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.7</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
@@ -54,7 +72,7 @@
         <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">КК</div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.6</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.7</span>
             <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
               <span class="realtime-dot"></span> Уланмоқда...
             </span>
@@ -98,17 +116,20 @@
       </div>
     </div>
 
-    <div class="bg-slate-800/95 border-t border-slate-700 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
-      <div id="roleBannerText" class="text-xs font-semibold text-blue-300"></div>
-      <div class="flex flex-wrap items-center gap-1.5">
-        <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">📊 Статистика</button>
-        <button id="tabBtnFototablitsa" onclick="switchTab('fototablitsa')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">🖼️ Фототаблица</button>
-        <button id="tabBtnFormer" onclick="switchTab('former')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">👤 Собиқ ходимлар</button>
-        <button id="tabBtnIts" onclick="switchTab('its')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">🔍 ИЦ Жадвали</button>
-        <button id="tabBtnNegative" onclick="switchTab('negative')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">⚠️ Судланганлар</button>
-        <button id="tabBtnDatabase" onclick="switchTab('database')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">🗂️ Ягона База</button>
-        <button id="tabBtnAudit" onclick="switchTab('audit')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">📋 Аудит-Лог</button>
-        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="display:none;">💾 Созламалар</button>
+    <!-- MENYU PANELI (Kattalashtirilgan va to'liq ekran) -->
+    <div class="bg-slate-800/95 border-t border-slate-700 px-2 py-2 flex flex-col w-full no-print">
+      <div class="w-full mb-2 flex justify-between items-center px-2">
+        <div id="roleBannerText" class="text-sm font-semibold text-blue-300"></div>
+      </div>
+      <div class="flex flex-nowrap overflow-x-auto w-full justify-between items-center gap-2 pb-1 px-2">
+        <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700">📊 Статистика</button>
+        <button id="tabBtnFototablitsa" onclick="switchTab('fototablitsa')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700">🖼️ Фототаблица</button>
+        <button id="tabBtnFormer" onclick="switchTab('former')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700">👤 Собиқ ходимлар</button>
+        <button id="tabBtnIts" onclick="switchTab('its')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700" style="display:none;">🔍 ИЦ Жадвали</button>
+        <button id="tabBtnNegative" onclick="switchTab('negative')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700" style="display:none;">⚠️ Судланганлар</button>
+        <button id="tabBtnDatabase" onclick="switchTab('database')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700" style="display:none;">🗂️ Ягона База</button>
+        <button id="tabBtnAudit" onclick="switchTab('audit')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700" style="display:none;">📋 Аудит-Лог</button>
+        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition cursor-pointer hover:bg-slate-700" style="display:none;">💾 Созламалар</button>
       </div>
     </div>
   </header>
@@ -757,6 +778,18 @@
           </div>
         </div>
 
+        <!-- 🆕 TASDIQLOVCHI MA'LUMOTLARI (Dinamik) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-indigo-50 p-3.5 rounded-xl border border-indigo-200">
+          <div>
+            <label class="block text-xs font-bold mb-1 text-indigo-900">Tasdiqlovchi F.I.Sh. (Imzo)</label>
+            <input id="editSignerName" type="text" class="w-full px-3 py-2 rounded-lg border border-indigo-300 text-xs font-semibold bg-white" placeholder="I.Zaripov" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1 text-indigo-900">Tasdiqlovchi Lavozimi</label>
+            <input id="editSignerPosition" type="text" class="w-full px-3 py-2 rounded-lg border border-indigo-300 text-xs font-semibold bg-white" placeholder="Korrupsiya bolimi boshlig'i" />
+          </div>
+        </div>
+
         <div>
           <label class="block text-xs font-bold mb-1">3. Диний эътиқоди ва ДЭО (2-хатбоши)</label>
           <textarea id="editPara2" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
@@ -880,9 +913,9 @@
     </div>
   </div>
 
-  <!-- DOC MODAL -->
+  <!-- DOC MODAL (To'g'ridan-to'g'ri tahrirlanadigan) -->
   <div id="docModal" class="fixed inset-0 z-[80] bg-slate-900/85 overflow-y-auto p-4 md:p-8 hidden">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[210mm] mx-auto">
       <div class="bg-blue-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-blue-700 shadow-xl no-print">
         <div class="flex items-center gap-3">
           <span id="docModalStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">✓ Ўрганиб чиқилди</span>
@@ -890,9 +923,11 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="copyDocText()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">📋 Нусхалаш</button>
+          <button onclick="saveDirectDocEdits()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer shadow">💾 Matnni saqlash</button>
+          <button onclick="resetDocEdits()" class="px-3.5 py-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer shadow">↩️ Asl holat</button>
+          <button onclick="copyDocText()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">📋 Nusxalash</button>
           <button onclick="exportCurrentDocWord()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer">📄 Word</button>
-          <button onclick="printCurrentDocA4()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow cursor-pointer">🖨 Печать (A4)</button>
+          <button onclick="printCurrentDocA4()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow cursor-pointer">🖨 Chop etish</button>
           <button onclick="closeDocModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer">✕</button>
         </div>
       </div>
@@ -919,8 +954,9 @@
         </div>
       </div>
 
-      <div id="a4PrintableSheet" class="a4-sheet doc-serif">
-        <div id="a4InnerContent"></div>
+      <div id="a4PrintableSheet" class="a4-sheet doc-serif bg-white text-black relative">
+        <!-- contenteditable="true" orqali Word kabi tahrirlash imkoniyati -->
+        <div id="a4InnerContent" class="outline-none focus:ring-2 focus:ring-blue-500 h-full w-full p-4" contenteditable="true"></div>
       </div>
     </div>
   </div>
