@@ -1,32 +1,23 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v10.6 (Тўлиқ тузатилган)
+// «КОМПЛАЕНС-КАДР» v10.7 (Тўлиқ тузатилган)
 // =========================================================================
 
 function openEditorModal(id) {
-  if (!hasPermission("edit_its") && !hasPermission("view_candidate_details")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
-
+  if (!hasPermission("edit_its") && !hasPermission("view_candidate_details")) { alert("Рухсат йўқ!"); return; }
   const c = appState.candidates.find(x => x.id === id);
   if (!c) return;
-
   activeCandidateId = id;
 
   if (currentRole === ROLES.KORRUPSIYA && !c.korrupsiyaViewedAt) {
     const now = getNow();
     c.korrupsiyaViewedAt = now.dateTime;
-    if (typeof logKorrupsiyaViewed === "function") {
-      logKorrupsiyaViewed(c);
-    }
+    if (typeof logKorrupsiyaViewed === "function") logKorrupsiyaViewed(c);
     saveState();
   }
 
   const title = document.getElementById("editorCandidateTitle");
-  if (title) {
-    title.textContent = `${c.fio} (${c.region}) — Маълумотномани тайёрлаш`;
-  }
+  if (title) title.textContent = `${c.fio} (${c.region}) — Маълумотномани тайёрлаш`;
 
   setVal("editSudlanganStatus", c.sudlanganStatus);
   setVal("editSudlanganText", c.sudlanganText);
@@ -39,16 +30,8 @@ function openEditorModal(id) {
   if (returnBlock) {
     if (c.bossReturnReason && c.bossReturnedAt) {
       returnBlock.classList.remove("hidden");
-      returnBlock.innerHTML = `
-        <div class="p-3 rounded-lg bg-red-50 border-2 border-red-400 text-red-900 text-xs">
-          <b>↩️ Охирги қайтариш:</b><br/>
-          <b>Вақт:</b> ${c.bossReturnedAt}<br/>
-          <b>Сабаб:</b> ${c.bossReturnReason}
-        </div>
-      `;
-    } else {
-      returnBlock.classList.add("hidden");
-    }
+      returnBlock.innerHTML = `<div class="p-3 rounded-lg bg-red-50 border-2 border-red-400 text-red-900 text-xs"><b>↩️ Охирги қайтариш:</b><br/><b>Вақт:</b> ${c.bossReturnedAt}<br/><b>Сабаб:</b> ${c.bossReturnReason}</div>`;
+    } else { returnBlock.classList.add("hidden"); }
   }
 
   const modal = document.getElementById("editorModal");
@@ -69,22 +52,13 @@ function onSudlanganSelectChange() {
   const sel = document.getElementById("editSudlanganStatus");
   const inp = document.getElementById("editSudlanganText");
   if (!sel || !inp) return;
-
-  if (sel.value === "clean") {
-    inp.value = "муқаддам судланмаган";
-  } else if (inp.value === "муқаддам судланмаган") {
-    inp.value = "муқаддам судланган (ЎзР ЖКнинг ___-моддаси билан)";
-  }
+  if (sel.value === "clean") inp.value = "муқаддам судланмаган";
+  else if (inp.value === "муқаддам судланмаган") inp.value = "муқаддам судланган (ЎзР ЖКнинг ___-моддаси билан)";
 }
 
 function collectEditorFields(c) {
   if (!c) return;
-
-  const getVal = (id) => {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : "";
-  };
-
+  const getVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   c.sudlanganStatus = getVal("editSudlanganStatus") || "clean";
   c.sudlanganText = getVal("editSudlanganText") || "муқаддам судланмаган";
   c.eduText = getVal("editEduText") || c.eduText;
@@ -97,17 +71,11 @@ function collectEditorFields(c) {
 function saveDraftOnly() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-
   collectEditorFields(c);
-
-  if (typeof logITSChecked === "function") {
-    logITSChecked(c, c.sudlanganStatus, c.sudlanganText);
-  }
-
+  if (typeof logITSChecked === "function") logITSChecked(c, c.sudlanganStatus, c.sudlanganText);
   saveState();
   renderAll();
   closeEditorModal();
-
   showToast("💾 Қоралама сақланди", "info");
 }
 
@@ -118,35 +86,24 @@ function sendToBossForApproval() {
   collectEditorFields(c);
   c.workflowStage = "boss_review";
 
-  if (typeof logSentToBoss === "function") {
-    logSentToBoss(c, "Бўлим бошлиғи");
-  }
+  saveState(); // 1. Мажбурий сақлаш
+  
+  if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); // 2. Логлаш
 
-  saveState();
-  renderAll();
+  renderAll(); // 3. Экранни янгилаш
   closeEditorModal();
-
   showToast(`📤 «${c.fio}» Бўлим бошлиғига юборилди`, "success");
 }
 
-// =========================================================================
-// A4 ҲУЖЖАТ ГЕНЕРАТОРИ (QR КОД БИЛАН)
-// =========================================================================
-
 function getSignerName(candidate) {
-  if (!candidate) return "—";
-  if (candidate.sentToBossByName) return candidate.sentToBossByName;
-  if (currentUser && currentRole === ROLES.KORRUPSIYA) return currentUser.name || currentUser.login;
-  const korrUser = appState.users.find(u => u.role === ROLES.KORRUPSIYA);
-  if (korrUser) return korrUser.name || korrUser.login;
-  return "—";
+  // Сиз айтгандек, имзо жойида доим I.Zaripov туради
+  return "I.Zaripov";
 }
 
 function getApproverName(candidate) {
   if (!candidate) return "—";
   if (candidate.workflowStage === "approved" && candidate.bossApprovedBy) return candidate.bossApprovedBy;
-  const rahbar = appState.users.find(u => u.role === ROLES.RAHBAR);
-  return rahbar ? (rahbar.name || rahbar.login) : "—";
+  return "I.Zaripov";
 }
 
 function buildOfficialMalumotnomaHtml(c) {
@@ -157,30 +114,17 @@ function buildOfficialMalumotnomaHtml(c) {
     ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>`
     : `${c.sudlanganText}`;
 
+  // 🆕 QR код фақат тасдиқланганда чиқади
   let qrHtml = "";
   if (c.workflowStage === "approved") {
     const qrText = `PINFL: ${c.pinfl}\nReestr: ${c.reestrNo}\nTasdiqlandi: ${c.approvedDate}\nTasdiqlovchi: ${getApproverName(c)}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}`;
-    
-    qrHtml = `
-      <div style="text-align:center;margin-top:5px;">
-        <img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" />
-        <div style="font-size:7pt;color:#475569;">Ҳужжат ҳақиқийлиги</div>
-      </div>
-    `;
+    qrHtml = `<div style="text-align:center;margin-top:5px;"><img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" /><div style="font-size:7pt;color:#475569;">Ҳужжат ҳақиқийлиги</div></div>`;
   }
 
   const stampHtml = c.workflowStage === "approved"
-    ? `<div style="border:2px solid #047857;color:#047857;padding:4px 12px;border-radius:6px;font-size:11pt;font-weight:bold;text-align:center;display:flex;align-items:center;gap:10px;">
-         <div>
-           ТАСДИҚЛАНДИ<br/>
-           <span style="font-size:9pt;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
-         </div>
-         ${qrHtml}
-       </div>`
-    : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:4px 12px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center;">
-         ЎРГАНИШ ЖАРАЁНИДА
-       </div>`;
+    ? `<div style="border:2px solid #047857;color:#047857;padding:4px 12px;border-radius:6px;font-size:11pt;font-weight:bold;text-align:center;display:flex;align-items:center;gap:10px;"><div>ТАСДИҚЛАНДИ<br/><span style="font-size:9pt;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span></div>${qrHtml}</div>`
+    : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:4px 12px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
 
   return `
     <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
@@ -205,8 +149,7 @@ function buildOfficialMalumotnomaHtml(c) {
         </div>
         ${stampHtml}
         <div style="text-align:center;">
-          ${getSignerName(c)}<br/>
-          <span style="font-size:10pt;font-weight:normal;color:#475569;">(имзо)</span>
+          ${getSignerName(c)}
         </div>
       </div>
 
@@ -218,37 +161,22 @@ function buildOfficialMalumotnomaHtml(c) {
   `;
 }
 
-// =========================================================================
-// ҲУЖЖАТНИ ОЧИШ (Бошлиқ учун ҳам ишлайди)
-// =========================================================================
-
 function openDocModal(id) {
   try {
     const c = appState.candidates.find(x => x.id === id);
-    if (!c) {
-      alert("Номзод топилмади!");
-      return;
-    }
+    if (!c) return alert("Номзод топилмади!");
 
     if ((currentRole === ROLES.KUZATUVCHI || currentRole === ROLES.KADR) && c.workflowStage !== "approved") {
-      alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
-      return;
+      return alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
     }
 
     activeCandidateId = id;
 
     const content = document.getElementById("a4InnerContent");
-    if (content) {
-      content.innerHTML = buildOfficialMalumotnomaHtml(c);
-    } else {
-      alert("Хато: a4InnerContent топилмади!");
-      return;
-    }
+    if (content) content.innerHTML = buildOfficialMalumotnomaHtml(c);
 
     const reestrInfo = document.getElementById("docModalReestrInfo");
-    if (reestrInfo) {
-      reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
-    }
+    if (reestrInfo) reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
 
     const badge = document.getElementById("docModalStatusBadge");
     if (badge) {
@@ -295,15 +223,10 @@ function openDocModal(id) {
     }
 
     const modal = document.getElementById("docModal");
-    if (modal) {
-      modal.classList.remove("hidden");
-    } else {
-      alert("Хато: docModal топилмади! index.html ни текширинг.");
-    }
-    
+    if (modal) modal.classList.remove("hidden");
   } catch (error) {
     console.error("Open Doc Modal Error:", error);
-    alert("Ҳужжатни очишда хато юз берди: " + error.message);
+    alert("Ҳужжатни очишда хато: " + error.message);
   }
 }
 
@@ -311,7 +234,6 @@ function toggleBossApproveButton() {
   const chk = document.getElementById("chkBossConfirmSudlangan");
   const btnApprove = document.getElementById("btnBossFinalApprove");
   if (!chk || !btnApprove) return;
-
   if (chk.checked) {
     btnApprove.disabled = false;
     btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
@@ -324,57 +246,38 @@ function toggleBossApproveButton() {
 function approveByBoss() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-
-  if (!hasPermission("approve")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
+  if (!hasPermission("approve")) return alert("Рухсат йўқ!");
 
   const now = getNow();
-
   c.workflowStage = "approved";
   c.approvedDate = now.date;
   c.bossApprovedAt = now.dateTime;
 
-  if (typeof logApproved === "function") {
-    logApproved(c, currentUser?.name || "Бўлим бошлиғи");
-  }
+  if (typeof logApproved === "function") logApproved(c, "I.Zaripov");
 
   saveState();
   renderAll();
   openDocModal(c.id);
-
   showToast(`✅ «${c.fio}» тасдиқланди!`, "success");
 }
 
 function returnToAdminForRevision() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-
-  if (!hasPermission("return")) {
-    alert("Рухсат йўқ!");
-    return;
-  }
+  if (!hasPermission("return")) return alert("Рухсат йўқ!");
 
   const reason = prompt("Қайтариш сабабини киритинг:", c.bossReturnReason || "");
   if (reason === null) return;
-
-  if (!reason.trim()) {
-    alert("Сабабни киритишингиз шарт!");
-    return;
-  }
+  if (!reason.trim()) return alert("Сабабни киритишингиз шарт!");
 
   c.workflowStage = "admin_review";
   c.bossReturnReason = reason.trim();
 
-  if (typeof logReturned === "function") {
-    logReturned(c, reason.trim());
-  }
+  if (typeof logReturned === "function") logReturned(c, reason.trim());
 
   saveState();
   renderAll();
   closeDocModal();
-
   showToast(`↩️ «${c.fio}» таҳрирга қайтарилди`, "warning");
 }
 
@@ -384,14 +287,9 @@ function closeDocModal() {
   activeCandidateId = null;
 }
 
-// =========================================================================
-// ПРИНТЕР ВА НУСХАЛАШ
-// =========================================================================
-
 function printCurrentDocA4() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -407,7 +305,6 @@ function printCurrentDocA4() {
     <body>${buildOfficialMalumotnomaHtml(c)}</body>
     </html>
   `;
-
   const printWin = window.open("", "_blank", "width=850,height=950");
   if (printWin) {
     printWin.document.open();
@@ -415,19 +312,12 @@ function printCurrentDocA4() {
     printWin.document.close();
     printWin.focus();
     setTimeout(() => printWin.print(), 300);
-  } else {
-    window.print();
-  }
+  } else { window.print(); }
 }
 
 function copyDocText() {
   const el = document.getElementById("a4InnerContent");
   if (!el) return;
-  navigator.clipboard.writeText(el.innerText).then(() => {
-    showToast("📋 Маълумотнома матни нусхаланди", "success");
-  }).catch(() => {
-    alert("Нусхалаш амалга ошмади");
-  });
+  navigator.clipboard.writeText(el.innerText).then(() => showToast("📋 Маълумотнома матни нусхаланди", "success")).catch(() => alert("Нусхалаш амалга ошмади"));
 }
-
-console.log("✅ 09-doc.js юкланди (v10.6 — Тўлиқ тузатилган + QR)");
+console.log("✅ 09-doc.js юкланди (v10.7 — Тўлиқ тузатилган, QR ва Имзо)");
