@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» v10.0 — Кадастр агентлиги комплаенс тизими</title>
+  <title>«КОМПЛАЕНС-КАДР» v10.8 — Кадастр агентлиги комплаенс тизими</title>
 
   <!-- External Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
   <!-- Local Styles -->
   <link rel="stylesheet" href="css/styles.css" />
@@ -17,13 +19,14 @@
   <!-- ================================================================ -->
   <!-- LOGIN MODAL -->
   <!-- ================================================================ -->
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
+  <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-950/90 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
       <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-5 text-white border-b border-blue-500/30 flex items-center justify-between">
         <div class="flex items-center gap-3.5">
           <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">КК</div>
           <div>
             <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v10.0</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v10.8</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
@@ -59,7 +62,7 @@
         <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">КК</div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v10.0</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v10.8</span>
             <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
               <span class="realtime-dot"></span> Уланмоқда...
             </span>
@@ -72,15 +75,12 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <!-- Соат -->
         <span id="currentClock" class="text-xs font-mono font-bold text-emerald-300 px-2"></span>
 
-        <!-- Жорий роль -->
         <div class="flex items-center bg-slate-800 px-4 py-1.5 rounded-xl border border-slate-700">
           <span id="currentRoleLabel" class="text-xs font-bold text-blue-300">— Тизимга кирилмаган —</span>
         </div>
 
-        <!-- 🔔 Уведомления -->
         <div class="relative">
           <button id="notifBellBtn" onclick="toggleNotificationPanel()" class="relative px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-700 cursor-pointer" title="Уведомлениялар">
             🔔
@@ -88,27 +88,22 @@
           </button>
         </div>
 
-        <!-- Синхронлаш -->
         <button onclick="pullFromSupabase(true)" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs font-bold text-white border border-emerald-500 cursor-pointer" title="Онлайн базадан янгилаш">
           🔄 Синхронлаш
         </button>
 
-        <!-- Кирилл/Лотин -->
         <button id="btnLangToggle" onclick="toggleAlphabet()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-300 border border-slate-700 cursor-pointer">
           🔤 Кирилл / Лотин
         </button>
 
-        <!-- Тунги -->
         <button id="btnThemeToggle" onclick="toggleDarkMode()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-700 cursor-pointer">
           🌙 Тунги
         </button>
 
-        <!-- ℹ️ Info -->
         <button onclick="showAboutModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-blue-300 border border-slate-700 cursor-pointer" title="Дастур ҳақида">
           ℹ️
         </button>
 
-        <!-- Чиқиш -->
         <button id="logoutBtn" onclick="doLogout()" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold cursor-pointer">
           🚪 Чиқиш
         </button>
@@ -190,9 +185,7 @@
       </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- DASHBOARD VIEW -->
-    <!-- ============================================== -->
+    <!-- 1. DASHBOARD VIEW -->
     <section id="viewDashboard" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -215,7 +208,7 @@
                 <th>КА туман/ш. бўлими бошлиғи</th>
                 <th>ДКП туман/ш. филиали раҳбари</th>
                 <th>Комплаенс ходимлари</th>
-                                <th style="background:#f3e8ff !important;">Марказий аппарат</th>
+                <th style="background:#f3e8ff !important;">Марказий аппарат</th>
                 <th style="background:#dbeafe !important;">🔷 Тизим ташкилотлари</th>
                 <th style="background:#f3e8ff !important;">👤 Собиқ ходимлар</th>
                 <th>⏳ Ўрганиш жараёнида</th>
@@ -230,13 +223,11 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- FOTOTABLITSA VIEW (3 SUBTABS) -->
-    <!-- ============================================== -->
+    <!-- 2. FOTOTABLITSA VIEW -->
     <section id="viewFototablitsa" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-        <!-- LEFT: ADD CANDIDATE FORM -->
+        
+        <!-- LEFT: FORM -->
         <div id="addCandidatePanel" class="lg:col-span-4 bg-white dark-card rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
           <div class="border-b border-slate-200 pb-3 mb-3">
             <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900">Янги сўров киритиш</span>
@@ -253,7 +244,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-bold mb-1">2. Ҳудуд (14 та) *</label>
+                <label class="block text-xs font-bold mb-1">2. Ҳудуд (17 та) *</label>
                 <select id="inpRegion" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
               </div>
             </div>
@@ -273,7 +264,7 @@
             </div>
 
             <div class="grid grid-cols-3 gap-2">
-                            <div class="col-span-2">
+              <div class="col-span-2">
                 <label id="inpDistrictLabel" class="block text-xs font-bold mb-1">4. Туман / шаҳар (қисқа) *</label>
                 <input id="inpDistrict" type="text" placeholder="Дўстлик тумани бўлими" oninput="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
               </div>
@@ -288,7 +279,7 @@
               </div>
             </div>
 
-            <!-- 🆕 ТЎЛИҚ САРЛАВҲА ПРЕВЬЮСИ -->
+            <!-- ТЎЛИҚ САРЛАВҲА ПРЕВЬЮСИ -->
             <div class="p-2.5 rounded-lg bg-blue-50 border-2 border-blue-300">
               <label class="block text-xs font-bold text-blue-900 mb-1">📝 Тўлиқ сарлавҳа (автоматик — қўлда тузатиш мумкин)</label>
               <textarea id="inpDistrictHeading" rows="2" placeholder="Автоматик ясалади..." class="w-full px-2.5 py-2 rounded-lg border-2 border-blue-400 bg-white text-xs font-semibold text-slate-900"></textarea>
@@ -332,13 +323,12 @@
               <textarea id="inpCurrentJob" rows="2" required placeholder="Давлат кадастрлари палатаси..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900"></textarea>
             </div>
 
-                        <div class="grid grid-cols-1 gap-2">
-                            <div>
-                <label class="block text-xs font-bold mb-1">Ишга кирган йили (ёки бошқарган йили) *</label>
-                <input id="inpJobSince" type="text" required maxlength="4" placeholder="2026" oninput="this.value = this.value.replace(/\\D/g, '')" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
-              </div>
-
+            <div class="grid grid-cols-2 gap-2">
               <div>
+                <label class="block text-xs font-bold mb-1">Ишга кирган йили (ёки бошқарган йили) *</label>
+                <input id="inpJobSince" type="text" required maxlength="4" placeholder="2026" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div class="col-span-2 mt-1">
                 <label class="block text-xs font-bold mb-1">9. 📷 Расм (3x4)</label>
                 <div id="inpPhotoDropZone" 
                      class="photo-drop-zone"
@@ -368,24 +358,18 @@
 
         <!-- RIGHT: FOTOTABLITSA TABLE -->
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
-
-          <!-- SUBTABS -->
           <div class="bg-slate-100 rounded-xl p-1.5 mb-4 flex flex-wrap gap-1.5">
             <button id="subtabNew" onclick="switchSubTab('new')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
-              🆕 Янги келганлар
-              <span id="subtabNewCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold">0</span>
+              🆕 Янги келганлар <span id="subtabNewCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold">0</span>
             </button>
             <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
-              ⏳ Тасдиқлаш жараёнида
-              <span id="subtabInProcessCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">0</span>
+              ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">0</span>
             </button>
             <button id="subtabApproved" onclick="switchSubTab('approved')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
-              ✅ Тугатилган
-              <span id="subtabApprovedCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">0</span>
+              ✅ Тугатилган <span id="subtabApprovedCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">0</span>
             </button>
           </div>
 
-          <!-- FILTERS -->
           <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-200">
             <div class="flex flex-wrap items-center gap-2">
               <label class="text-xs font-extrabold">Ҳудуд:</label>
@@ -407,7 +391,6 @@
             </div>
           </div>
 
-          <!-- HEADER -->
           <div class="text-center doc-serif mb-3">
             <p class="text-lg font-bold leading-snug">
               <span class="text-red-700">Кадастр агентлиги</span>
@@ -417,16 +400,15 @@
             <p class="text-right text-sm italic font-bold text-blue-900" id="fotoCurrentDateLabel"></p>
           </div>
 
-          <!-- TABLE -->
           <div class="overflow-x-auto">
             <table class="official-table" id="mainFototablitsaTable">
               <thead>
                 <tr>
-                  <th style="width:45px;">Т/р</th>
-                  <th style="width:130px;">Расм</th>
-                  <th style="width:230px;">Ф.И.Ш., туғилган йили ва жойи</th>
-                  <th style="width:270px;">Лавозими ва жараён тарихи</th>
-                  <th style="width:200px;">Якуний натижа</th>
+                  <th style="width:5%;">Т/р</th>
+                  <th style="width:15%;">Расм</th>
+                  <th style="width:28%;">Ф.И.Ш., туғилган йили ва жойи</th>
+                  <th style="width:30%;">Лавозими ва жараён тарихи</th>
+                  <th style="width:22%;">Якуний натижа</th>
                 </tr>
               </thead>
               <tbody id="fototablitsaBody"></tbody>
@@ -436,9 +418,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- FORMER VIEW -->
-    <!-- ============================================== -->
+    <!-- 3. FORMER VIEW -->
     <section id="viewFormer" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-purple-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -448,6 +428,7 @@
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select id="formerRegionFilter" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+            <button onclick="openWordImportModal()" class="px-3.5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-extrabold shadow cursor-pointer">📄 Word импорт</button>
             <button onclick="exportFototablitsaWord('former')" class="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow cursor-pointer">📄 Word</button>
             <button onclick="exportFototablitsaExcel('former')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📊 Excel</button>
           </div>
@@ -457,11 +438,11 @@
           <table class="official-table">
             <thead>
               <tr>
-                <th style="width:45px;">Т/р</th>
-                <th style="width:130px;">Расм</th>
-                <th style="width:230px;">Ф.И.Ш., туғилган сана, ПИНФЛ</th>
-                <th style="width:280px;">Илгари ишлаган лавозими</th>
-                <th style="width:200px;">Якуний натижа</th>
+                <th style="width:5%;">Т/р</th>
+                <th style="width:15%;">Расм</th>
+                <th style="width:30%;">Ф.И.Ш., туғилган сана, ПИНФЛ</th>
+                <th style="width:28%;">Илгари ишлаган лавозими</th>
+                <th style="width:22%;">Якуний натижа</th>
               </tr>
             </thead>
             <tbody id="formerTableBody"></tbody>
@@ -470,9 +451,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- ITS VIEW -->
-    <!-- ============================================== -->
+    <!-- 4. ИЦ VIEW -->
     <section id="viewIts" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -513,9 +492,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- NEGATIVE VIEW -->
-    <!-- ============================================== -->
+    <!-- 5. NEGATIVE VIEW -->
     <section id="viewNegative" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border-2 border-red-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
@@ -547,9 +524,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- DATABASE VIEW -->
-    <!-- ============================================== -->
+    <!-- 6. DATABASE VIEW -->
     <section id="viewDatabase" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -628,9 +603,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- AUDIT VIEW -->
-    <!-- ============================================== -->
+    <!-- 7. AUDIT VIEW -->
     <section id="viewAudit" class="space-y-4 hidden">
       <div class="bg-white dark-card rounded-2xl border border-indigo-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-indigo-200">
@@ -662,22 +635,16 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- SETTINGS VIEW -->
-    <!-- ============================================== -->
+    <!-- 8. SETTINGS VIEW -->
     <section id="viewSettings" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-        <!-- SUPABASE + D:\ -->
         <div class="lg:col-span-6 bg-white dark-card rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-900">🌐 Realtime + D:\ Диск</span>
             <span class="text-xs font-extrabold text-emerald-700">⚡ Realtime</span>
           </div>
           <h3 class="text-lg font-extrabold">1. Supabase Realtime Кўприк</h3>
-          <p class="text-xs text-slate-600 leading-relaxed">
-            ⚡ Realtime ёқилган — барча ўзгаришлар <b>&lt; 1 сонияда</b> барча компьютерларга келади.
-          </p>
+          <p class="text-xs text-slate-600 leading-relaxed">⚡ Realtime ёқилган — барча ўзгаришлар <b>&lt; 1 сонияда</b> барча компьютерларга келади.</p>
 
           <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-slate-800">
             <div>
@@ -700,12 +667,10 @@
           <h3 class="text-base font-extrabold">2. D:\Komplayens_Kadr_Baza\ Дискка Улаш</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button onclick="connectDDriveFolder()" class="p-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
-              📂 1. D:\ дискга сақлаш
-              <span class="block font-normal text-emerald-100 mt-0.5">Авто-сақлаш</span>
+              📂 1. D:\ дискга сақлаш <span class="block font-normal text-emerald-100 mt-0.5">Авто-сақлаш</span>
             </button>
             <button onclick="downloadBackupJson()" class="p-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
-              💾 2. Захира (JSON)
-              <span class="block font-normal text-blue-100 mt-0.5">komplayens_kadr_baza.json</span>
+              💾 2. Захира (JSON) <span class="block font-normal text-blue-100 mt-0.5">komplayens_kadr_baza.json</span>
             </button>
           </div>
 
@@ -715,7 +680,6 @@
           </div>
         </div>
 
-        <!-- USER MANAGEMENT -->
         <div class="lg:col-span-6 bg-white dark-card rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
           <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-amber-100 text-amber-900">🔐 Фақат Коррупция бўлими бошқаради</span>
           <h3 class="text-lg font-extrabold">Фойдаланувчиларга Логин-Парол яратиш</h3>
@@ -771,6 +735,7 @@
   <!-- ================================================================ -->
   <!-- EDITOR MODAL (Маълумотнома таҳрирлаш) -->
   <!-- ================================================================ -->
+  <div id="editorModal" class="fixed inset-0 z-[60] bg-slate-950/80 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
       <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
         <div>
@@ -834,7 +799,7 @@
   <!-- ================================================================ -->
   <!-- EDIT CANDIDATE MODAL -->
   <!-- ================================================================ -->
-  <div id="editCandidateModal" class="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
+  <div id="editCandidateModal" class="fixed inset-0 z-[70] bg-slate-950/80 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
       <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
         <div>
@@ -895,10 +860,10 @@
             <textarea id="editCandCurrentJob" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"></textarea>
           </div>
           <div>
-                            <label class="block text-xs font-bold mb-1">Ишга кирган йили *</label>
-                <input id="inpJobSince" type="text" required maxlength="4" placeholder="2026" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+            <label class="block text-xs font-bold mb-1">Ишга кирган йили *</label>
+            <input id="editCandJobSince" type="text" maxlength="4" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold" />
           </div>
-                    <div>
+          <div>
             <label class="block text-xs font-bold mb-1">Тайинлов тури</label>
             <select id="editCandAppointType" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
               <option value="(ишга олиш)">(ишга олиш)</option>
@@ -907,8 +872,7 @@
               <option value="(собиқ ходим)">(собиқ ходим)</option>
             </select>
           </div>
-
-          <div class="sm:col-span-2">
+          <div class="sm:col-span-2 mt-2">
             <label class="block text-xs font-bold mb-1">📷 Расм (3x4)</label>
             <div id="editCandPhotoDropZone" 
                  class="photo-drop-zone"
@@ -931,6 +895,7 @@
         </div>
 
         <div id="editHistoryBlock" class="hidden p-3 rounded-lg bg-amber-50 border border-amber-200"></div>
+      </div>
 
       <div class="bg-slate-100 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
         <button onclick="closeEditCandidateModal()" class="px-4 py-2 rounded-xl bg-slate-400 hover:bg-slate-500 text-white text-xs font-bold cursor-pointer">❌ Бекор қилиш</button>
@@ -942,7 +907,7 @@
   <!-- ================================================================ -->
   <!-- DOC MODAL (A4 Маълумотнома) -->
   <!-- ================================================================ -->
-  <div id="docModal" class="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-sm overflow-y-auto p-4 md:p-8 hidden">
+  <div id="docModal" class="fixed inset-0 z-[80] bg-slate-950/85 overflow-y-auto p-4 md:p-8 hidden">
     <div class="max-w-4xl mx-auto">
       <div class="bg-blue-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-blue-700 shadow-xl no-print">
         <div class="flex items-center gap-3">
@@ -992,7 +957,7 @@
   <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackupJson(event)" hidden />
 
   <!-- ================================================================ -->
-  <!-- JS MODULES — ТАРТИБ МУҲИМ! -->
+  <!-- JS MODULES -->
   <!-- ================================================================ -->
   <script src="js/01-config.js"></script>
   <script src="js/02-crypto.js"></script>
@@ -1007,5 +972,6 @@
   <script src="js/11-electron.js"></script>
   <script src="js/12-ui.js"></script>
   <script src="js/13-app.js"></script>
+  <!-- Агар 14 ва 15 модуллар бўлса, уларни ҳам қўшинг -->
 </body>
 </html>
