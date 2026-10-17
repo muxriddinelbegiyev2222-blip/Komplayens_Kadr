@@ -1,10 +1,10 @@
 // =========================================================================
 // 13-APP.JS — Асосий инициализация ва Event Listeners
-// «КОМПЛАЕНС-КАДР» v11.6
+// «КОМПЛАЕНС-КАДР» v11.7
 // =========================================================================
 
 async function initApp() {
-  console.log("🚀 «КОМПЛАЕНС-КАДР» v11.6 ишга тушмоқда...");
+  console.log("🚀 «КОМПЛАЕНС-КАДР» v11.7 ишга тушмоқда...");
   console.log("=".repeat(60));
 
   try {
@@ -71,7 +71,7 @@ async function initApp() {
     }
 
     console.log("=".repeat(60));
-    console.log("✅ «КОМПЛАЕНС-КАДР» v11.6 тайёр!");
+    console.log("✅ «КОМПЛАЕНС-КАДР» v11.7 тайёр!");
 
   } catch (e) {
     console.error("❌ Инициализацияда хато:", e);
@@ -136,7 +136,6 @@ function setupCandidateFormListeners() {
   const pinflInput = document.getElementById("inpPinfl");
   if (pinflInput) pinflInput.addEventListener("input", checkPinflDuplicate);
 
-  // 🆕 Сўров тури ўзгарганда сарлавҳа/лейбл янгиланиши (safety net)
   const recTypeSel = document.getElementById("inpRecordType");
   if (recTypeSel && typeof updateHeadingPreview === "function") {
     recTypeSel.addEventListener("change", () => {
@@ -208,7 +207,7 @@ function setupModalBackdropClose() {
 function showVersion() {
   console.log(`
 ╔══════════════════════════════════════════════════════╗
-║  «КОМПЛАЕНС-КАДР» v11.6                              ║
+║  «КОМПЛАЕНС-КАДР» v11.7                              ║
 ║  Кадастр агентлиги учун ягона комплаенс тизими       ║
 ║  ─────────────────────────────────────────────────   ║
 ║  Яратувчи: Elbegiyev Muxriddin                       ║
@@ -244,6 +243,21 @@ function checkAppHealth() {
   return issues;
 }
 
+// 🆕 KADR VA BOSHQA ROLNIG TIZIMGA KIRISHIDAGI HUQUQLARINI KUCHAYTIRISH
+// Yagona Baza va Sudlanganlar tablarini HR (Kadrlar)ga ham ochish
+const origSwitchRole = window.switchRole;
+window.switchRole = function(role) {
+  if (origSwitchRole) origSwitchRole(role);
+  
+  // Ruxsatlarni tekshirish va tablarni ochish
+  if (role === 'kadr' || role === 'rahbar' || role === 'korrupsiya') {
+    const tabDb = document.getElementById('tabBtnDatabase');
+    const tabNeg = document.getElementById('tabBtnNegative');
+    if (tabDb) tabDb.style.display = 'block';
+    if (tabNeg) tabNeg.style.display = 'block';
+  }
+};
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     setupModalBackdropClose();
@@ -265,8 +279,4 @@ window.addEventListener("unhandledrejection", (e) => {
   console.error("❌ Ушланмаган Promise:", e.reason);
 });
 
-window.addEventListener("beforeunload", (e) => {
-  // зарурат бўлса
-});
-
-console.log("✅ 13-app.js юкланди (v11.6)");
+console.log("✅ 13-app.js юкланди (v11.7)");
