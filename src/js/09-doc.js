@@ -19,6 +19,17 @@ function openEditorModal(id) {
   const title = document.getElementById("editorCandidateTitle");
   if (title) title.textContent = `${c.fio} (${c.region}) — Маълумотномани тайёрлаш`;
 
+  // 🆕 Agar eski ma'lumotlarda "..." bo'lsa, avtomatik to'ldirish (Fallback)
+  if (!c.para2 || c.para2 === "...") {
+    c.para2 = `У миллати ўзбек, маълумоти олий, оилали. Диний эътиқодига кўра ислом динига амал қилади. ДЭО (дарҳақиқат, экстремистик оқимларга) аъзо эмас.`;
+  }
+  if (!c.para3 || c.para3 === "...") {
+    c.para3 = `Ҳозирда ${c.region} ${c.currentJob} лавозимида фаолият кўрсатиб келмоқда. Ўз вазифаларини бажаришда меҳнат интизомига қатъий риоя қилади, ўз ишига масъулиятли ва ташаббускор.`;
+  }
+  if (!c.para4 || c.para4 === "...") {
+    c.para4 = `Шахсий ва бошқарув фазилатларига кўра, жамоада ўзаро ҳурмат ва ҳамжиҳатлик муҳитини ярата олади. Вазифаларни бажаришда тадбиркор ва изланувчан, юқори натижаларга эришишга интилади.`;
+  }
+
   setVal("editSudlanganStatus", c.sudlanganStatus);
   setVal("editSudlanganText", c.sudlanganText);
   setVal("editEduText", c.eduText);
@@ -117,7 +128,7 @@ function qrShortHash(input) {
   return (hex1 + hex2).substring(0, 8);
 }
 
-// QR мазмуни: ~70-80 белги
+// QR мазмуни: ~73 белги
 function buildQrPayload(c) {
   const approverName = getApproverName(c);
   const position = getSignerPositionLat();
@@ -160,6 +171,18 @@ function buildOfficialMalumotnomaHtml(c) {
     ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>`
     : `${c.sudlanganText}`;
 
+  // 🆕 Matn uchun sana formatlash (chunki endi 15.01.2026 shaklida)
+  let jobSinceText = c.jobSince || "";
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(jobSinceText)) {
+    jobSinceText = `${jobSinceText} йилдан бошлаб`;
+  } else if (/^\d{4}$/.test(jobSinceText)) {
+    jobSinceText = `${jobSinceText} йилдан`;
+  } else if (jobSinceText) {
+    jobSinceText = `${jobSinceText} дан`;
+  } else {
+    jobSinceText = "иш фаолиятини бошлагандан";
+  }
+
   // 🆕 QR: ихчам, катта, сканерланадиган
   let qrHtml = "";
   if (c.workflowStage === "approved") {
@@ -192,7 +215,7 @@ function buildOfficialMalumotnomaHtml(c) {
         ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>${c.fio} бўйича<br/>МАЪЛУМОТНОМА
       </div>
       <div class="malumotnoma-text">
-        <p>Номзод ${(c.jobSince || "").replace(/ й\.?$/, "")} йилдан ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
+        <p>Номзод ${jobSinceText} ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
         <p>${c.para2}</p>
         ${p3Parts.map(line => `<p>${line}</p>`).join("")}
         ${p4Parts.map(line => `<p>${line}</p>`).join("")}
