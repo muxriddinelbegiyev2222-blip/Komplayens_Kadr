@@ -1,30 +1,24 @@
 // =========================================================================
-// 12-UI.JS — Тунги режим олиб ташланди, фақат Кундузги (Оқ фон)
-// «КОМПЛАЕНС-КАДР» v11.0
+// 12-UI.JS — Тунги режим, Кирилл/Лотин (Тўлиқ ва Аниқ), Info
+// «КОМПЛАЕНС-КАДР» v11.5
 // =========================================================================
 
 function initUI() {
-  // Ҳозирча кундузги режим доимий
   document.body.classList.remove("dark-mode");
-  
-  if (typeof loadNotificationSoundSetting === "function") {
-    loadNotificationSoundSetting();
-  }
-  
+  if (typeof loadNotificationSoundSetting === "function") loadNotificationSoundSetting();
   startClock();
   setupKeyboardShortcuts();
   setupOnlineOfflineDetector();
-
   setupDateInput("inpBirthDate");
+  setupDateInput("inpJobSince");
   setupPinflInput("inpPinfl");
   setupPassportInputs("inpPassSeries", "inpPassNum");
-
   setupDateInput("editCandBirthDate");
+  setupDateInput("editCandJobSince");
   setupPinflInput("editCandPinfl");
   setupPassportInputs("editCandPassSeries", "editCandPassNum");
-
   loadLanguage();
-  console.log("✅ UI созламалари тайёр (Фақат Кундузги режим)");
+  console.log("✅ UI созламалари тайёр");
 }
 
 function startClock() {
@@ -74,6 +68,7 @@ function setupOnlineOfflineDetector() {
   });
 }
 
+// 🆕 САНА (КУН.ОЙ.ЙИЛ) КИРИТИШ
 function setupDateInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
@@ -100,25 +95,4 @@ function setupPinflInput(inputId) {
 function setupPassportInputs(seriesId, numberId) {
   const series = document.getElementById(seriesId);
   const number = document.getElementById(numberId);
-  if (series) series.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 2); });
-  if (number) number.addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").substring(0, 7); });
-}
-
-function showAboutModal() {
-  const modal = document.getElementById("aboutModal");
-  if (modal) { modal.classList.remove("hidden"); }
-}
-
-function closeAboutModal() {
-  const modal = document.getElementById("aboutModal");
-  if (modal) modal.classList.add("hidden");
-}
-
-// Лотин-Кирилл
-function toggleAlphabet() {
-  // Бу ерда аввалги кодлар сақланиб қолади
-}
-
-function loadLanguage() {
-  // Тил юклаш
-}
+  if (series) series.addEventListener("input",
