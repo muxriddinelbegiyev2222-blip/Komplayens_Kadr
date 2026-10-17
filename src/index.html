@@ -3,22 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» v11.0 — Кадастр агентлиги комплаенс тизими</title>
+  <title>«КОМПЛАЕНС-КАДР» v11.5 — Кадастр агентлиги комплаенс тизими</title>
 
-  <!-- External Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-  <!-- Local Styles -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 transition-colors">
 
-  <!-- ================================================================ -->
-  <!-- 1. LOGIN MODAL -->
-  <!-- ================================================================ -->
+  <!-- LOGIN -->
   <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
       <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-5 text-white border-b border-blue-500/30 flex items-center justify-between">
@@ -26,7 +22,7 @@
           <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">КК</div>
           <div>
             <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.0</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.5</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
@@ -51,16 +47,14 @@
     </div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- 2. HEADER -->
-  <!-- ================================================================ -->
+  <!-- HEADER -->
   <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 no-print shadow-md">
     <div class="w-full px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">КК</div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.0</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.5</span>
             <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
               <span class="realtime-dot"></span> Уланмоқда...
             </span>
@@ -104,7 +98,6 @@
       </div>
     </div>
 
-    <!-- TABS -->
     <div class="bg-slate-800/95 border-t border-slate-700 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
       <div id="roleBannerText" class="text-xs font-semibold text-blue-300"></div>
       <div class="flex flex-wrap items-center gap-1.5">
@@ -120,9 +113,7 @@
     </div>
   </header>
 
-  <!-- ================================================================ -->
-  <!-- 3. УВЕДОМЛЕНИЯ ПАНЕЛИ -->
-  <!-- ================================================================ -->
+  <!-- NOTIFICATIONS -->
   <div id="notificationPanel" class="fixed top-24 right-4 z-[80] bg-white rounded-2xl shadow-2xl border border-slate-200 w-96 max-h-[600px] overflow-hidden hidden">
     <div class="bg-blue-900 text-white px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -138,9 +129,7 @@
     <div id="notificationList" class="overflow-y-auto max-h-[520px] p-3"></div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- 4. MAIN CONTENT -->
-  <!-- ================================================================ -->
+  <!-- MAIN -->
   <main class="w-full flex-1 px-4 py-4 space-y-4 no-print">
 
     <!-- KPI CARDS -->
@@ -177,9 +166,7 @@
       </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- VIEW: DASHBOARD -->
-    <!-- ============================================== -->
+    <!-- DASHBOARD -->
     <section id="viewDashboard" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -217,12 +204,9 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: FOTOTABLITSA -->
-    <!-- ============================================== -->
+    <!-- FOTOTABLITSA -->
     <section id="viewFototablitsa" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <!-- LEFT: FORM -->
         <div id="addCandidatePanel" class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
           <div class="border-b border-slate-200 pb-3 mb-3">
             <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900">Янги сўров киритиш</span>
@@ -258,7 +242,8 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-3 gap-2">
+            <!-- 🆕 ТУМАН МАЙДОНИ (Яшириниш имконияти билан) -->
+            <div class="grid grid-cols-3 gap-2" id="districtFieldWrapper">
               <div class="col-span-2">
                 <label id="inpDistrictLabel" class="block text-xs font-bold mb-1">4. Туман / шаҳар (қисқа) *</label>
                 <input id="inpDistrict" type="text" placeholder="Дўстлик тумани бўлими" oninput="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
@@ -277,7 +262,7 @@
             <div class="p-2.5 rounded-lg bg-blue-50 border-2 border-blue-300">
               <label class="block text-xs font-bold text-blue-900 mb-1">📝 Тўлиқ сарлавҳа (автоматик — қўлда тузатиш мумкин)</label>
               <textarea id="inpDistrictHeading" rows="2" placeholder="Автоматик ясалади..." class="w-full px-2.5 py-2 rounded-lg border-2 border-blue-400 bg-white text-xs font-semibold text-slate-900"></textarea>
-              <p class="text-[10px] text-blue-700 mt-1">⚠️ Нотўғри бўлса — <b>қўлда тузатинг</b>. Автоматик янгилаш ўчирилади.</p>
+              <p class="text-[10px] text-blue-700 mt-1">⚠️ Нотўғри бўлса — <b>қўлда тузатинг</b>.</p>
             </div>
 
             <div class="grid grid-cols-3 gap-2">
@@ -317,10 +302,11 @@
               <textarea id="inpCurrentJob" rows="2" required placeholder="Давлат кадастрлари палатаси..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900"></textarea>
             </div>
 
+            <!-- 🆕 ТЎЛИҚ САНА МАЙДОНИ (Кун.Ой.Йил) -->
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-xs font-bold mb-1">Ишга кирган йили *</label>
-                <input id="inpJobSince" type="text" required maxlength="4" placeholder="2026" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+                <label class="block text-xs font-bold mb-1">Лавозимга қўйилган вақти *</label>
+                <input id="inpJobSince" type="text" required placeholder="15.01.2026" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
               </div>
               <div class="col-span-2 mt-1">
                 <label class="block text-xs font-bold mb-1">9. 📷 Расм (3x4)</label>
@@ -353,8 +339,9 @@
             <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
               ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold">0</span>
             </button>
+            <!-- 🆕 ТУГАТИЛГАН -> ЎРГАНИБ ЧИҚИЛДИ -->
             <button id="subtabApproved" onclick="switchSubTab('approved')" class="flex-1 min-w-[150px] px-4 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-200 cursor-pointer">
-              ✅ Тугатилган <span id="subtabApprovedCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">0</span>
+              ✅ Ўрганиб чиқилди <span id="subtabApprovedCount" class="inline-block ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">0</span>
             </button>
           </div>
 
@@ -406,9 +393,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: FORMER -->
-    <!-- ============================================== -->
+    <!-- FORMER -->
     <section id="viewFormer" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-purple-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -441,9 +426,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: ИЦ ЖАДВАЛИ -->
-    <!-- ============================================== -->
+    <!-- ITS -->
     <section id="viewIts" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -484,9 +467,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: СУДЛАНГАНЛАР -->
-    <!-- ============================================== -->
+    <!-- NEGATIVE -->
     <section id="viewNegative" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border-2 border-red-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
@@ -518,9 +499,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: ЯГОНА БАЗА -->
-    <!-- ============================================== -->
+    <!-- DATABASE -->
     <section id="viewDatabase" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -533,11 +512,11 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
           <div>
             <label class="block text-xs font-bold mb-1">1. Ҳудуд</label>
-            <select id="dbRegionFilter" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+            <select id="dbRegionFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">2. Йўналиш</label>
-            <select id="dbCategoryFilter" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+            <select id="dbCategoryFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
               <option value="ALL">Барча йўналишлар</option>
               <option value="КА туман (шаҳар) бўлими бошлиғи">КА туман бўлими бошлиғи</option>
               <option value="ДКП туман (шаҳар) филиали бошлиғи">ДКП туман филиали бошлиғи</option>
@@ -551,24 +530,36 @@
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">3. Йил</label>
-            <select id="dbYearFilter" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+            <select id="dbYearFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
               <option value="ALL">Барча йиллар</option>
               <option value="2026">2026</option>
               <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">4. Ой</label>
-            <select id="dbMonthFilter" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
-              <option value="ALL">Барча ойлар</option>
-              <option value="10">10 — Октябр</option>
-              <option value="09">09 — Сентябр</option>
+            <select id="dbMonthFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча ойлар (1-12)</option>
+              <option value="01">01 — Январ</option>
+              <option value="02">02 — Феврал</option>
+              <option value="03">03 — Март</option>
+              <option value="04">04 — Апрел</option>
+              <option value="05">05 — Май</option>
+              <option value="06">06 — Июн</option>
+              <option value="07">07 — Июл</option>
               <option value="08">08 — Август</option>
+              <option value="09">09 — Сентябр</option>
+              <option value="10">10 — Октябр</option>
+              <option value="11">11 — Ноябр</option>
+              <option value="12">12 — Декабр</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">5. Ҳолати</label>
-            <select id="dbStatusFilter" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+            <select id="dbStatusFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
               <option value="ALL">Барчаси</option>
               <option value="approved">✓ Ўрганиб чиқилди</option>
               <option value="in_process">⏳ Ўрганиш жараёнида</option>
@@ -576,7 +567,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">6. Қидирув (Ctrl+K)</label>
-            <input id="dbSearchInput" type="text" placeholder="ПИНФЛ/Ф.И.Ш..." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+            <input id="dbSearchInput" oninput="renderAll()" type="text" placeholder="ПИНФЛ/Ф.И.Ш..." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
           </div>
         </div>
 
@@ -599,9 +590,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: АУДИТ-ЛОГ -->
-    <!-- ============================================== -->
+    <!-- AUDIT -->
     <section id="viewAudit" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-indigo-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-indigo-200">
@@ -633,9 +622,7 @@
       </div>
     </section>
 
-    <!-- ============================================== -->
-    <!-- VIEW: СОЗЛАМАЛАР -->
-    <!-- ============================================== -->
+    <!-- SETTINGS -->
     <section id="viewSettings" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div class="lg:col-span-6 bg-white rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
@@ -732,9 +719,7 @@
 
   </main>
 
-  <!-- ================================================================ -->
-  <!-- 5. EDITOR MODAL -->
-  <!-- ================================================================ -->
+  <!-- EDITOR MODAL -->
   <div id="editorModal" class="fixed inset-0 z-[60] bg-slate-900/80 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
       <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
@@ -796,9 +781,7 @@
     </div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- 6. EDIT CANDIDATE MODAL -->
-  <!-- ================================================================ -->
+  <!-- EDIT CANDIDATE MODAL -->
   <div id="editCandidateModal" class="fixed inset-0 z-[70] bg-slate-900/80 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
       <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
@@ -860,8 +843,8 @@
             <textarea id="editCandCurrentJob" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
           </div>
           <div>
-            <label class="block text-xs font-bold mb-1">Ишга кирган йили *</label>
-            <input id="editCandJobSince" type="text" maxlength="4" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
+            <label class="block text-xs font-bold mb-1">Лавозимга қўйилган вақти *</label>
+            <input id="editCandJobSince" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">Тайинлов тури</label>
@@ -898,9 +881,7 @@
     </div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- 7. DOC MODAL -->
-  <!-- ================================================================ -->
+  <!-- DOC MODAL -->
   <div id="docModal" class="fixed inset-0 z-[80] bg-slate-900/85 overflow-y-auto p-4 md:p-8 hidden">
     <div class="max-w-4xl mx-auto">
       <div class="bg-blue-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-blue-700 shadow-xl no-print">
@@ -948,9 +929,7 @@
   <!-- HIDDEN FILE INPUTS -->
   <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackupJson(event)" hidden />
 
-  <!-- ================================================================ -->
   <!-- JS MODULES -->
-  <!-- ================================================================ -->
   <script src="js/01-config.js"></script>
   <script src="js/02-crypto.js"></script>
   <script src="js/03-audit.js"></script>
