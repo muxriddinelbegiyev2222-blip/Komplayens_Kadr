@@ -1,24 +1,32 @@
 // =========================================================================
 // 12-UI.JS — Тунги режим, Кирилл/Лотин (Тўлиқ ва Аниқ), Info
-// «КОМПЛАЕНС-КАДР» v11.6
+// «КОМПЛАЕНС-КАДР» v11.8 FINAL
 // =========================================================================
 
 function initUI() {
   document.body.classList.remove("dark-mode");
-  if (typeof loadNotificationSoundSetting === "function") loadNotificationSoundSetting();
+  
+  if (typeof loadNotificationSoundSetting === "function") {
+    loadNotificationSoundSetting();
+  }
+  
   startClock();
   setupKeyboardShortcuts();
   setupOnlineOfflineDetector();
+  
   setupDateInput("inpBirthDate");
   setupDateInput("inpJobSince");
   setupPinflInput("inpPinfl");
   setupPassportInputs("inpPassSeries", "inpPassNum");
+  
   setupDateInput("editCandBirthDate");
   setupDateInput("editCandJobSince");
   setupPinflInput("editCandPinfl");
   setupPassportInputs("editCandPassSeries", "editCandPassNum");
+  
   loadLanguage();
   setupAlphabetObserver();
+  
   console.log("✅ UI созламалари тайёр");
 }
 
@@ -30,6 +38,7 @@ function startClock() {
 function updateClock() {
   const el = document.getElementById("currentClock");
   if (!el) return;
+  
   const d = new Date();
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -37,21 +46,40 @@ function updateClock() {
   const hh = String(d.getHours()).padStart(2, "0");
   const mi = String(d.getMinutes()).padStart(2, "0");
   const ss = String(d.getSeconds()).padStart(2, "0");
+  
   el.textContent = `${dd}.${mm}.${yyyy}  ${hh}:${mi}:${ss}`;
 }
 
 function setupKeyboardShortcuts() {
   document.addEventListener("keydown", (e) => {
+    // Ctrl+K - Global Qidiruv
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      if (typeof openGlobalSearch === "function") {
+        openGlobalSearch();
+      }
+    }
+    
+    // Escape - Modallarni yopish
     if (e.key === "Escape") {
-      const modals = ["aboutModal", "docModal", "editorModal", "editCandidateModal", "notificationPanel"];
+      const modals = ["aboutModal", "docModal", "editorModal", "editCandidateModal", "notificationPanel", "globalSearchModal"];
+      
       for (const id of modals) {
         const el = document.getElementById(id);
         if (el && !el.classList.contains("hidden")) {
-          if (id === "docModal") closeDocModal();
-          else if (id === "editorModal") closeEditorModal();
-          else if (id === "editCandidateModal") closeEditCandidateModal();
-          else if (id === "notificationPanel") closeNotificationPanel();
-          else if (id === "aboutModal") el.classList.add("hidden");
+          if (id === "docModal") {
+            closeDocModal();
+          } else if (id === "editorModal") {
+            closeEditorModal();
+          } else if (id === "editCandidateModal") {
+            closeEditCandidateModal();
+          } else if (id === "notificationPanel") {
+            closeNotificationPanel();
+          } else if (id === "globalSearchModal") {
+            closeGlobalSearch();
+          } else if (id === "aboutModal") {
+            el.classList.add("hidden");
+          }
           return;
         }
       }
@@ -62,27 +90,34 @@ function setupKeyboardShortcuts() {
 function setupOnlineOfflineDetector() {
   window.addEventListener("online", () => {
     showToast("🌐 Интернет уланди", "success");
-    if (typeof initRealtime === "function") initRealtime();
+    if (typeof initRealtime === "function") {
+      initRealtime();
+    }
   });
+  
   window.addEventListener("offline", () => {
     showToast("⚠️ Интернет узилди", "warning");
   });
 }
 
-// 🆕 САНА (КУН.ОЙ.ЙИЛ) КИРИТИШ — идемпотент (такрор боғланмайди)
+// 🆕 САНА (КУН.ОЙ.ЙИЛ) КИРИТИШ
 function setupDateInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
   if (el.dataset.dateBound === "1") return;
+  
   el.dataset.dateBound = "1";
   el.placeholder = "кк.оо.йййй";
+  
   el.addEventListener("input", (e) => {
     let val = e.target.value.replace(/\D/g, "").substring(0, 8);
+    
     if (val.length >= 3 && val.length <= 4) {
       val = val.substring(0, 2) + "." + val.substring(2);
     } else if (val.length > 4) {
       val = val.substring(0, 2) + "." + val.substring(2, 4) + "." + val.substring(4);
     }
+    
     e.target.value = val;
   });
 }
@@ -91,7 +126,9 @@ function setupPinflInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
   if (el.dataset.pinflBound === "1") return;
+  
   el.dataset.pinflBound = "1";
+  
   el.addEventListener("input", (e) => {
     e.target.value = e.target.value.replace(/\D/g, "").substring(0, 14);
   });
@@ -100,28 +137,38 @@ function setupPinflInput(inputId) {
 function setupPassportInputs(seriesId, numberId) {
   const series = document.getElementById(seriesId);
   const number = document.getElementById(numberId);
+  
   if (series && series.dataset.passBound !== "1") {
     series.dataset.passBound = "1";
-    series.addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 2); });
+    series.addEventListener("input", (e) => {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "").substring(0, 2);
+    });
   }
+  
   if (number && number.dataset.passBound !== "1") {
     number.dataset.passBound = "1";
-    number.addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").substring(0, 7); });
+    number.addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/\D/g, "").substring(0, 7);
+    });
   }
 }
 
 function showAboutModal() {
   const modal = document.getElementById("aboutModal");
-  if (modal) { modal.classList.remove("hidden"); }
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
 }
 
 function closeAboutModal() {
   const modal = document.getElementById("aboutModal");
-  if (modal) modal.classList.add("hidden");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
 // =========================================================================
-// КИРИЛЛ-ЛОТИН — ТЎЛИҚ ВА ИДЕМПОТЕНТ (v11.6)
+// КИРИЛЛ-ЛОТИН (Тўлиқ ва хатосиз)
 // =========================================================================
 
 const CHAR_MAP = {
@@ -170,29 +217,34 @@ const WORD_DICTIONARY = {
 function cyrToLat(text) {
   if (!text) return text;
   let result = text;
+  
   Object.keys(WORD_DICTIONARY).forEach(cyrWord => {
     const latWord = WORD_DICTIONARY[cyrWord];
     const regex = new RegExp(cyrWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
     result = result.replace(regex, latWord);
   });
+  
   result = result.replace(/[А-Яа-яЁёЎўҚқҒғҲҳЪъЬьЫыЩщЭэЮюЯя]/g, ch => {
     return CHAR_MAP[ch] !== undefined ? CHAR_MAP[ch] : ch;
   });
+  
   return result;
 }
 
-// 🆕 Битта алмаштириш ишлаяптими ёки йўқми (рекурсияни тўхтатиш учун)
 let _applyAlphabetRunning = false;
 
 function applyAlphabet() {
   if (_applyAlphabetRunning) return;
   _applyAlphabetRunning = true;
+  
   try {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     let node;
+    
     while ((node = walker.nextNode())) {
       const parent = node.parentElement;
       if (!parent) continue;
+      
       const tag = parent.tagName;
       if (tag === "SCRIPT" || tag === "STYLE") continue;
       if (!node.nodeValue || !node.nodeValue.trim()) continue;
@@ -201,7 +253,9 @@ function applyAlphabet() {
         if (!node._origCyr) node._origCyr = node.nodeValue;
         if (/[А-Яа-яЁёЎўҚқҒғҲҳ]/.test(node.nodeValue)) {
           const converted = cyrToLat(node._origCyr);
-          if (converted !== node.nodeValue) node.nodeValue = converted;
+          if (converted !== node.nodeValue) {
+            node.nodeValue = converted;
+          }
         }
       } else {
         if (node._origCyr && node.nodeValue !== node._origCyr) {
@@ -216,10 +270,12 @@ function applyAlphabet() {
   }
 }
 
-// 🆕 ТУГМА ИШЛАШИ УЧУН
 function toggleAlphabet() {
   isLatinMode = !isLatinMode;
-  try { localStorage.setItem("KOMPLAYENS_KADR_LANG", isLatinMode ? "lat" : "cyr"); } catch (e) {}
+  
+  try { 
+    localStorage.setItem("KOMPLAYENS_KADR_LANG", isLatinMode ? "lat" : "cyr"); 
+  } catch (e) {}
 
   const btn = document.getElementById("btnLangToggle");
   if (btn) {
@@ -230,7 +286,6 @@ function toggleAlphabet() {
     }
   }
 
-  // renderAll() ичидаги wrapper applyAlphabet() ни чақиради
   if (typeof renderAll === "function") {
     renderAll();
   } else {
@@ -252,44 +307,57 @@ function loadLanguage() {
         }
       }
     }
-  } catch (e) { console.error("loadLanguage error:", e); }
+  } catch (e) { 
+    console.error("loadLanguage error:", e); 
+  }
 }
 
-// 🆕 Динамик DOM ўзгаришларини ушлаб, дарҳол алфавитни қўллаш
 function setupAlphabetObserver() {
   if (typeof MutationObserver === "undefined") return;
   let scheduled = false;
+  
   const observer = new MutationObserver(() => {
     if (!isLatinMode) return;
     if (scheduled) return;
+    
     scheduled = true;
     requestAnimationFrame(() => {
       scheduled = false;
       applyAlphabet();
     });
   });
+  
   try {
     observer.observe(document.body, {
       childList: true,
       subtree: true,
       characterData: true
     });
-  } catch (e) { console.error("MutationObserver setup error:", e); }
+  } catch (e) { 
+    console.error("MutationObserver setup error:", e); 
+  }
 }
 
-// 🆕 renderAll() wrapper — ҳар бир чақирувда алфавитни қўллайди
 (function wrapRenderAllForAlphabet() {
   if (typeof window.renderAll !== "function") return;
   if (window.renderAll.__alphabetWrapped) return;
+  
   const _orig = window.renderAll;
   const wrapped = function() {
     const result = _orig.apply(this, arguments);
-    try { if (typeof applyAlphabet === "function") applyAlphabet(); } catch (e) { console.error("applyAlphabet wrapper error:", e); }
+    try { 
+      if (typeof applyAlphabet === "function") {
+        applyAlphabet(); 
+      }
+    } catch (e) { 
+      console.error("applyAlphabet wrapper error:", e); 
+    }
     return result;
   };
+  
   wrapped.__alphabetWrapped = true;
   window.renderAll = wrapped;
   console.log("✅ renderAll — алфавит синхронизация билан ўралди");
 })();
 
-console.log("✅ 12-ui.js юкланди (v11.6 — Кирилл/Лотин тўлиқ, идемпотент)");
+console.log("✅ 12-ui.js юкланди (v11.8 FINAL)");
