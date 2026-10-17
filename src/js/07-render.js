@@ -1,10 +1,6 @@
 // =========================================================================
 // 07-RENDER.JS — Барча жадвалларни чизиш
-// «КОМПЛАЕНС-КАДР» v10.2 — Марказий аппарат + Тизим ташкилотлари
-// =========================================================================
-
-// =========================================================================
-// АСОСИЙ RENDER
+// «КОМПЛАЕНС-КАДР» v10.5 (Тўғирланган жадвал + Равшан тугмалар)
 // =========================================================================
 
 function renderAll() {
@@ -58,7 +54,7 @@ function renderSubtabsCounters() {
 }
 
 // =========================================================================
-// 1. DASHBOARD (14 USTUN — Тизим ташкилотлари қўшилди)
+// 1. DASHBOARD
 // =========================================================================
 
 function renderDashboardTable() {
@@ -70,40 +66,17 @@ function renderDashboardTable() {
   REGIONS_14.forEach((reg, idx) => {
     const list = appState.candidates.filter(c => c.region === reg);
 
-    // 🆕 Махсус категориялар
-    const isCentralKA = reg === "Кадастр агентлиги Марказий аппарати";
-    const isCentralDKP = reg === "Давлат кадастрлари палатаси Марказий аппарати";
+    const isCentralKA = reg === "Кадастр агентлиги";
+    const isCentralDKP = reg === "Давлат кадастрлари палатаси";
     const isTizim = reg === "Тизим ташкилотлари";
-    const isSpecial = isCentralKA || isCentralDKP || isTizim;
 
-    let kaManagement, dkpManagement, kaDistrict, dkpDistrict, compliance, centralKA, centralDKP, tizim;
+    let kaManagement = 0, dkpManagement = 0, kaDistrict = 0, dkpDistrict = 0, compliance = 0, centralKA = 0, centralDKP = 0, tizim = 0;
 
     if (isCentralKA) {
-      kaManagement = 0;
-      dkpManagement = 0;
-      kaDistrict = 0;
-      dkpDistrict = 0;
-      compliance = 0;
       centralKA = list.filter(c => c.recordType === "current").length;
-      centralDKP = 0;
-      tizim = 0;
     } else if (isCentralDKP) {
-      kaManagement = 0;
-      dkpManagement = 0;
-      kaDistrict = 0;
-      dkpDistrict = 0;
-      compliance = 0;
-      centralKA = 0;
       centralDKP = list.filter(c => c.recordType === "current").length;
-      tizim = 0;
     } else if (isTizim) {
-      kaManagement = 0;
-      dkpManagement = 0;
-      kaDistrict = 0;
-      dkpDistrict = 0;
-      compliance = 0;
-      centralKA = 0;
-      centralDKP = 0;
       tizim = list.filter(c => c.recordType === "current").length;
     } else {
       kaManagement = list.filter(c => c.recordType === "current" && c.category && c.category.includes("КА ҳудудий бошқармаси")).length;
@@ -111,9 +84,6 @@ function renderDashboardTable() {
       kaDistrict = list.filter(c => c.recordType === "current" && c.category === "КА туман (шаҳар) бўлими бошлиғи").length;
       dkpDistrict = list.filter(c => c.recordType === "current" && c.category === "ДКП туман (шаҳар) филиали бошлиғи").length;
       compliance = list.filter(c => c.recordType === "current" && c.category === "Комплаенс хизмати ходими").length;
-      centralKA = 0;
-      centralDKP = 0;
-      tizim = 0;
     }
 
     const former = list.filter(c => c.recordType === "former").length;
@@ -123,7 +93,6 @@ function renderDashboardTable() {
 
     const onclick = (type) => `onclick="openDashboardDetail('${reg}', '${type}')" class="cursor-pointer hover:bg-blue-50 transition"`;
 
-    // Қатор номи
     let regDisplay = reg;
     let rowClass = "";
     if (isCentralKA || isCentralDKP) {
@@ -192,12 +161,29 @@ function getDetailTitle(type) {
 }
 
 // =========================================================================
-// 2. ФОТОТАБЛИЦА
+// 2. ФОТОТАБЛИЦА (Жадвал 100% тўғирланди)
 // =========================================================================
 
 function renderFototablitsaTable() {
   const tbody = document.getElementById("fototablitsaBody");
   if (!tbody) return;
+
+  // 🆕 Жадвал сарлавҳасини қатъий белгилаш
+  const mainTable = document.getElementById("mainFototablitsaTable");
+  if (mainTable) {
+    const thead = mainTable.querySelector("thead");
+    if (thead) {
+      thead.innerHTML = `
+        <tr>
+          <th style="width:5%;">Т/р</th>
+          <th style="width:15%;">Расм</th>
+          <th style="width:28%;">Ф.И.Ш., туғилган йили ва жойи</th>
+          <th style="width:30%;">Лавозими ва жараён тарихи</th>
+          <th style="width:22%;">Якуний натижа</th>
+        </tr>
+      `;
+    }
+  }
 
   const regFilterEl = document.getElementById("fotoRegionFilter");
   const catFilterEl = document.getElementById("fotoCategoryFilter");
@@ -206,18 +192,12 @@ function renderFototablitsaTable() {
   const catFilter = catFilterEl ? catFilterEl.value : "ALL";
 
   let workflowFilter = [];
-  if (currentSubTab === "new") {
-    workflowFilter = ["admin_review"];
-  } else if (currentSubTab === "in_process") {
-    workflowFilter = ["boss_review"];
-  } else if (currentSubTab === "approved") {
-    workflowFilter = ["approved"];
-  }
+  if (currentSubTab === "new") workflowFilter = ["admin_review"];
+  else if (currentSubTab === "in_process") workflowFilter = ["boss_review"];
+  else if (currentSubTab === "approved") workflowFilter = ["approved"];
 
-  if (currentRole === ROLES.KADR) {
-    if (currentSubTab === "in_process") {
-      workflowFilter = ["admin_review", "boss_review"];
-    }
+  if (currentRole === ROLES.KADR && currentSubTab === "in_process") {
+    workflowFilter = ["admin_review", "boss_review"];
   }
 
   const filtered = appState.candidates.filter(c => {
@@ -252,6 +232,8 @@ function renderFototablitsaTable() {
 
   Object.keys(groups).forEach(key => {
     const [heading, appType] = key.split("|||");
+    
+    // 5 та устун учун colspan="5"
     html += `
       <tr>
         <td colspan="5" class="text-center font-bold py-2 bg-slate-50" style="font-size:14px;">
@@ -285,7 +267,7 @@ function renderCandidateRow(c, counter) {
 
     if (steps.length > 0) {
       timelineHtml = `
-        <div class="mt-2 p-2 rounded bg-slate-50 border border-slate-200 text-[10px] space-y-0.5">
+        <div class="mt-2 p-2 rounded bg-slate-50 border border-slate-200 text-[10px] space-y-0.5 text-left">
           <div class="font-bold text-slate-700 mb-1">📋 Жараён тарихи:</div>
           ${steps.map(s => `<div class="text-slate-600">${s}</div>`).join("")}
         </div>
@@ -296,8 +278,8 @@ function renderCandidateRow(c, counter) {
   return `
     <tr>
       <td class="text-center font-bold">${counter}.</td>
-      <td class="text-center">
-        <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
+      <td class="text-center align-middle">
+        <img src="${c.photo}" alt="Фото" style="width:100px; height:125px; object-fit:cover; margin:0 auto; border:1px solid #334155; border-radius:4px; display:block;" />
       </td>
       <td class="text-center">
         <div class="font-bold text-sm">${c.fio}</div>
@@ -312,26 +294,27 @@ function renderCandidateRow(c, counter) {
         <div class="mt-2 font-semibold text-slate-700">${c.jobSince}</div>
         ${timelineHtml}
       </td>
-      <td class="text-center">${renderActionCell(c)}</td>
+      <td class="text-center align-middle">${renderActionCell(c)}</td>
     </tr>
   `;
 }
 
 // =========================================================================
-// РОЛ БЎЙИЧА АМАЛ ТУГМАЛАРИ
+// РОЛ БЎЙИЧА АМАЛ ТУГМАЛАРИ (Равшан ва тушунарли)
 // =========================================================================
 
 function renderActionCell(c) {
   const resultBadge = getFinalResultBadge(c);
   const isSudlangan = c.sudlanganStatus === "sudlangan";
 
+  // КАДРЛАР
   if (currentRole === ROLES.KADR) {
     if (c.workflowStage === "approved") {
       return `
         <div class="space-y-1.5 text-center">
           ${resultBadge}
           <div class="text-[10px] font-bold text-emerald-800">Тасдиқланди (${c.approvedDate || c.createdAt})</div>
-          <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] shadow cursor-pointer">
+          <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-bold text-[11px] shadow cursor-pointer">
             📄 МАЪЛУМОТНОМА
           </button>
         </div>
@@ -345,6 +328,7 @@ function renderActionCell(c) {
     `;
   }
 
+  // КОРРУПСИЯ (Тугмалар тўғирланди ва равшанлаштирилди)
   if (currentRole === ROLES.KORRUPSIYA) {
     let stageInfo = "";
     if (c.workflowStage === "admin_review") {
@@ -360,36 +344,34 @@ function renderActionCell(c) {
       : `<div class="text-[10px] font-semibold text-emerald-800">✓ Судланмаган</div>`;
 
     return `
-      <div class="space-y-1.5">
+      <div class="space-y-1.5 w-full">
         ${resultBadge}
         ${stageInfo}
         ${sudAlert}
-        <div class="flex flex-wrap gap-1 pt-1">
-          <button onclick="openEditorModal('${c.id}')" class="flex-1 py-1.5 px-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] cursor-pointer">
-            ✍️ Таҳрир
+        <div class="flex flex-col gap-1 pt-1 w-full">
+          <button onclick="openEditorModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] cursor-pointer">
+            ✍️ Таҳрир (ИЦ)
           </button>
-          <button onclick="editCandidate('${c.id}')" class="py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] cursor-pointer" title="Маълумотни таҳрирлаш">
-            ✏️
-          </button>
-          <button onclick="confirmDeleteCandidate('${c.id}')" class="py-1.5 px-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] cursor-pointer" title="Ўчириш">
-            🗑
-          </button>
-          <button onclick="openDocModal('${c.id}')" class="py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] cursor-pointer">
-            📄
+          <div class="flex gap-1 w-full">
+            <button onclick="editCandidate('${c.id}')" class="flex-1 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] cursor-pointer" title="Маълумотни таҳрирлаш">
+              ✏️
+            </button>
+            <button onclick="confirmDeleteCandidate('${c.id}')" class="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] cursor-pointer" title="Ўчириш">
+              🗑
+            </button>
+          </div>
+          <button onclick="openDocModal('${c.id}')" class="w-full py-2 px-2 mt-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[11px] shadow cursor-pointer">
+            📄 МАЪЛУМОТНОМА
           </button>
         </div>
       </div>
     `;
   }
 
+  // РАҲБАР
   if (currentRole === ROLES.RAHBAR) {
     if (c.workflowStage === "admin_review") {
-      return `
-        <div class="space-y-1 text-center">
-          ${resultBadge}
-          <div class="text-[10px] text-slate-500">🔒 Коррупция бўлимида</div>
-        </div>
-      `;
+      return `<div class="space-y-1 text-center">${resultBadge}<div class="text-[10px] text-slate-500">🔒 Коррупция бўлимида</div></div>`;
     }
     if (c.workflowStage === "boss_review") {
       if (isSudlangan) {
@@ -416,21 +398,17 @@ function renderActionCell(c) {
       <div class="space-y-1.5">
         ${resultBadge}
         ${isSudlangan ? `<div class="text-[10px] font-bold text-red-700">🚨 Судланган</div>` : `<div class="text-[10px] font-semibold text-emerald-800">✓ Судланмаган</div>`}
-        <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] cursor-pointer">
+        <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-bold text-[10px] cursor-pointer">
           📄 МАЪЛУМОТНОМА
         </button>
       </div>
     `;
   }
 
+  // КУЗАТУВЧИ
   if (currentRole === ROLES.KUZATUVCHI) {
     if (c.workflowStage !== "approved") {
-      return `
-        <div class="space-y-1 text-center">
-          ${resultBadge}
-          <div class="text-[10px] text-slate-500">🔒 Ўрганишда</div>
-        </div>
-      `;
+      return `<div class="space-y-1 text-center">${resultBadge}<div class="text-[10px] text-slate-500">🔒 Ўрганишда</div></div>`;
     }
     return `
       <div class="space-y-1.5">
@@ -476,8 +454,8 @@ function renderFormerTable() {
     return `
       <tr>
         <td class="text-center font-bold">${i + 1}.</td>
-        <td class="text-center">
-          <img src="${c.photo}" alt="Фото" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" />
+        <td class="text-center align-middle">
+          <img src="${c.photo}" alt="Фото" style="width:100px; height:125px; object-fit:cover; margin:0 auto; border:1px solid #334155; border-radius:4px; display:block;" />
         </td>
         <td class="text-center">
           <div class="font-bold text-sm">${c.fio}</div>
@@ -491,7 +469,7 @@ function renderFormerTable() {
           <div class="mt-1">${c.currentJob}</div>
           <div class="mt-1 text-[10px]">${c.jobSince}</div>
         </td>
-        <td class="text-center">${renderActionCell(c)}</td>
+        <td class="text-center align-middle">${renderActionCell(c)}</td>
       </tr>
     `;
   }).join("");
@@ -592,7 +570,7 @@ function renderNegativeTable() {
         ${(currentRole === ROLES.KUZATUVCHI && c.workflowStage !== "approved") ? `
           <span class="text-[10px] font-bold text-slate-500">🔒 Тасдиқлангач</span>
         ` : `
-          <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold cursor-pointer">
+          <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-bold cursor-pointer">
             📄 МАЪЛУМОТНОМА
           </button>
         `}
@@ -657,93 +635,4 @@ function renderDatabaseTable() {
         </td>
         <td class="text-[11px]">
           <div class="font-bold text-blue-950">${c.category}</div>
-          <div class="text-[10px]">${c.currentJob}</div>
-        </td>
-        <td class="text-center font-bold text-xs">${getFinalResultPlainText(c)}</td>
-        <td class="text-center">${getFinalResultBadge(c)}</td>
-        <td class="text-center">
-          ${canOpenDoc ? `
-            <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold cursor-pointer">
-              📄 ҲУЖЖАТ
-            </button>
-          ` : `<span class="text-[10px] text-slate-400 font-bold">🔒</span>`}
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// =========================================================================
-// 7. ФОЙДАЛАНУВЧИЛАР
-// =========================================================================
-
-function renderUsersTable() {
-  const tbody = document.getElementById("usersTableBody");
-  if (!tbody) return;
-
-  if (currentRole !== ROLES.KORRUPSIYA) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500">Рухсат йўқ</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = appState.users.map((u, idx) => `
-    <tr>
-      <td class="font-bold text-xs">${u.name}</td>
-      <td class="text-xs font-bold">${ROLE_NAMES[u.role] || u.role}</td>
-      <td class="font-mono text-xs font-bold">${u.login}</td>
-      <td class="text-center text-[10px]">
-        ${u.passHash ? '<span class="text-emerald-700 font-bold">🔒 Хеш</span>' : '<span class="text-amber-700 font-bold">⚠️ Очиқ</span>'}
-      </td>
-      <td class="text-center">
-        ${u.login === "admin" ? `<span class="text-[10px] text-slate-400">Асосий</span>` : `
-          <button onclick="deleteUser(${idx})" class="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold cursor-pointer">Ўчириш</button>
-        `}
-      </td>
-    </tr>
-  `).join("");
-}
-
-// =========================================================================
-// ЁРДАМЧИ ФУНКЦИЯЛАР
-// =========================================================================
-
-function getFinalResultBadge(c) {
-  if (c.workflowStage === "approved") {
-    return `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[10px]">✓ Ўрганиб чиқилди</span>`;
-  }
-  return `<span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400 font-bold text-[10px]">⏳ Ўрганиш жараёнида</span>`;
-}
-
-function getFinalResultPlainText(c) {
-  return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
-}
-
-function populateRegionSelects() {
-  const inpReg = document.getElementById("inpRegion");
-  const editReg = document.getElementById("editCandRegion");
-  const fotoReg = document.getElementById("fotoRegionFilter");
-  const formerReg = document.getElementById("formerRegionFilter");
-  const dbReg = document.getElementById("dbRegionFilter");
-
-  const allOpt = `<option value="ALL">Барча ҳудудлар (${REGIONS_14.length} та)</option>` +
-    REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
-
-  const singleOpts = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
-
-  if (inpReg && inpReg.options.length === 0) inpReg.innerHTML = singleOpts;
-  if (editReg && editReg.options.length === 0) editReg.innerHTML = singleOpts;
-
-  [fotoReg, formerReg, dbReg].forEach(el => {
-    if (el && el.options.length === 0) {
-      el.innerHTML = allOpt;
-    }
-  });
-
-  const dateLabel = document.getElementById("fotoCurrentDateLabel");
-  if (dateLabel) {
-    const now = getNow();
-    dateLabel.textContent = `${now.date} йил ҳолатига`;
-  }
-}
-
-console.log("✅ 07-render.js юкланди (v10.2 — 17 та ҳудуд + Тизим ташкилотлари)");
+          <div class="text-[10
