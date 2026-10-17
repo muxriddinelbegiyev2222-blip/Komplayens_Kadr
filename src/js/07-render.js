@@ -1,6 +1,6 @@
 // =========================================================================
 // 07-RENDER.JS — Барча жадвалларни чизиш
-// «КОМПЛАЕНС-КАДР» v10.6 (Тўлиқ тузатилган)
+// «КОМПЛАЕНС-КАДР» v10.7 (Тўлиқ тузатилган, қотишларсиз)
 // =========================================================================
 
 function renderAll() {
@@ -24,12 +24,8 @@ function renderAll() {
   renderDatabaseTable();
   renderUsersTable();
   
-  if (typeof renderAuditTable === "function") {
-    renderAuditTable();
-  }
-  if (typeof updateNotificationBadge === "function") {
-    updateNotificationBadge();
-  }
+  if (typeof renderAuditTable === "function") renderAuditTable();
+  if (typeof updateNotificationBadge === "function") updateNotificationBadge();
 
   populateRegionSelects();
 }
@@ -138,18 +134,11 @@ function openDashboardDetail(region, type) {
 
 function getDetailTitle(type) {
   const titles = {
-    ka_management: "КА бошқарма раҳбарияти",
-    dkp_management: "ДКП бошқарма раҳбарияти",
-    ka_district: "КА туман бўлими бошлиғи",
-    dkp_district: "ДКП туман филиали раҳбари",
-    compliance: "Комплаенс ходимлари",
-    central: "Марказий аппарат",
-    tizim: "Тизим ташкилотлари",
-    former: "Собиқ ходимлар",
-    in_process: "Ўрганиш жараёнида",
-    approved: "Ўрганиб чиқилган",
-    sudlangan: "Судланганлар",
-    all: "Барча ёзувлар"
+    ka_management: "КА бошқарма раҳбарияти", dkp_management: "ДКП бошқарма раҳбарияти",
+    ka_district: "КА туман бўлими бошлиғи", dkp_district: "ДКП туман филиали раҳбари",
+    compliance: "Комплаенс ходимлари", central: "Марказий аппарат", tizim: "Тизим ташкилотлари",
+    former: "Собиқ ходимлар", in_process: "Ўрганиш жараёнида", approved: "Ўрганиб чиқилган",
+    sudlangan: "Судланганлар", all: "Барча ёзувлар"
   };
   return titles[type] || type;
 }
@@ -307,8 +296,8 @@ function renderActionCell(c) {
   if (currentRole === ROLES.RAHBAR) {
     if (c.workflowStage === "admin_review") return `<div class="space-y-1 text-center">${resultBadge}<div class="text-[10px] text-slate-500">🔒 Коррупция бўлимида</div></div>`;
     if (c.workflowStage === "boss_review") {
-      if (isSudlangan) return `<div class="space-y-1.5 p-2 rounded-lg bg-red-50 border-2 border-red-500 sudlangan-alert-pulse"><div class="text-[10px] font-extrabold text-red-700 uppercase">🚨 СУДЛАНГАНЛИК!</div><button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold text-[10px] cursor-pointer">⚠️ ЎҚИШ ВА ҚАРОР</button></div>`;
-      return `<div class="space-y-1.5">${resultBadge}<div class="text-[10px] font-bold text-emerald-800">✓ Судланмаган</div><button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[10px] cursor-pointer">👁 ТАСДИҚЛАШ</button></div>`;
+      if (isSudlangan) return `<div class="space-y-1.5 p-2 rounded-lg bg-red-50 border-2 border-red-500 sudlangan-alert-pulse"><div class="text-[10px] font-extrabold text-red-700 uppercase">🚨 СУДЛАНГАНЛИК!</div><button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold text-[10px] cursor-pointer">⚠️ ҲУЖЖАТНИ ОЧИШ</button></div>`;
+      return `<div class="space-y-1.5">${resultBadge}<div class="text-[10px] font-bold text-emerald-800">✓ Судланмаган</div><button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[10px] cursor-pointer">📄 МАЪЛУМОТНОМА ОЧИШ</button></div>`;
     }
     return `<div class="space-y-1.5">${resultBadge}${isSudlangan ? `<div class="text-[10px] font-bold text-red-700">🚨 Судланган</div>` : `<div class="text-[10px] font-semibold text-emerald-800">✓ Судланмаган</div>`}<button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-bold text-[10px] cursor-pointer">📄 МАЪЛУМОТНОМА</button></div>`;
   }
@@ -321,18 +310,26 @@ function renderActionCell(c) {
   return `<div class="text-[10px] text-slate-400 italic text-center">—</div>`;
 }
 
-// СОБИҚ ХОДИМЛАР
+function getFinalResultBadge(c) {
+  if (c.workflowStage === "approved") return `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[10px]">✓ Ўрганиб чиқилди</span>`;
+  if (c.workflowStage === "boss_review") return `<span class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-400 font-bold text-[10px]">📤 Бошлиқда</span>`;
+  return `<span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400 font-bold text-[10px]">⏳ Ўрганиш жараёнида</span>`;
+}
+
+function getFinalResultPlainText(c) {
+  if (c.workflowStage === "approved") return "Ўрганиб чиқилди";
+  if (c.workflowStage === "boss_review") return "Бошлиқда (Тасдиқлашда)";
+  return "Ўрганиш жараёнида";
+}
+
+// СОБИҚ, ИЦ, СУДЛАНГАНЛАР, БАЗА, USER ва бошқа функциялар тўлиқ жойида.
 function renderFormerTable() {
   const regFilter = document.getElementById("formerRegionFilter")?.value || "ALL";
   const tbody = document.getElementById("formerTableBody");
   if (!tbody) return;
 
   const list = appState.candidates.filter(c => c.recordType === "former" && (regFilter === "ALL" || c.region === regFilter));
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`;
-    return;
-  }
+  if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`; return; }
 
   tbody.innerHTML = list.map((c, i) => {
     const createdInfo = c.createdTime ? `<div class="text-[10px] text-slate-500 font-mono mt-1">🕐 ${c.createdAt} ${c.createdTime}</div>` : "";
@@ -358,23 +355,17 @@ function renderFormerTable() {
   }).join("");
 }
 
-// ИЦ ЖАДВАЛИ
 function renderItsTable() {
   const statusFilter = document.getElementById("itsFilterStatus")?.value || "ALL";
   const tbody = document.getElementById("itsTableBody");
   if (!tbody) return;
-
   const readOnly = currentRole !== ROLES.KORRUPSIYA;
   const list = appState.candidates.filter(c => {
     if (statusFilter === "UNCHECKED" && c.itsChecked) return false;
     if (statusFilter === "SUDLANGAN" && c.sudlanganStatus !== "sudlangan") return false;
     return true;
   });
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`;
-    return;
-  }
+  if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`; return; }
 
   tbody.innerHTML = list.map((c, idx) => `
     <tr>
@@ -403,17 +394,11 @@ function renderItsTable() {
   `).join("");
 }
 
-// СУДЛАНГАНЛАР
 function renderNegativeTable() {
   const tbody = document.getElementById("negativeTableBody");
   if (!tbody) return;
-
   const list = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan");
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Судланганлиги чиққан ходимлар йўқ</td></tr>`;
-    return;
-  }
-
+  if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Судланганлиги чиққан ходимлар йўқ</td></tr>`; return; }
   tbody.innerHTML = list.map((c, idx) => `
     <tr>
       <td class="text-center font-bold">${idx + 1}.</td>
@@ -427,7 +412,6 @@ function renderNegativeTable() {
   `).join("");
 }
 
-// ЯГОНА БАЗА
 function renderDatabaseTable() {
   const reg = document.getElementById("dbRegionFilter")?.value || "ALL";
   const cat = document.getElementById("dbCategoryFilter")?.value || "ALL";
@@ -449,11 +433,7 @@ function renderDatabaseTable() {
 
   const tbody = document.getElementById("databaseTableBody");
   if (!tbody) return;
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`;
-    return;
-  }
+  if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`; return; }
 
   tbody.innerHTML = list.map(c => {
     const canOpenDoc = currentRole === ROLES.KORRUPSIYA || (currentRole === ROLES.RAHBAR && c.workflowStage !== "admin_review") || ((currentRole === ROLES.KADR || currentRole === ROLES.KUZATUVCHI) && c.workflowStage === "approved");
@@ -471,16 +451,10 @@ function renderDatabaseTable() {
   }).join("");
 }
 
-// ФОЙДАЛАНУВЧИЛАР
 function renderUsersTable() {
   const tbody = document.getElementById("usersTableBody");
   if (!tbody) return;
-
-  if (currentRole !== ROLES.KORRUPSIYA) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500">Рухсат йўқ</td></tr>`;
-    return;
-  }
-
+  if (currentRole !== ROLES.KORRUPSIYA) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500">Рухсат йўқ</td></tr>`; return; }
   tbody.innerHTML = appState.users.map((u, idx) => `
     <tr>
       <td class="font-bold text-xs">${u.name}</td>
@@ -490,15 +464,6 @@ function renderUsersTable() {
       <td class="text-center">${u.login === "admin" ? `<span class="text-[10px] text-slate-400">Асосий</span>` : `<button onclick="deleteUser(${idx})" class="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold cursor-pointer">Ўчириш</button>`}</td>
     </tr>
   `).join("");
-}
-
-// ЁРДАМЧИЛАР
-function getFinalResultBadge(c) {
-  return c.workflowStage === "approved" ? `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[10px]">✓ Ўрганиб чиқилди</span>` : `<span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400 font-bold text-[10px]">⏳ Ўрганиш жараёнида</span>`;
-}
-
-function getFinalResultPlainText(c) {
-  return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
 }
 
 function populateRegionSelects() {
@@ -524,5 +489,4 @@ function populateRegionSelects() {
     dateLabel.textContent = `${now.date} йил ҳолатига`;
   }
 }
-
-console.log("✅ 07-render.js юкланди (v10.6 — Тўлиқ тузатилган)");
+console.log("✅ 07-render.js юкланди (v10.7 — Тўлиқ тузатилган)");
