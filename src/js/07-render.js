@@ -635,4 +635,93 @@ function renderDatabaseTable() {
         </td>
         <td class="text-[11px]">
           <div class="font-bold text-blue-950">${c.category}</div>
-          <div class="text-[10
+          <div class="text-[10px]">${c.currentJob}</div>
+        </td>
+        <td class="text-center font-bold text-xs">${getFinalResultPlainText(c)}</td>
+        <td class="text-center">${getFinalResultBadge(c)}</td>
+        <td class="text-center">
+          ${canOpenDoc ? `
+            <button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-bold cursor-pointer">
+              📄 ҲУЖЖАТ
+            </button>
+          ` : `<span class="text-[10px] text-slate-400 font-bold">🔒</span>`}
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// =========================================================================
+// 7. ФОЙДАЛАНУВЧИЛАР
+// =========================================================================
+
+function renderUsersTable() {
+  const tbody = document.getElementById("usersTableBody");
+  if (!tbody) return;
+
+  if (currentRole !== ROLES.KORRUPSIYA) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500">Рухсат йўқ</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = appState.users.map((u, idx) => `
+    <tr>
+      <td class="font-bold text-xs">${u.name}</td>
+      <td class="text-xs font-bold">${ROLE_NAMES[u.role] || u.role}</td>
+      <td class="font-mono text-xs font-bold">${u.login}</td>
+      <td class="text-center text-[10px]">
+        ${u.passHash ? '<span class="text-emerald-700 font-bold">🔒 Хеш</span>' : '<span class="text-amber-700 font-bold">⚠️ Очиқ</span>'}
+      </td>
+      <td class="text-center">
+        ${u.login === "admin" ? `<span class="text-[10px] text-slate-400">Асосий</span>` : `
+          <button onclick="deleteUser(${idx})" class="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold cursor-pointer">Ўчириш</button>
+        `}
+      </td>
+    </tr>
+  `).join("");
+}
+
+// =========================================================================
+// ЁРДАМЧИ ФУНКЦИЯЛАР
+// =========================================================================
+
+function getFinalResultBadge(c) {
+  if (c.workflowStage === "approved") {
+    return `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[10px]">✓ Ўрганиб чиқилди</span>`;
+  }
+  return `<span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400 font-bold text-[10px]">⏳ Ўрганиш жараёнида</span>`;
+}
+
+function getFinalResultPlainText(c) {
+  return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : "Ўрганиш жараёнида";
+}
+
+function populateRegionSelects() {
+  const inpReg = document.getElementById("inpRegion");
+  const editReg = document.getElementById("editCandRegion");
+  const fotoReg = document.getElementById("fotoRegionFilter");
+  const formerReg = document.getElementById("formerRegionFilter");
+  const dbReg = document.getElementById("dbRegionFilter");
+
+  const allOpt = `<option value="ALL">Барча ҳудудлар (${REGIONS_14.length} та)</option>` +
+    REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+
+  const singleOpts = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+
+  if (inpReg && inpReg.options.length === 0) inpReg.innerHTML = singleOpts;
+  if (editReg && editReg.options.length === 0) editReg.innerHTML = singleOpts;
+
+  [fotoReg, formerReg, dbReg].forEach(el => {
+    if (el && el.options.length === 0) {
+      el.innerHTML = allOpt;
+    }
+  });
+
+  const dateLabel = document.getElementById("fotoCurrentDateLabel");
+  if (dateLabel) {
+    const now = getNow();
+    dateLabel.textContent = `${now.date} йил ҳолатига`;
+  }
+}
+
+console.log("✅ 07-render.js юкланди (v10.5 — Тўғирланган жадвал + Равшан тугмалар)");
