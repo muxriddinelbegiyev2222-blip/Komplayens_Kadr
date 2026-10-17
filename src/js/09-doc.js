@@ -1,6 +1,5 @@
 // =========================================================================
-// 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v10.7 (Тўлиқ тузатилган)
+// 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД (v10.8)
 // =========================================================================
 
 function openEditorModal(id) {
@@ -82,44 +81,48 @@ function saveDraftOnly() {
 function sendToBossForApproval() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-
   collectEditorFields(c);
-  c.workflowStage = "boss_review";
-
-  saveState(); // 1. Мажбурий сақлаш
+  c.workflowStage = "boss_review"; // 1. Ҳолатни ўзгартириш
+  saveState(); // 2. ДАРҲОЛ САҚЛАШ!
   
-  if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); // 2. Логлаш
-
-  renderAll(); // 3. Экранни янгилаш
+  if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); // 3. Логлаш
+  renderAll(); // 4. Экранни янгилаш
   closeEditorModal();
   showToast(`📤 «${c.fio}» Бўлим бошлиғига юборилди`, "success");
 }
 
-function getSignerName(candidate) {
-  // Сиз айтгандек, имзо жойида доим I.Zaripov туради
-  return "I.Zaripov";
-}
-
-function getApproverName(candidate) {
-  if (!candidate) return "—";
-  if (candidate.workflowStage === "approved" && candidate.bossApprovedBy) return candidate.bossApprovedBy;
-  return "I.Zaripov";
-}
+// Имзо жойида доим I.Zaripov чиқади
+function getSignerName(candidate) { return "I.Zaripov"; }
+function getApproverName(candidate) { return candidate?.bossApprovedBy || "I.Zaripov"; }
 
 function buildOfficialMalumotnomaHtml(c) {
   const p3Parts = (c.para3 || "").split("\n").filter(Boolean);
   const p4Parts = (c.para4 || "").split("\n").filter(Boolean);
+  const sudHtml = c.sudlanganStatus === "sudlangan" ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>` : `${c.sudlanganText}`;
 
-  const sudHtml = c.sudlanganStatus === "sudlangan"
-    ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>`
-    : `${c.sudlanganText}`;
-
-  // 🆕 QR код фақат тасдиқланганда чиқади
+  // 🆕 QR КОД: Сканер қилганда телефонда шу HTML саҳифа очилади
   let qrHtml = "";
   if (c.workflowStage === "approved") {
-    const qrText = `PINFL: ${c.pinfl}\nReestr: ${c.reestrNo}\nTasdiqlandi: ${c.approvedDate}\nTasdiqlovchi: ${getApproverName(c)}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}`;
-    qrHtml = `<div style="text-align:center;margin-top:5px;"><img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" /><div style="font-size:7pt;color:#475569;">Ҳужжат ҳақиқийлиги</div></div>`;
+    const miniHtml = `
+      <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:'Times New Roman',serif;padding:15px;font-size:16px;line-height:1.5;} .title{text-align:center;font-weight:bold;font-size:18px;margin-bottom:10px;} .row{margin-bottom:8px;} .lbl{font-weight:bold;}</style></head>
+      <body>
+        <div class="title">МАЪЛУМОТНОМА<br><span style="font-size:14px;">(Ҳақиқийлиги тасдиқланган)</span></div>
+        <div class="row"><span class="lbl">Ф.И.Ш.:</span> ${c.fio}</div>
+        <div class="row"><span class="lbl">ПИНФЛ:</span> ${c.pinfl}</div>
+        <div class="row"><span class="lbl">Реестр №:</span> ${c.reestrNo}</div>
+        <div class="row"><span class="lbl">Лавозим:</span> ${c.category}</div>
+        <div class="row"><span class="lbl">Ҳолат:</span> Тасдиқланган</div>
+        <div class="row"><span class="lbl">Сана:</span> ${c.approvedDate}</div>
+        <div class="row"><span class="lbl">Тасдиқловчи:</span> ${getApproverName(c)}</div>
+        <div style="margin-top:20px;font-size:12px;color:#666;text-align:center;">Бу маълумот «КОМПЛАЕНС-КАДР» тизими орқали тасдиқланган.</div>
+      </body></html>
+    `;
+    // HTML ни Base64 га ўтказиб, QR кодга жойлаймиз
+    const encodedHtml = btoa(unescape(encodeURIComponent(miniHtml)));
+    const qrData = `data:text/html;base64,${encodedHtml}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+    
+    qrHtml = `<div style="text-align:center;margin-top:5px;"><img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" /><div style="font-size:7pt;color:#475569;">Сканер қилинг</div></div>`;
   }
 
   const stampHtml = c.workflowStage === "approved"
@@ -129,30 +132,19 @@ function buildOfficialMalumotnomaHtml(c) {
   return `
     <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
       <div style="text-align:center;font-weight:bold;font-size:14pt;line-height:1.35;margin-bottom:14pt;">
-        ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>
-        ${c.fio} бўйича<br/>
-        МАЪЛУМОТНОМА
+        ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>${c.fio} бўйича<br/>МАЪЛУМОТНОМА
       </div>
-
       <div class="malumotnoma-text">
-        <p>
-          Номзод ${(c.jobSince || "").replace(/ й\.?$/, "")} йилдан ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}
-        </p>
+        <p>Номзод ${(c.jobSince || "").replace(/ й\.?$/, "")} йилдан ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
         <p>${c.para2}</p>
         ${p3Parts.map(line => `<p>${line}</p>`).join("")}
         ${p4Parts.map(line => `<p>${line}</p>`).join("")}
       </div>
-
       <div style="margin-top:26pt;display:flex;align-items:flex-end;justify-content:space-between;font-family:'Times New Roman',Times,serif;font-size:14pt;font-weight:bold;color:#000000;">
-        <div style="line-height:1.35;">
-          Коррупцияга қарши курашиш<br/>бўлими бошлиғи
-        </div>
+        <div style="line-height:1.35;">Коррупцияга қарши курашиш<br/>бўлими бошлиғи</div>
         ${stampHtml}
-        <div style="text-align:center;">
-          ${getSignerName(c)}
-        </div>
+        <div style="text-align:center;">${getSignerName(c)}</div>
       </div>
-
       <div style="margin-top:16pt;padding-top:6pt;border-top:1px solid #cbd5e1;display:flex;justify-content:space-between;font-size:9.5pt;color:#475569;font-family:'Times New Roman',Times,serif;">
         <span>«КОМПЛАЕНС-КАДР» реестри: ${c.reestrNo} (${c.region})</span>
         <span>ПИНФЛ: ${c.pinfl} | Якуний натижа: ${getFinalResultPlainText(c)}</span>
@@ -166,6 +158,7 @@ function openDocModal(id) {
     const c = appState.candidates.find(x => x.id === id);
     if (!c) return alert("Номзод топилмади!");
 
+    // HR ва Кузатувчи фақат тасдиқланганларни очади
     if ((currentRole === ROLES.KUZATUVCHI || currentRole === ROLES.KADR) && c.workflowStage !== "approved") {
       return alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
     }
@@ -196,27 +189,17 @@ function openDocModal(id) {
 
     if (currentRole === ROLES.RAHBAR && c.workflowStage === "boss_review") {
       if (bossPanel) bossPanel.classList.remove("hidden");
-
-      if (!c.bossViewedAt) {
-        if (typeof logBossViewed === "function") logBossViewed(c);
-        saveState();
-      }
+      if (!c.bossViewedAt) { if (typeof logBossViewed === "function") logBossViewed(c); saveState(); }
 
       if (c.sudlanganStatus === "sudlangan") {
         if (warnBox) warnBox.classList.remove("hidden");
         const warnText = document.getElementById("bossSudlanganWarningText");
         if (warnText) warnText.textContent = `ИЦ Маълумоти: ${c.sudlanganText}`;
         if (chk) chk.checked = false;
-        if (btnApprove) {
-          btnApprove.disabled = true;
-          btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
-        }
+        if (btnApprove) { btnApprove.disabled = true; btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed"; }
       } else {
         if (warnBox) warnBox.classList.add("hidden");
-        if (btnApprove) {
-          btnApprove.disabled = false;
-          btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
-        }
+        if (btnApprove) { btnApprove.disabled = false; btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer"; }
       }
     } else {
       if (bossPanel) bossPanel.classList.add("hidden");
@@ -234,13 +217,8 @@ function toggleBossApproveButton() {
   const chk = document.getElementById("chkBossConfirmSudlangan");
   const btnApprove = document.getElementById("btnBossFinalApprove");
   if (!chk || !btnApprove) return;
-  if (chk.checked) {
-    btnApprove.disabled = false;
-    btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer";
-  } else {
-    btnApprove.disabled = true;
-    btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed";
-  }
+  if (chk.checked) { btnApprove.disabled = false; btnApprove.className = "px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer"; } 
+  else { btnApprove.disabled = true; btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed"; }
 }
 
 function approveByBoss() {
@@ -254,7 +232,6 @@ function approveByBoss() {
   c.bossApprovedAt = now.dateTime;
 
   if (typeof logApproved === "function") logApproved(c, "I.Zaripov");
-
   saveState();
   renderAll();
   openDocModal(c.id);
@@ -274,7 +251,6 @@ function returnToAdminForRevision() {
   c.bossReturnReason = reason.trim();
 
   if (typeof logReturned === "function") logReturned(c, reason.trim());
-
   saveState();
   renderAll();
   closeDocModal();
@@ -290,29 +266,10 @@ function closeDocModal() {
 function printCurrentDocA4() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>МАЪЛУМОТНОМА — ${c.fio}</title>
-      <style>
-        @page { size: A4 portrait; margin: 16mm 16mm 16mm 22mm; }
-        body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: 0; }
-        .malumotnoma-text p { text-indent: 1.25cm; text-align: justify; line-height: 1.48; font-size: 14pt; margin: 0 0 8pt 0; }
-      </style>
-    </head>
-    <body>${buildOfficialMalumotnomaHtml(c)}</body>
-    </html>
-  `;
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>МАЪЛУМОТНОМА — ${c.fio}</title><style>@page { size: A4 portrait; margin: 16mm 16mm 16mm 22mm; } body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: 0; } .malumotnoma-text p { text-indent: 1.25cm; text-align: justify; line-height: 1.48; font-size: 14pt; margin: 0 0 8pt 0; }</style></head><body>${buildOfficialMalumotnomaHtml(c)}</body></html>`;
   const printWin = window.open("", "_blank", "width=850,height=950");
-  if (printWin) {
-    printWin.document.open();
-    printWin.document.write(htmlContent);
-    printWin.document.close();
-    printWin.focus();
-    setTimeout(() => printWin.print(), 300);
-  } else { window.print(); }
+  if (printWin) { printWin.document.open(); printWin.document.write(htmlContent); printWin.document.close(); printWin.focus(); setTimeout(() => printWin.print(), 300); } 
+  else { window.print(); }
 }
 
 function copyDocText() {
@@ -320,4 +277,4 @@ function copyDocText() {
   if (!el) return;
   navigator.clipboard.writeText(el.innerText).then(() => showToast("📋 Маълумотнома матни нусхаланди", "success")).catch(() => alert("Нусхалаш амалга ошмади"));
 }
-console.log("✅ 09-doc.js юкланди (v10.7 — Тўлиқ тузатилган, QR ва Имзо)");
+console.log("✅ 09-doc.js юкланди (v10.8 — QR ва Модаллар 100% тузатилди)");
