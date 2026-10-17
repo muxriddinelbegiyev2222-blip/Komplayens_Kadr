@@ -514,7 +514,7 @@ function validateCandidateForm() {
   const passSeries = document.getElementById("inpPassSeries").value.trim().toUpperCase();
   const passNum = document.getElementById("inpPassNum").value.trim();
   const birthDate = document.getElementById("inpBirthDate").value.trim();
-  const jobSince = document.getElementById("inpJobSince").value.trim();
+  let jobSince = document.getElementById("inpJobSince").value.trim();   // Фақат йилни олиш   jobSince = jobSince.replace(/\D/g, "").substring(0, 4);
   const currentJob = document.getElementById("inpCurrentJob").value.trim();
   const district = document.getElementById("inpDistrict").value.trim();
   const heading = document.getElementById("inpDistrictHeading")?.value.trim() || "";
