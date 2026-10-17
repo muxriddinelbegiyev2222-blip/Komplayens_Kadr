@@ -1,6 +1,6 @@
 // =========================================================================
 // 10-EXPORT.JS — Word / Excel / PDF экспорт
-// «КОМПЛАЕНС-КАДР» v11.6 (QR экспорти 09-doc.js орқали ишлайди)
+// «КОМПЛАЕНС-КАДР» v11.8 FINAL
 // =========================================================================
 
 function downloadBlobFile(content, filename, mimeType) {
@@ -14,6 +14,7 @@ function downloadBlobFile(content, filename, mimeType) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
     showToast(`📥 ${filename} юклаб олинди`, "success");
   } catch (e) {
     console.error("Download error:", e);
@@ -54,7 +55,13 @@ function wrapFramedExportHtml(title, tableHtml) {
 
 function exportCurrentDocWord() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
-  if (!c) { alert("Номзод топилмади!"); return; }
+  if (!c) {
+    alert("Номзод топилмади!");
+    return;
+  }
+
+  const content = document.getElementById("a4InnerContent");
+  const htmlToExport = content ? content.innerHTML : buildOfficialMalumotnomaHtml(c);
 
   const docHtml = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' 
@@ -66,15 +73,20 @@ function exportCurrentDocWord() {
       <style>
         @page { size: 21cm 29.7cm; margin: 1.8cm 1.8cm 1.8cm 2.4cm; }
         body { font-family: 'Times New Roman', serif; font-size: 14pt; }
-        p { text-indent: 1.25cm; text-align: justify; line-height: 1.45; margin-bottom: 8pt; }
+        p { text-indent: 1.25cm; text-align: justify; line-height: 1.35; margin-bottom: 6pt; }
       </style>
     </head>
-    <body>${buildOfficialMalumotnomaHtml(c)}</body>
+    <body>${htmlToExport}</body>
     </html>
   `;
 
   const safeName = c.fio.replace(/\s+/g, "_").replace(/[^\w\u0400-\u04FF_-]/g, "");
-  downloadBlobFile(docHtml, `МАЪЛУМОТНОМА_${safeName}.doc`, "application/msword;charset=utf-8");
+  
+  downloadBlobFile(
+    docHtml,
+    `МАЪЛУМОТНОМА_${safeName}.doc`,
+    "application/msword;charset=utf-8"
+  );
 
   if (typeof addAuditLog === "function") {
     addAuditLog("EXPORT_DOC_WORD", `${c.fio} — Word юкланди`);
@@ -85,6 +97,7 @@ function exportFototablitsaWord(recordType = "current") {
   const regFilterEl = recordType === "former"
     ? document.getElementById("formerRegionFilter")
     : document.getElementById("fotoRegionFilter");
+
   const regFilter = regFilterEl ? regFilterEl.value : "ALL";
 
   const list = appState.candidates.filter(c => {
@@ -93,7 +106,10 @@ function exportFototablitsaWord(recordType = "current") {
     return true;
   });
 
-  if (list.length === 0) { alert("Юклаш учун маълумот йўқ!"); return; }
+  if (list.length === 0) {
+    alert("Юклаш учун маълумот йўқ!");
+    return;
+  }
 
   let rows = "";
   list.forEach((c, i) => {
@@ -122,18 +138,30 @@ function exportFototablitsaWord(recordType = "current") {
     <table>
       <thead>
         <tr>
-          <th>Т/р</th><th>Расм</th><th>Ф.И.Ш., туғилган йили ва жойи</th>
-          <th>Эгаллаб турган лавозими ва қайси санадан</th><th>Якуний натижа</th>
+          <th>Т/р</th>
+          <th>Расм</th>
+          <th>Ф.И.Ш., туғилган йили ва жойи</th>
+          <th>Эгаллаб турган лавозими ва қайси санадан</th>
+          <th>Якуний натижа</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  const title = recordType === "former" ? `СОБИҚ ХОДИМЛАР (${regFilter})` : `ФОТОТАБЛИЦА (${regFilter})`;
-  const filename = recordType === "former" ? `Sobiq_xodimlar_${regFilter}.doc` : `Fototablitsa_${regFilter}.doc`;
+  const title = recordType === "former"
+    ? `СОБИҚ ХОДИМЛАР (${regFilter})`
+    : `ФОТОТАБЛИЦА (${regFilter})`;
 
-  downloadBlobFile(wrapFramedExportHtml(title, table), filename, "application/msword;charset=utf-8");
+  const filename = recordType === "former"
+    ? `Sobiq_xodimlar_${regFilter}.doc`
+    : `Fototablitsa_${regFilter}.doc`;
+
+  downloadBlobFile(
+    wrapFramedExportHtml(title, table),
+    filename,
+    "application/msword;charset=utf-8"
+  );
 
   if (typeof addAuditLog === "function") {
     addAuditLog("EXPORT_FOTO_WORD", `${recordType} | ${regFilter} | ${list.length} та`);
@@ -144,6 +172,7 @@ function exportFototablitsaExcel(recordType = "current") {
   const regFilterEl = recordType === "former"
     ? document.getElementById("formerRegionFilter")
     : document.getElementById("fotoRegionFilter");
+
   const regFilter = regFilterEl ? regFilterEl.value : "ALL";
 
   const list = appState.candidates.filter(c => {
@@ -152,7 +181,10 @@ function exportFototablitsaExcel(recordType = "current") {
     return true;
   });
 
-  if (list.length === 0) { alert("Юклаш учун маълумот йўқ!"); return; }
+  if (list.length === 0) {
+    alert("Юклаш учун маълумот йўқ!");
+    return;
+  }
 
   let rows = "";
   list.forEach((c, i) => {
@@ -175,19 +207,34 @@ function exportFototablitsaExcel(recordType = "current") {
     <table>
       <thead>
         <tr>
-          <th>Т/р</th><th>Ф.И.Ш.</th><th>Ҳудуд</th><th>Йўналиш</th>
-          <th>Туғилган сана</th><th>Паспорт</th><th>ПИНФЛ</th>
-          <th>Лавозими</th><th>Якуний натижа</th>
+          <th>Т/р</th>
+          <th>Ф.И.Ш.</th>
+          <th>Ҳудуд</th>
+          <th>Йўналиш</th>
+          <th>Туғилган сана</th>
+          <th>Паспорт</th>
+          <th>ПИНФЛ</th>
+          <th>Лавозими</th>
+          <th>Якуний натижа</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  const title = recordType === "former" ? `СОБИҚ ХОДИМЛАР (${regFilter})` : `НОМЗОДЛАР ЖАДВАЛИ (${regFilter})`;
-  const filename = recordType === "former" ? `Sobiq_xodimlar_${regFilter}.xls` : `Fototablitsa_${regFilter}.xls`;
+  const title = recordType === "former"
+    ? `СОБИҚ ХОДИМЛАР (${regFilter})`
+    : `НОМЗОДЛАР ЖАДВАЛИ (${regFilter})`;
 
-  downloadBlobFile(wrapFramedExportHtml(title, table), filename, "application/vnd.ms-excel;charset=utf-8");
+  const filename = recordType === "former"
+    ? `Sobiq_xodimlar_${regFilter}.xls`
+    : `Fototablitsa_${regFilter}.xls`;
+
+  downloadBlobFile(
+    wrapFramedExportHtml(title, table),
+    filename,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
   if (typeof addAuditLog === "function") {
     addAuditLog("EXPORT_FOTO_EXCEL", `${recordType} | ${regFilter} | ${list.length} та`);
@@ -195,8 +242,14 @@ function exportFototablitsaExcel(recordType = "current") {
 }
 
 function exportItsExcel(mode = "ALL") {
-  const list = appState.candidates.filter(c => mode === "UNCHECKED" ? !c.itsChecked : true);
-  if (list.length === 0) { alert("Юклаш учун маълумот йўқ!"); return; }
+  const list = appState.candidates.filter(c =>
+    mode === "UNCHECKED" ? !c.itsChecked : true
+  );
+
+  if (list.length === 0) {
+    alert("Юклаш учун маълумот йўқ!");
+    return;
+  }
 
   let rows = "";
   list.forEach((c, i) => {
@@ -217,8 +270,12 @@ function exportItsExcel(mode = "ALL") {
     <table>
       <thead>
         <tr>
-          <th>T/R</th><th>FIO</th><th>Tug'ilgan sana</th>
-          <th>Pasport seriyasi</th><th>Pasport raqami</th><th>PINFL</th>
+          <th>T/R</th>
+          <th>FIO</th>
+          <th>Tug'ilgan sana</th>
+          <th>Pasport seriyasi</th>
+          <th>Pasport raqami</th>
+          <th>PINFL</th>
           <th>Судланганлик натижаси</th>
         </tr>
       </thead>
@@ -226,18 +283,37 @@ function exportItsExcel(mode = "ALL") {
     </table>
   `;
 
-  const title = mode === "UNCHECKED" ? "ИЦ ТЕКШИРИШ УЧУН (Ўрганилмаганлар)" : "ИЦ ТЎЛИҚ ЖАДВАЛ";
-  const filename = mode === "UNCHECKED" ? "IC_tekшириш_учун.xls" : "IC_toliq_jadval.xls";
+  const title = mode === "UNCHECKED"
+    ? "ИЦ ТЕКШИРИШ УЧУН (Ўрганилмаганлар)"
+    : "ИЦ ТЎЛИҚ ЖАДВАЛ";
 
-  downloadBlobFile(wrapFramedExportHtml(title, table), filename, "application/vnd.ms-excel;charset=utf-8");
+  const filename = mode === "UNCHECKED"
+    ? "IC_tekшириш_учун.xls"
+    : "IC_toliq_jadval.xls";
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_ITS", `${mode} | ${list.length} та`);
+  downloadBlobFile(
+    wrapFramedExportHtml(title, table),
+    filename,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
+
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_ITS", `${mode} | ${list.length} та`);
+  }
 }
 
 function exportNegativeExcel() {
-  if (!hasPermission("export_negative")) { alert("Рухсат йўқ!"); return; }
+  if (!hasPermission("export_negative")) {
+    alert("Рухсат йўқ!");
+    return;
+  }
+
   const list = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan");
-  if (list.length === 0) { alert("Судланганлиги чиққан ходим йўқ!"); return; }
+
+  if (list.length === 0) {
+    alert("Судланганлиги чиққан ходим йўқ!");
+    return;
+  }
 
   let rows = "";
   list.forEach((c, i) => {
@@ -257,22 +333,36 @@ function exportNegativeExcel() {
     <table>
       <thead>
         <tr>
-          <th>Т/р</th><th>Ф.И.Ш.</th><th>Паспорт ва ПИНФЛ</th>
-          <th>Ҳудуд ва Йўналиш</th><th>Судланганлик моддаси</th><th>Якуний натижа</th>
+          <th>Т/р</th>
+          <th>Ф.И.Ш.</th>
+          <th>Паспорт ва ПИНФЛ</th>
+          <th>Ҳудуд ва Йўналиш</th>
+          <th>Судланганлик моддаси</th>
+          <th>Якуний натижа</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  downloadBlobFile(wrapFramedExportHtml("СУДЛАНГАНЛАР МАХСУС РЕЕСТРИ", table), "Sudlanganlar_reestri.xls", "application/vnd.ms-excel;charset=utf-8");
+  downloadBlobFile(
+    wrapFramedExportHtml("СУДЛАНГАНЛАР МАХСУС РЕЕСТРИ", table),
+    "Sudlanganlar_reestri.xls",
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_NEGATIVE", `${list.length} та судланган`);
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_NEGATIVE", `${list.length} та судланган`);
+  }
 }
 
 function exportDatabaseExcel() {
   const list = appState.candidates;
-  if (list.length === 0) { alert("База бўш!"); return; }
+
+  if (list.length === 0) {
+    alert("База бўш!");
+    return;
+  }
 
   let rows = "";
   list.forEach((c, i) => {
@@ -294,8 +384,14 @@ function exportDatabaseExcel() {
     <table>
       <thead>
         <tr>
-          <th>Т/р</th><th>Реестр №</th><th>Ҳудуд (Йил/Ой)</th>
-          <th>Ф.И.Ш.</th><th>ПИНФЛ</th><th>Тоифа</th><th>Лавозим</th><th>Якуний натижа</th>
+          <th>Т/р</th>
+          <th>Реестр №</th>
+          <th>Ҳудуд (Йил/Ой)</th>
+          <th>Ф.И.Ш.</th>
+          <th>ПИНФЛ</th>
+          <th>Тоифа</th>
+          <th>Лавозим</th>
+          <th>Якуний натижа</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -303,27 +399,50 @@ function exportDatabaseExcel() {
   `;
 
   const now = getNow();
-  downloadBlobFile(wrapFramedExportHtml("ЯГОНА КОМПЛАЕНС БАЗАСИ", table), `Yagona_Baza_${now.date.replace(/\./g, "_")}.xls`, "application/vnd.ms-excel;charset=utf-8");
+  downloadBlobFile(
+    wrapFramedExportHtml("ЯГОНА КОМПЛАЕНС БАЗАСИ", table),
+    `Yagona_Baza_${now.date.replace(/\./g, "_")}.xls`,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_DATABASE", `${list.length} та ёзув`);
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_DATABASE", `${list.length} та ёзув`);
+  }
 }
 
 function exportDashboardExcel() {
   const tableEl = document.getElementById("dashboardStatsTable");
-  if (!tableEl) { alert("Статистика жадвали топилмади!"); return; }
+  if (!tableEl) {
+    alert("Статистика жадвали топилмади!");
+    return;
+  }
 
   const tableHtml = tableEl.outerHTML;
   const now = getNow();
 
-  downloadBlobFile(wrapFramedExportHtml("ҲУДУДЛАР ВА ЙЎНАЛИШЛАР КЕСИМИДА СТАТИСТИКА", tableHtml), `Statistika_${now.date.replace(/\./g, "_")}.xls`, "application/vnd.ms-excel;charset=utf-8");
+  downloadBlobFile(
+    wrapFramedExportHtml("ҲУДУДЛАР ВА ЙЎНАЛИШЛАР КЕСИМИДА СТАТИСТИКА", tableHtml),
+    `Statistika_${now.date.replace(/\./g, "_")}.xls`,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_DASHBOARD", "Статистика юкланди");
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_DASHBOARD", "Статистика юкланди");
+  }
 }
 
 function exportAuditLogExcel() {
-  if (!hasPermission("export_audit")) { alert("Рухсат йўқ!"); return; }
+  if (!hasPermission("export_audit")) {
+    alert("Рухсат йўқ!");
+    return;
+  }
+
   const log = loadAuditLog();
-  if (log.length === 0) { alert("Аудит-лог бўш!"); return; }
+
+  if (log.length === 0) {
+    alert("Аудит-лог бўш!");
+    return;
+  }
 
   let rows = "";
   log.forEach((item, i) => {
@@ -343,7 +462,12 @@ function exportAuditLogExcel() {
     <table>
       <thead>
         <tr>
-          <th>Т/р</th><th>Вақт</th><th>Фойдаланувчи</th><th>Роль</th><th>Амал</th><th>Тафсилот</th>
+          <th>Т/р</th>
+          <th>Вақт</th>
+          <th>Фойдаланувчи</th>
+          <th>Роль</th>
+          <th>Амал</th>
+          <th>Тафсилот</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -351,22 +475,35 @@ function exportAuditLogExcel() {
   `;
 
   const now = getNow();
-  downloadBlobFile(wrapFramedExportHtml("АУДИТ-ЛОГ — Ким нима ўзгартирди", table), `Audit_Log_${now.date.replace(/\./g, "_")}.xls`, "application/vnd.ms-excel;charset=utf-8");
+  downloadBlobFile(
+    wrapFramedExportHtml("АУДИТ-ЛОГ — Ким нима ўзгартирди", table),
+    `Audit_Log_${now.date.replace(/\./g, "_")}.xls`,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_AUDIT", `${log.length} та ёзув`);
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_AUDIT", `${log.length} та ёзув`);
+  }
 }
 
 function exportCandidateHistoryExcel(candidateId) {
   const c = appState.candidates.find(x => x.id === candidateId);
   if (!c) return;
+
   const history = getCandidateHistory(candidateId);
-  if (history.length === 0) { alert("Бу номзод бўйича тарих мавжуд эмас!"); return; }
+
+  if (history.length === 0) {
+    alert("Бу номзод бўйича тарих мавжуд эмас!");
+    return;
+  }
 
   let rows = "";
   history.forEach((item, i) => {
     let displayText = (item.details || "").replace(/CAND-\d+\s*\|\s*/g, "");
     const parts = displayText.split("|");
-    if (parts.length > 1) displayText = parts.slice(1).join("|").trim();
+    if (parts.length > 1) {
+      displayText = parts.slice(1).join("|").trim();
+    }
 
     rows += `
       <tr>
@@ -382,20 +519,36 @@ function exportCandidateHistoryExcel(candidateId) {
   const table = `
     <table>
       <thead>
-        <tr><th>Т/р</th><th>Вақт</th><th>Амал</th><th>Тафсилот</th><th>Ким</th></tr>
+        <tr>
+          <th>Т/р</th>
+          <th>Вақт</th>
+          <th>Амал</th>
+          <th>Тафсилот</th>
+          <th>Ким</th>
+        </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
   const safeName = c.fio.replace(/\s+/g, "_").replace(/[^\w\u0400-\u04FF_-]/g, "");
-  downloadBlobFile(wrapFramedExportHtml(`ЖАРАЁН ТАРИХИ — ${c.fio}`, table), `Tarix_${safeName}.xls`, "application/vnd.ms-excel;charset=utf-8");
+  downloadBlobFile(
+    wrapFramedExportHtml(`ЖАРАЁН ТАРИХИ — ${c.fio}`, table),
+    `Tarix_${safeName}.xls`,
+    "application/vnd.ms-excel;charset=utf-8"
+  );
 
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_HISTORY", `${c.fio} тарихи юкланди`);
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_HISTORY", `${c.fio} тарихи юкланди`);
+  }
 }
 
 function exportFullBackupJson() {
-  if (currentRole !== ROLES.KORRUPSIYA) { alert("Рухсат йўқ!"); return; }
+  if (currentRole !== ROLES.KORRUPSIYA) {
+    alert("Рухсат йўқ!");
+    return;
+  }
+
   const now = getNow();
   const backup = {
     exportedAt: now.dateTime,
@@ -405,21 +558,36 @@ function exportFullBackupJson() {
     totalUsers: appState.users.length,
     data: appState
   };
+
   const filename = `KOMPLAYENS_BACKUP_${now.date.replace(/\./g, "_")}_${now.time.replace(/:/g, "")}.json`;
-  downloadBlobFile(JSON.stringify(backup, null, 2), filename, "application/json;charset=utf-8");
-  if (typeof addAuditLog === "function") addAuditLog("EXPORT_BACKUP_JSON", `${filename} юкланди`);
+
+  downloadBlobFile(
+    JSON.stringify(backup, null, 2),
+    filename,
+    "application/json;charset=utf-8"
+  );
+
+  if (typeof addAuditLog === "function") {
+    addAuditLog("EXPORT_BACKUP_JSON", `${filename} юкланди`);
+  }
 }
 
 function exportToCsv(data, headers, filename) {
-  if (!Array.isArray(data) || data.length === 0) { alert("Маълумот йўқ!"); return; }
+  if (!Array.isArray(data) || data.length === 0) {
+    alert("Маълумот йўқ!");
+    return;
+  }
+
   let csv = headers.map(h => `"${h}"`).join(",") + "\n";
+
   data.forEach(row => {
     csv += row.map(cell => {
       const val = String(cell || "").replace(/"/g, '""');
       return `"${val}"`;
     }).join(",") + "\n";
   });
+
   downloadBlobFile(csv, filename, "text/csv;charset=utf-8");
 }
 
-console.log("✅ 10-export.js юкланди (v11.6)");
+console.log("✅ 10-export.js юкланди (v11.8 FINAL)");
