@@ -169,7 +169,7 @@ function updateHeadingPreview() {
   const field = document.getElementById("inpDistrictHeading");
   if (field && field.dataset.manualEdited !== "true") field.value = heading;
 
-  // Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
+  // 🆕 Сўров тури "Собиқ ходим" бўлса, ёзувни ўзгартириш
   const jobSinceLabel = document.getElementById("inpJobSinceLabel");
   const recType = document.getElementById("inpRecordType")?.value;
   if (jobSinceLabel) {
@@ -269,10 +269,15 @@ function handleCandidateFormSubmit(e) {
   fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); 
   jobSince = jobSince.replace(/[^\d.]/g, "");
 
+  // 🆕 AVTOMATIK MATN GENERATSIYASI (Qaytarildi)
+  const autoPara2 = `У миллати ўзбек, маълумоти олий, оилали. Диний эътиқодига кўра ислом динига амал қилади. ДЭО (дарҳақиқат, экстремистик оқимларга) аъзо эмас.`;
+  const autoPara3 = `Ҳозирда ${region} ${currentJob} лавозимида фаолият кўрсатиб келмоқда. Ўз вазифаларини бажаришда меҳнат интизомига қатъий риоя қилади, ўз ишига масъулиятли ва ташаббускор.`;
+  const autoPara4 = `Шахсий ва бошқарув фазилатларига кўра, жамоада ўзаро ҳурмат ва ҳамжиҳатлик муҳитини ярата олади. Вазифаларни бажаришда тадбиркор ва изланувчан, юқори натижаларга эришишга интилади.`;
+
   let photoDataUrl = currentPhotoDataUrl || makeAvatarSvg(((fio.split(" ")[0] || "Х")[0] + (fio.split(" ")[1] || "А")[0]).toUpperCase(), "#4a6fa5");
   const now = getNow(); const num = String(appState.candidates.length + 1).padStart(2, "0"); const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-"; const reestrNo = `${prefix}${now.year}/${now.month}-${num}`; const heading = getFinalHeading();
   
-  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: "...", para3: "...", para4: "...", korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
+  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: autoPara2, para3: autoPara3, para4: autoPara4, korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
   
   appState.candidates.unshift(newCand); if (typeof logCandidateAdded === "function") logCandidateAdded(newCand); if (typeof addNotification === "function") addNotification({ type: "new_candidate", candidateId: newCand.id, candidateName: newCand.fio, message: "🆕 Янги ходим киритилди", detail: `${newCand.region} | ${newCand.category}`, forRoles: [ROLES.KORRUPSIYA, ROLES.RAHBAR] });
   
