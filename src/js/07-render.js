@@ -1,6 +1,6 @@
 // =========================================================================
-// 07-RENDER.JS — Барча жадвалларни чизиш (Тўлиқ код)
-// «КОМПЛАЕНС-КАДР» v10.8
+// 07-RENDER.JS — Барча жадвалларни чизиш
+// «КОМПЛАЕНС-КАДР» v11.6 (Тўлиқ, 12 ой ва йил фильтри, "Ўрганиб чиқилди")
 // =========================================================================
 
 function renderAll() {
@@ -40,6 +40,7 @@ function renderSubtabsCounters() {
   };
   setBadge("subtabNewCount", c => c.recordType === "current" && c.workflowStage === "admin_review");
   setBadge("subtabInProcessCount", c => c.recordType === "current" && c.workflowStage === "boss_review");
+  // 🆕 Тугатилган -> Ўрганиб чиқилди
   setBadge("subtabApprovedCount", c => c.recordType === "current" && c.workflowStage === "approved");
 }
 
@@ -248,6 +249,7 @@ function renderNegativeTable() {
   `).join("");
 }
 
+// 🆕 ЯГОНА БАЗА (12 ОЙ ВА ЙИЛЛАР БЎЙИЧА ФИЛЬТРЛАШ)
 function renderDatabaseTable() {
   const reg = document.getElementById("dbRegionFilter")?.value || "ALL";
   const cat = document.getElementById("dbCategoryFilter")?.value || "ALL";
@@ -308,7 +310,6 @@ function renderUsersTable() {
   `).join("");
 }
 
-// 🆕 POPULATE REGION SELECTS (Мана шу функция тушиб қолган эди!)
 function populateRegionSelects() {
   const inpReg = document.getElementById("inpRegion");
   const editReg = document.getElementById("editCandRegion");
@@ -331,3 +332,5 @@ function populateRegionSelects() {
     dateLabel.textContent = `${now.date} йил ҳолатига`; 
   }
 }
+
+console.log("✅ 07-render.js юкланди (v11.6 — 'Ўрганиб чиқилди' сўзи билан)");
