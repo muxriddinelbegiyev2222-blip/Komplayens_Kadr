@@ -1,5 +1,6 @@
 // =========================================================================
-// 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД (v10.8)
+// 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД (Катта ва Аниқ)
+// «КОМПЛАЕНС-КАДР» v11.5
 // =========================================================================
 
 function openEditorModal(id) {
@@ -82,16 +83,15 @@ function sendToBossForApproval() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
   collectEditorFields(c);
-  c.workflowStage = "boss_review"; // 1. Ҳолатни ўзгартириш
-  saveState(); // 2. ДАРҲОЛ САҚЛАШ!
-  
-  if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); // 3. Логлаш
-  renderAll(); // 4. Экранни янгилаш
+  c.workflowStage = "boss_review";
+  saveState();
+  if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи");
+  renderAll();
   closeEditorModal();
   showToast(`📤 «${c.fio}» Бўлим бошлиғига юборилди`, "success");
 }
 
-// Имзо жойида доим I.Zaripov чиқади
+// 🆕 QR КОД ВА ИМЗО (Тўғирланган)
 function getSignerName(candidate) { return "I.Zaripov"; }
 function getApproverName(candidate) { return candidate?.bossApprovedBy || "I.Zaripov"; }
 
@@ -100,7 +100,7 @@ function buildOfficialMalumotnomaHtml(c) {
   const p4Parts = (c.para4 || "").split("\n").filter(Boolean);
   const sudHtml = c.sudlanganStatus === "sudlangan" ? `<b style="color:#b91c1c;text-decoration:underline;">${c.sudlanganText}</b>` : `${c.sudlanganText}`;
 
-  // 🆕 QR КОД: Сканер қилганда телефонда шу HTML саҳифа очилади
+  // 🆕 QR код каттароқ ва аниқроқ (Data URI)
   let qrHtml = "";
   if (c.workflowStage === "approved") {
     const miniHtml = `
@@ -117,18 +117,18 @@ function buildOfficialMalumotnomaHtml(c) {
         <div style="margin-top:20px;font-size:12px;color:#666;text-align:center;">Бу маълумот «КОМПЛАЕНС-КАДР» тизими орқали тасдиқланган.</div>
       </body></html>
     `;
-    // HTML ни Base64 га ўтказиб, QR кодга жойлаймиз
     const encodedHtml = btoa(unescape(encodeURIComponent(miniHtml)));
     const qrData = `data:text/html;base64,${encodedHtml}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
     
-    qrHtml = `<div style="text-align:center;margin-top:5px;"><img src="${qrUrl}" alt="QR" style="width:70px;height:70px;display:block;margin:0 auto 2px auto;" /><div style="font-size:7pt;color:#475569;">Сканер қилинг</div></div>`;
+    qrHtml = `<div style="text-align:center;margin-top:5px;"><img src="${qrUrl}" alt="QR" style="width:75px;height:75px;display:block;margin:0 auto 2px auto;" /><div style="font-size:7pt;color:#475569;">Сканер қилинг</div></div>`;
   }
 
   const stampHtml = c.workflowStage === "approved"
     ? `<div style="border:2px solid #047857;color:#047857;padding:4px 12px;border-radius:6px;font-size:11pt;font-weight:bold;text-align:center;display:flex;align-items:center;gap:10px;"><div>ТАСДИҚЛАНДИ<br/><span style="font-size:9pt;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span></div>${qrHtml}</div>`
     : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:4px 12px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
 
+  // 🆕 ПИНФЛ жойи олиб ташланди, фақат реестр қолди
   return `
     <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
       <div style="text-align:center;font-weight:bold;font-size:14pt;line-height:1.35;margin-bottom:14pt;">
@@ -147,7 +147,7 @@ function buildOfficialMalumotnomaHtml(c) {
       </div>
       <div style="margin-top:16pt;padding-top:6pt;border-top:1px solid #cbd5e1;display:flex;justify-content:space-between;font-size:9.5pt;color:#475569;font-family:'Times New Roman',Times,serif;">
         <span>«КОМПЛАЕНС-КАДР» реестри: ${c.reestrNo} (${c.region})</span>
-        <span>ПИНФЛ: ${c.pinfl} | Якуний натижа: ${getFinalResultPlainText(c)}</span>
+        <span>Якуний натижа: ${getFinalResultPlainText(c)}</span>
       </div>
     </div>
   `;
@@ -158,7 +158,6 @@ function openDocModal(id) {
     const c = appState.candidates.find(x => x.id === id);
     if (!c) return alert("Номзод топилмади!");
 
-    // HR ва Кузатувчи фақат тасдиқланганларни очади
     if ((currentRole === ROLES.KUZATUVCHI || currentRole === ROLES.KADR) && c.workflowStage !== "approved") {
       return alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
     }
@@ -225,12 +224,11 @@ function approveByBoss() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
   if (!hasPermission("approve")) return alert("Рухсат йўқ!");
-
   const now = getNow();
   c.workflowStage = "approved";
   c.approvedDate = now.date;
   c.bossApprovedAt = now.dateTime;
-
+  c.bossApprovedBy = currentUser?.name || "I.Zaripov";
   if (typeof logApproved === "function") logApproved(c, "I.Zaripov");
   saveState();
   renderAll();
@@ -242,14 +240,11 @@ function returnToAdminForRevision() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
   if (!hasPermission("return")) return alert("Рухсат йўқ!");
-
   const reason = prompt("Қайтариш сабабини киритинг:", c.bossReturnReason || "");
   if (reason === null) return;
   if (!reason.trim()) return alert("Сабабни киритишингиз шарт!");
-
   c.workflowStage = "admin_review";
   c.bossReturnReason = reason.trim();
-
   if (typeof logReturned === "function") logReturned(c, reason.trim());
   saveState();
   renderAll();
@@ -277,4 +272,5 @@ function copyDocText() {
   if (!el) return;
   navigator.clipboard.writeText(el.innerText).then(() => showToast("📋 Маълумотнома матни нусхаланди", "success")).catch(() => alert("Нусхалаш амалга ошмади"));
 }
-console.log("✅ 09-doc.js юкланди (v10.8 — QR ва Модаллар 100% тузатилди)");
+
+console.log("✅ 09-doc.js юкланди (v11.5 — QR катта, ПИНФЛ олиб ташланди)");
