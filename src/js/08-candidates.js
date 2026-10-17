@@ -619,7 +619,7 @@ function handleCandidateFormSubmit(e) {
   const birthDate = document.getElementById("inpBirthDate").value.trim();
   let birthPlace = document.getElementById("inpBirthPlace").value.trim();
   let currentJob = document.getElementById("inpCurrentJob").value.trim();
-  const jobSince = document.getElementById("inpJobSince").value.trim();
+    let jobSince = document.getElementById("inpJobSince").value.trim();   jobSince = jobSince.replace(/\D/g, "").substring(0, 4); // Фақат йил
 
   // 🆕 Марказий аппарат учун district бўш бўлиши мумкин
   if (region === "Кадастр агентлиги" || region === "Давлат кадастрлари палатаси") {
