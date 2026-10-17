@@ -368,7 +368,7 @@ function renderActionCell(c) {
     `;
   }
 
-  // РАҲБАР
+    // РАҲБАР
   if (currentRole === ROLES.RAHBAR) {
     if (c.workflowStage === "admin_review") {
       return `<div class="space-y-1 text-center">${resultBadge}<div class="text-[10px] text-slate-500">🔒 Коррупция бўлимида</div></div>`;
@@ -378,12 +378,22 @@ function renderActionCell(c) {
         return `
           <div class="space-y-1.5 p-2 rounded-lg bg-red-50 border-2 border-red-500 sudlangan-alert-pulse">
             <div class="text-[10px] font-extrabold text-red-700 uppercase">🚨 СУДЛАНГАНЛИК!</div>
-            <button onclick="openDocModal('${c.id}')" class="w-full py-1.5 px-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold text-[10px] cursor-pointer">
-              ⚠️ ЎҚИШ ВА ҚАРОР
+            <button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-red-700 hover:bg-red-800 text-white font-extrabold text-[10px] cursor-pointer">
+              ⚠️ ҲУЖЖАТНИ ОЧИШ ВА ҚАРОР
             </button>
           </div>
         `;
       }
+      return `
+        <div class="space-y-1.5">
+          ${resultBadge}
+          <div class="text-[10px] font-bold text-emerald-800">✓ Судланмаган</div>
+          <button onclick="openDocModal('${c.id}')" class="w-full py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[10px] cursor-pointer">
+            📄 МАЪЛУМОТНОМАНИ ОЧИШ
+          </button>
+        </div>
+      `;
+    }
       return `
         <div class="space-y-1.5">
           ${resultBadge}
