@@ -1,6 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v11.8 FINAL (Тўлиқ тўғирланган)
+// «КОМПЛАЕНС-КАДР» v11.8 FINAL
 // =========================================================================
 
 function openEditorModal(id) {
@@ -134,6 +134,7 @@ function getSignerPosition(c) {
 
 function getApproverName(c) { return c?.bossApprovedBy || getSignerName(c); }
 
+// QAYTARILDI: Hech bo'lmasa funksiya o'chib qolmasligi uchun joyida qoldirdik
 function qrShortHash(input) {
   const data = String(input) + "|" + QR_VERIFY_SECRET;
   let h1 = 2166136261, h2 = 5381;
@@ -148,13 +149,12 @@ function qrShortHash(input) {
 }
 
 function buildQrPayload(c) {
-  const approverName = getSignerName(c);
-  const position = getSignerPosition(c);
   const reestrNo = (c.reestrNo || "").replace(/\|/g, "/");
-  const date = (c.approvedDate || c.createdAt || "").replace(/\|/g, "/");
-  const core = `${reestrNo}|${approverName}|${position}|${date}`;
-  const hash = qrShortHash(core);
-  return `${core}|${hash}`;
+  const position = getSignerPosition(c);
+  const signer = getSignerName(c);
+  
+  // QR kodda chiqadigan matn
+  return `Reestr: ${reestrNo}\nLavozim: ${position}\nImzo: ${signer}\nHolat: TASDIQLANDI`;
 }
 
 function generateBase64Qr(payload) {
@@ -162,7 +162,7 @@ function generateBase64Qr(payload) {
     const qr = qrcode(0, 'L');
     qr.addData(payload);
     qr.make();
-    // 🆕 O'zgarish 1: 4 o'rniga 8 (kattalashtirish) va 0 o'rniga 4 (atrofiga oq joy qo'shish)
+    // 8 - nuqtalar aniqligi, 4 - atrofiga oq joy qo'shish
     return qr.createDataURL(8, 4); 
   } catch (e) {
     console.error("QR generation error:", e);
@@ -199,18 +199,15 @@ function buildOfficialMalumotnomaHtml(c) {
 
   let qrHtml = "";
   if (c.workflowStage === "approved") {
-    const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
-    const qrPayload = `${baseUrl}?search=${encodeURIComponent(c.reestrNo)}`;
+    const qrPayload = buildQrPayload(c);
     const qrDataUrl = generateBase64Qr(qrPayload);
     if (qrDataUrl) {
-      // 🆕 O'zgarish 2: Rasm o'lchamini 90px dan 130px ga kattalashtirdik
       qrHtml = `<img src="${qrDataUrl}" style="width:130px; height:130px; display:block; margin:5px auto 0 auto;" draggable="true" title="QR Kodni ko'chirish mumkin" />`;
     }
   }
 
   const stampHtml = c.workflowStage === "approved"
-    ? // 🆕 O'zgarish 3: Muhr o'lchamini ham biroz kengaytirdik (130px QR kod sig'ishi uchun)
-      `<div style="border:2px solid #047857;color:#047857;padding:8px 12px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:140px; margin:0 auto;">
+    ? `<div style="border:2px solid #047857;color:#047857;padding:8px 12px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:140px; margin:0 auto;">
         ТАСДИҚЛАНДИ<br/>
         <span style="font-size:8pt;font-weight:normal;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
         ${qrHtml}
@@ -249,6 +246,11 @@ function buildOfficialMalumotnomaHtml(c) {
       <div style="margin-top:10pt; padding-top:5pt; border-top:1px solid #cbd5e1; display:flex; justify-content:space-between; font-size:9pt; color:#475569;">
         <span>«КОМПЛАЕНС-КАДР» реестри: ${c.reestrNo} (${c.region})</span>
         <span>Якуний натижа: ${getFinalResultPlainText(c)}</span>
+      </div>
+
+      <!-- QIZIL RANGDAGI OGOHLANTIRISH YOZUVI -->
+      <div style="margin-top: 12pt; text-align: center; color: #b91c1c; font-size: 9.5pt; font-weight: bold; border: 1px solid #b91c1c; padding: 6px; border-radius: 4px; background-color: #fef2f2;">
+        ДИҚҚАТ! Ушбу QR-кодни ўзгартириш, таҳрирлаш ёки сохталаштириш қонунга мувофиқ жиноий ва маъмурий жавобгарликка сабаб бўлади!
       </div>
     </div>
   `;
