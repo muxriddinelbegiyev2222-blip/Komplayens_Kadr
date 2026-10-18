@@ -37,6 +37,50 @@ async function initApp() {
     if (urlInput) urlInput.value = cfg.url;
     if (keyInput) keyInput.value = cfg.key;
 
+    // =========================================================================
+    // 🆕 1. QR KOD TEKSHIRUVI (LOGINDAN OLDIN ISHLAYDI)
+    // =========================================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('search');
+
+    if (searchQuery) {
+      // Login oynasini yashirish
+      const loginOverlay = document.getElementById("loginOverlay");
+      if (loginOverlay) loginOverlay.classList.add("hidden");
+
+      if (typeof showToast === "function") {
+        showToast("⏳ QR код орқали маълумот текширилмоқда...", "info");
+      }
+
+      // Yangi qurilma bo'lgani uchun ma'lumotlarni Supabase'dan yuklash
+      if (typeof pullFromSupabase === "function") {
+        await pullFromSupabase(false);
+      }
+
+      // Kerakli nomzodni topish
+      const foundCand = appState.candidates.find(c => 
+        c.reestrNo === searchQuery || c.pinfl === searchQuery
+      );
+
+      if (foundCand) {
+        // Hujjatni ochish
+        if (typeof openDocModal === "function") {
+          openDocModal(foundCand.id);
+        }
+        // URL dan ?search=... qismini tozalash
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        alert("⚠️ Ушбу QR код бўйича маълумот топилмади. Илтимос, тизимга логин билан киринг.");
+        if (typeof showLoginScreen === "function") showLoginScreen();
+      }
+      
+      // QR tekshiruvi tugagach, initApp shu yerda to'xtaydi
+      return; 
+    }
+
+    // =========================================================================
+    // 2. ODDIY ISHLASH TARTIBI (Agar QR kod bo'lmasa, hammasi avvalgidek)
+    // =========================================================================
     const hasSession = checkSession();
 
     if (typeof initRealtime === "function") {
@@ -66,10 +110,6 @@ async function initApp() {
       if (typeof showToast === "function") {
         showToast(`Хуш келибсиз, ${currentUser.name}!`, "success");
       }
-      
-      // 🆕 QR KOD ORQALI KIRGANDA AVTOMATIK QIDIRISH
-      handleQrSearch();
-
     } else {
       showLoginScreen();
     }
@@ -80,35 +120,6 @@ async function initApp() {
   } catch (e) {
     console.error("❌ Инициализацияда хато:", e);
     alert("Дастурни ишга туширишда хато:\n\n" + e.message);
-  }
-}
-
-// 🆕 QR KODDAN KELGAN HAVOLANI TEKSHIRISH VA HUJJATNI OCHISH
-function handleQrSearch() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const searchQuery = urlParams.get('search');
-  
-  if (searchQuery) {
-    // URL dagi qidiruv so'zini tozalash (chalg'imasligi uchun)
-    window.history.replaceState({}, document.title, window.location.pathname);
-    
-    // Ma'lumotlar to'liq yuklanishi uchun 1 soniya kutamiz
-    setTimeout(() => {
-      const foundCand = appState.candidates.find(c => 
-        c.reestrNo === searchQuery || c.pinfl === searchQuery
-      );
-      
-      if (foundCand) {
-        // Agar topilsa, hujjatni ochamiz
-        if (typeof openDocModal === "function") {
-          openDocModal(foundCand.id);
-        }
-      } else {
-        if (typeof showToast === "function") {
-          showToast("⚠️ QR код бўйича маълумот топилмади", "warning");
-        }
-      }
-    }, 1000);
   }
 }
 
@@ -277,12 +288,10 @@ function checkAppHealth() {
 }
 
 // 🆕 KADR VA BOSHQA ROLNIG TIZIMGA KIRISHIDAGI HUQUQLARINI KUCHAYTIRISH
-// Yagona Baza va Sudlanganlar tablarini HR (Kadrlar)ga ham ochish
 const origSwitchRole = window.switchRole;
 window.switchRole = function(role) {
   if (origSwitchRole) origSwitchRole(role);
   
-  // Ruxsatlarni tekshirish va tablarni ochish
   if (role === 'kadr' || role === 'rahbar' || role === 'korrupsiya') {
     const tabDb = document.getElementById('tabBtnDatabase');
     const tabNeg = document.getElementById('tabBtnNegative');
