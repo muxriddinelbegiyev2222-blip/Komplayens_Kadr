@@ -1,6 +1,6 @@
 // =========================================================================
 // 07-RENDER.JS — Жадвалларни, KPI ва Статистикани экранга чиқариш
-// «КОМПЛАЕНС-КАДР» v12.0 FINAL
+// «КОМПЛАЕНС-КАДР» v12.0 FINAL (100% тўлиқ)
 // =========================================================================
 
 let activeSubTab = "new"; // new, in_process, approved, rejected
@@ -17,6 +17,7 @@ function renderAll() {
   if (typeof renderAuditLog === "function") renderAuditLog();
   if (typeof renderUsersTable === "function") renderUsersTable();
   if (typeof updateSubTabCounts === "function") updateSubTabCounts();
+  if (typeof applyPagination === "function") applyPagination();
   
   // 3D Menyularni aktiv qilish
   const activeTab = typeof activeMainTab !== 'undefined' ? activeMainTab : 'fototablitsa';
@@ -48,7 +49,7 @@ function renderKPI() {
   if (document.getElementById("kpiFormer")) document.getElementById("kpiFormer").textContent = former;
   if (document.getElementById("kpiInProcess")) document.getElementById("kpiInProcess").textContent = inProcess;
   
-  // Yangi kartochkalar uchun
+  // Yangi kartochkalar
   if (document.getElementById("kpiHired")) document.getElementById("kpiHired").textContent = hired;
   if (document.getElementById("kpiRejected")) document.getElementById("kpiRejected").textContent = rejected;
   if (document.getElementById("kpiSudlangan")) document.getElementById("kpiSudlangan").textContent = sudlangan;
@@ -97,7 +98,7 @@ function getFilteredCandidates(recordType, stageFilter = null) {
 }
 
 // =========================================================================
-// ФОТОТАБЛИЦА ЖАДВАЛИ (Tugmalar bilan)
+// ФОТОТАБЛИЦА ЖАДВАЛИ (HR uchun tugmalar bilan)
 // =========================================================================
 function renderFototablitsa() {
   const tbody = document.getElementById("fototablitsaBody");
@@ -114,34 +115,25 @@ function renderFototablitsa() {
   list.forEach((c, i) => {
     const tr = document.createElement("tr");
     
-    // 🆕 TUGMALARNI SHAKLLANTIRISH (Qizil chizilgan joylar uchun)
+    // Tugmalarni shakllantirish
     let actionBtns = "";
-    
     if (c.workflowStage === "admin_review" || c.workflowStage === "hr_review") {
       actionBtns = `<button onclick="editCandidate('${c.id}')" class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Tahrirlash</button>`;
-    } 
-    else if (c.workflowStage === "boss_review") {
+    } else if (c.workflowStage === "boss_review") {
       actionBtns = `<button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>`;
-    } 
-    else if (c.workflowStage === "hr_final") {
-      // Komplayens va Boshliq tasdiqlagach, HR ga qaror qabul qilish tugmalari chiqadi
+    } else if (c.workflowStage === "hr_final") {
+      // HR QAROR QABUL QILISH TUGMALARI
       actionBtns = `
         <div class="flex flex-col gap-1 items-center">
           <button onclick="openDocModal('${c.id}')" class="w-full px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
-          <button onclick="hrHireCandidate('${c.id}')" class="w-full px-2 py-1 bg-emerald-500 text-white rounded text-[10px] font-bold shadow">Ishga qabul qilish</button>
-          <button onclick="hrRejectCandidate('${c.id}')" class="w-full px-2 py-1 bg-red-500 text-white rounded text-[10px] font-bold shadow">Bekor qilish</button>
+          <button onclick="hrHireCandidate('${c.id}')" class="w-full px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[10px] font-bold shadow">Ishga qabul qilish</button>
+          <button onclick="hrRejectCandidate('${c.id}')" class="w-full px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[10px] font-bold shadow">Bekor qilish</button>
         </div>
       `;
-    } 
-    else if (c.workflowStage === "hired" || c.workflowStage === "approved") {
-      actionBtns = `
-        <button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
-      `;
-    } 
-    else if (c.workflowStage === "rejected") {
-      actionBtns = `
-        <button onclick="hrHireCandidate('${c.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Qabul qilish</button>
-      `;
+    } else if (c.workflowStage === "hired" || c.workflowStage === "approved") {
+      actionBtns = `<button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>`;
+    } else if (c.workflowStage === "rejected") {
+      actionBtns = `<button onclick="hrHireCandidate('${c.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Qabul qilish</button>`;
     }
 
     tr.innerHTML = `
@@ -458,4 +450,66 @@ function getFinalResultPlainText(c) {
     return `<span class="text-amber-600 font-bold">⏳ Бошлиқ тасдиғида</span>`;
   }
   return `<span class="text-slate-500 font-bold">⏳ Ўрганиш жараёнида</span>`;
+}
+
+// =========================================================================
+// PAGINATION (САҲИФАЛАШ)
+// =========================================================================
+function applyPagination() {
+  const tableIds = ["fototablitsaBody", "formerTableBody", "hiredTableBody", "databaseTableBody", "itsTableBody", "negativeTableBody"];
+  tableIds.forEach(id => {
+    const tbody = document.getElementById(id);
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll("tr");
+    rows.forEach(row => row.style.display = "");
+  });
+}
+
+// =========================================================================
+// ХУДУДЛАРНИ СЕЛЕКТЛАРГА ТЎЛДИРИШ (populateRegionSelects)
+// =========================================================================
+function populateRegionSelects() {
+  const regions = [
+    "Кадастр агентлиги",
+    "Давлат кадастрлари палатаси",
+    "Тизим ташкилотлари",
+    "Андижон вилояти",
+    "Бухоро вилояти",
+    "Жиззах вилояти",
+    "Қашқадарё вилояти",
+    "Навоий вилояти",
+    "Наманган вилояти",
+    "Самарқанд вилояти",
+    "Сурхондарё вилояти",
+    "Сирдарё вилояти",
+    "Тошкент шаҳри",
+    "Тошкент вилояти",
+    "Фарғона вилояти",
+    "Хоразм вилояти",
+    "Қорақалпоғистон Р."
+  ];
+
+  const selectIds = ["inpRegion", "fotoRegionFilter", "formerRegionFilter", "dbRegionFilter", "editCandRegion"];
+
+  selectIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.innerHTML = "";
+    
+    // Agar filtr bo'lsa, "ALL" varianti
+    if (id !== "inpRegion" && id !== "editCandRegion") {
+        const allOpt = document.createElement("option");
+        allOpt.value = "ALL";
+        allOpt.textContent = "Барча ҳудудлар (17 та)";
+        el.appendChild(allOpt);
+    }
+
+    regions.forEach(reg => {
+      const opt = document.createElement("option");
+      opt.value = reg;
+      opt.textContent = reg;
+      el.appendChild(opt);
+    });
+  });
 }
