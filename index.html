@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>«КОМПЛАЕНС-КАДР» v11.8 FINAL — Кадастр агентлиги</title>
+  <title>«КОМПЛАЕНС-КАДР» v11.9 FINAL — Кадастр агентлиги</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -85,7 +85,7 @@
           </div>
           <div>
             <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
-            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.8</h2>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.9</h2>
           </div>
         </div>
         <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
@@ -121,7 +121,7 @@
         </div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.8</span>
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.9</span>
             <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
               <span class="realtime-dot"></span> Уланмоқда...
             </span>
@@ -175,7 +175,7 @@
         <div id="roleBannerText" class="text-sm font-semibold text-blue-300"></div>
       </div>
       
-      <div class="grid grid-cols-4 md:grid-cols-8 gap-2 w-full px-2 pb-1" id="mainNavGrid">
+      <div class="grid grid-cols-4 md:grid-cols-9 gap-2 w-full px-2 pb-1" id="mainNavGrid">
         <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
           <span class="text-base">📊</span> Статистика
         </button>
@@ -186,6 +186,10 @@
         
         <button id="tabBtnFormer" onclick="switchTab('former')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
           <span class="text-base">👤</span> Собиқ ходимлар
+        </button>
+        
+        <button id="tabBtnHired" onclick="switchTab('hired')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">✅</span> Ишга қабул қилинганлар
         </button>
         
         <button id="tabBtnIts" onclick="switchTab('its')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
@@ -237,26 +241,31 @@
         <div class="text-2xl font-extrabold text-slate-900 mt-0.5" id="kpiTotal">0</div>
         <span class="text-xs text-slate-500">КА бўйича</span>
       </div>
+      
       <div class="bg-white rounded-xl p-3.5 border border-blue-200 shadow-sm">
         <span class="text-xs font-bold text-blue-700 uppercase">Амалдаги номзодлар</span>
         <div class="text-2xl font-extrabold text-blue-700 mt-0.5" id="kpiCurrent">0</div>
         <span class="text-xs text-slate-500">Фототаблицада</span>
       </div>
+      
       <div class="bg-white rounded-xl p-3.5 border border-purple-200 shadow-sm">
         <span class="text-xs font-bold text-purple-700 uppercase">Собиқ ходимлар</span>
         <div class="text-2xl font-extrabold text-purple-700 mt-0.5" id="kpiFormer">0</div>
         <span class="text-xs text-slate-500">Алоҳида ҳисобда</span>
       </div>
+      
       <div class="bg-white rounded-xl p-3.5 border border-amber-200 shadow-sm">
         <span class="text-xs font-bold text-amber-700 uppercase">Ўрганиш жараёнида</span>
         <div class="text-2xl font-extrabold text-amber-600 mt-0.5" id="kpiInProcess">0</div>
         <span class="text-xs text-slate-500">Текширилмоқда</span>
       </div>
+      
       <div class="bg-white rounded-xl p-3.5 border border-emerald-200 shadow-sm">
         <span class="text-xs font-bold text-emerald-700 uppercase">Тасдиқланди</span>
         <div class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="kpiApproved">0</div>
-        <span class="text-xs text-slate-500">Ўрганиб чиқилди</span>
+        <span class="text-xs text-slate-500">Ишга қабул қилинди</span>
       </div>
+      
       <div class="bg-white rounded-xl p-3.5 border border-red-300 shadow-sm">
         <span class="text-xs font-bold text-red-700 uppercase">🚨 Судланганлар</span>
         <div class="text-2xl font-extrabold text-red-600 mt-0.5" id="kpiSudlangan">0</div>
@@ -292,7 +301,7 @@
                 <th style="background:#dbeafe !important;">🔷 Тизим ташкилотлари</th>
                 <th style="background:#f3e8ff !important;">👤 Собиқ ходимлар</th>
                 <th>⏳ Ўрганиш жараёнида</th>
-                <th>✓ Ўрганиб чиқилди</th>
+                <th>✓ Ишга қабул қилинди</th>
                 <th style="background:#fee2e2 !important;">🚨 Судланганлар</th>
                 <th>Жами</th>
               </tr>
@@ -430,14 +439,17 @@
 
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex flex-wrap gap-2 mb-4">
-            <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
-              🆕 Янги келганлар <span id="subtabNewCount" class="ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px]">0</span>
+            <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
+              🆕 Янги келганлар <span id="subtabNewCount" class="ml-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px]">0</span>
             </button>
-            <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
-              ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px]">0</span>
+            <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
+              ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="ml-1 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px]">0</span>
             </button>
-            <button id="subtabApproved" onclick="switchSubTab('approved')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
-              ✅ Ўрганиб чиқилди <span id="subtabApprovedCount" class="ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px]">0</span>
+            <button id="subtabApproved" onclick="switchSubTab('approved')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
+              ✅ Ишга қабул қилинди <span id="subtabApprovedCount" class="ml-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px]">0</span>
+            </button>
+            <button id="subtabRejected" onclick="switchSubTab('rejected')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
+              ❌ Бекор қилинди <span id="subtabRejectedCount" class="ml-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px]">0</span>
             </button>
           </div>
           
@@ -486,6 +498,36 @@
             </table>
             <div id="fototablitsaPagination" class="flex justify-center gap-2 mt-4"></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HIRED (YANGI BO'LIM) -->
+    <section id="viewHired" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-emerald-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-emerald-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-900">Якуний қарор</span>
+            <h2 class="text-lg font-extrabold mt-1">✅ Ишга қабул қилинган ходимлар рўйхати</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="exportHiredExcel()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📥 Excel (.xls)</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:5%;">Т/р</th>
+                <th style="width:15%;">Расм</th>
+                <th style="width:30%;">Ф.И.Ш., ПИНФЛ</th>
+                <th style="width:25%;">Лавозими</th>
+                <th style="width:25%;">Ишга қабул қилинган сана</th>
+              </tr>
+            </thead>
+            <tbody id="hiredTableBody"></tbody>
+          </table>
+          <div id="hiredPagination" class="flex justify-center gap-2 mt-4"></div>
         </div>
       </div>
     </section>
@@ -661,7 +703,7 @@
             <label class="block text-xs font-bold mb-1">5. Ҳолати</label>
             <select id="dbStatusFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
               <option value="ALL">Барчаси</option>
-              <option value="approved">✓ Ўрганиб чиқилди</option>
+              <option value="approved">✓ Ишга қабул қилинди</option>
               <option value="in_process">⏳ Ўрганиш жараёнида</option>
             </select>
           </div>
