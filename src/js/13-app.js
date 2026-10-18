@@ -66,6 +66,10 @@ async function initApp() {
       if (typeof showToast === "function") {
         showToast(`Хуш келибсиз, ${currentUser.name}!`, "success");
       }
+      
+      // 🆕 QR KOD ORQALI KIRGANDA AVTOMATIK QIDIRISH
+      handleQrSearch();
+
     } else {
       showLoginScreen();
     }
@@ -76,6 +80,35 @@ async function initApp() {
   } catch (e) {
     console.error("❌ Инициализацияда хато:", e);
     alert("Дастурни ишга туширишда хато:\n\n" + e.message);
+  }
+}
+
+// 🆕 QR KODDAN KELGAN HAVOLANI TEKSHIRISH VA HUJJATNI OCHISH
+function handleQrSearch() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchQuery = urlParams.get('search');
+  
+  if (searchQuery) {
+    // URL dagi qidiruv so'zini tozalash (chalg'imasligi uchun)
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Ma'lumotlar to'liq yuklanishi uchun 1 soniya kutamiz
+    setTimeout(() => {
+      const foundCand = appState.candidates.find(c => 
+        c.reestrNo === searchQuery || c.pinfl === searchQuery
+      );
+      
+      if (foundCand) {
+        // Agar topilsa, hujjatni ochamiz
+        if (typeof openDocModal === "function") {
+          openDocModal(foundCand.id);
+        }
+      } else {
+        if (typeof showToast === "function") {
+          showToast("⚠️ QR код бўйича маълумот топилмади", "warning");
+        }
+      }
+    }, 1000);
   }
 }
 
