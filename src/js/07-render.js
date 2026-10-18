@@ -1,515 +1,336 @@
 // =========================================================================
-// 07-RENDER.JS — Жадвалларни, KPI ва Статистикани экранга чиқариш
-// «КОМПЛАЕНС-КАДР» v12.0 FINAL (100% тўлиқ)
+// 07-RENDER.JS — Барча жадвалларни чизиш
+// «КОМПЛАЕНС-КАДР» v11.6 (Тўлиқ, 12 ой ва йил фильтри, "Ўрганиб чиқилди")
 // =========================================================================
-
-let activeSubTab = "new"; // new, in_process, approved, rejected
 
 function renderAll() {
-  if (typeof renderKPI === "function") renderKPI();
-  if (typeof renderFototablitsa === "function") renderFototablitsa();
-  if (typeof renderFormer === "function") renderFormer();
-  if (typeof renderHired === "function") renderHired();
-  if (typeof renderItsTable === "function") renderItsTable();
-  if (typeof renderNegative === "function") renderNegative();
-  if (typeof renderDatabase === "function") renderDatabase();
-  if (typeof renderDashboard === "function") renderDashboard();
-  if (typeof renderAuditLog === "function") renderAuditLog();
-  if (typeof renderUsersTable === "function") renderUsersTable();
-  if (typeof updateSubTabCounts === "function") updateSubTabCounts();
-  if (typeof applyPagination === "function") applyPagination();
+  if (!appState) return;
+  const all = appState.candidates || [];
+  setKpi("kpiTotal", all.length);
+  setKpi("kpiCurrent", all.filter(x => x.recordType === "current").length);
+  setKpi("kpiFormer", all.filter(x => x.recordType === "former").length);
+  setKpi("kpiInProcess", all.filter(x => x.workflowStage !== "approved").length);
+  setKpi("kpiApproved", all.filter(x => x.workflowStage === "approved").length);
+  setKpi("kpiSudlangan", all.filter(x => x.sudlanganStatus === "sudlangan").length);
   
-  // 3D Menyularni aktiv qilish
-  const activeTab = typeof activeMainTab !== 'undefined' ? activeMainTab : 'fototablitsa';
-  document.querySelectorAll('.nav-card').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`tabBtn${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`)?.classList.add('active');
+  renderDashboardTable(); 
+  renderSubtabsCounters(); 
+  renderFototablitsaTable(); 
+  renderFormerTable(); 
+  renderItsTable(); 
+  renderNegativeTable(); 
+  renderDatabaseTable(); 
+  renderUsersTable();
+  
+  if (typeof renderAuditTable === "function") renderAuditTable();
+  if (typeof updateNotificationBadge === "function") updateNotificationBadge();
+  populateRegionSelects();
 }
 
-// =========================================================================
-// KPI CARDS (Юқоридаги рақамлар)
-// =========================================================================
-function renderKPI() {
-  const total = appState.candidates.length;
-  const current = appState.candidates.filter(c => c.recordType === "current").length;
-  const former = appState.candidates.filter(c => c.recordType === "former").length;
-  
-  const inProcess = appState.candidates.filter(c => 
-    c.workflowStage === "admin_review" || 
-    c.workflowStage === "hr_review" || 
-    c.workflowStage === "boss_review" || 
-    c.workflowStage === "hr_final"
-  ).length;
-  
-  const hired = appState.candidates.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
-  const rejected = appState.candidates.filter(c => c.workflowStage === "rejected").length;
-  const sudlangan = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan").length;
-
-  if (document.getElementById("kpiTotal")) document.getElementById("kpiTotal").textContent = total;
-  if (document.getElementById("kpiCurrent")) document.getElementById("kpiCurrent").textContent = current;
-  if (document.getElementById("kpiFormer")) document.getElementById("kpiFormer").textContent = former;
-  if (document.getElementById("kpiInProcess")) document.getElementById("kpiInProcess").textContent = inProcess;
-  
-  // Yangi kartochkalar
-  if (document.getElementById("kpiHired")) document.getElementById("kpiHired").textContent = hired;
-  if (document.getElementById("kpiRejected")) document.getElementById("kpiRejected").textContent = rejected;
-  if (document.getElementById("kpiSudlangan")) document.getElementById("kpiSudlangan").textContent = sudlangan;
+function setKpi(id, val) { 
+  const el = document.getElementById(id); 
+  if (el) el.textContent = val; 
 }
 
-// =========================================================================
-// SUB-TABLAR (Ички менюлар сони)
-// =========================================================================
-function updateSubTabCounts() {
-  const list = appState.candidates.filter(c => c.recordType === "current");
-  
-  const countNew = list.filter(c => c.workflowStage === "admin_review" || c.workflowStage === "hr_review").length;
-  const countInProcess = list.filter(c => c.workflowStage === "boss_review" || c.workflowStage === "hr_final").length;
-  const countApproved = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
-  const countRejected = list.filter(c => c.workflowStage === "rejected").length;
-
-  if (document.getElementById("subtabNewCount")) document.getElementById("subtabNewCount").textContent = countNew;
-  if (document.getElementById("subtabInProcessCount")) document.getElementById("subtabInProcessCount").textContent = countInProcess;
-  if (document.getElementById("subtabApprovedCount")) document.getElementById("subtabApprovedCount").textContent = countApproved;
-  if (document.getElementById("subtabRejectedCount")) document.getElementById("subtabRejectedCount").textContent = countRejected;
+function renderSubtabsCounters() {
+  const all = appState.candidates || [];
+  const setBadge = (id, filter) => { 
+    const b = document.getElementById(id); 
+    if (b) b.textContent = all.filter(filter).length; 
+  };
+  setBadge("subtabNewCount", c => c.recordType === "current" && c.workflowStage === "admin_review");
+  setBadge("subtabInProcessCount", c => c.recordType === "current" && c.workflowStage === "boss_review");
+  // 🆕 Тугатилган -> Ўрганиб чиқилди
+  setBadge("subtabApprovedCount", c => c.recordType === "current" && c.workflowStage === "approved");
 }
 
-// =========================================================================
-// ЁРДАМЧИ: ФИЛЬТРЛАШ
-// =========================================================================
-function getFilteredCandidates(recordType, stageFilter = null) {
-  const regElId = recordType === "former" ? "formerRegionFilter" : "fotoRegionFilter";
-  const catElId = "fotoCategoryFilter";
-  
-  const reg = document.getElementById(regElId)?.value || "ALL";
-  const cat = document.getElementById(catElId)?.value || "ALL";
-
-  return appState.candidates.filter(c => {
-    if (c.recordType !== recordType) return false;
-    if (reg !== "ALL" && c.region !== reg) return false;
-    if (recordType === "current" && cat !== "ALL" && c.category !== cat) return false;
-    
-    if (stageFilter) {
-      if (stageFilter === "new" && c.workflowStage !== "admin_review" && c.workflowStage !== "hr_review") return false;
-      if (stageFilter === "in_process" && c.workflowStage !== "boss_review" && c.workflowStage !== "hr_final") return false;
-      if (stageFilter === "approved" && c.workflowStage !== "hired" && c.workflowStage !== "approved") return false;
-      if (stageFilter === "rejected" && c.workflowStage !== "rejected") return false;
+function renderDashboardTable() {
+  const tbody = document.getElementById("dashboardTableBody"); 
+  if (!tbody) return; 
+  let html = "";
+  REGIONS_14.forEach((reg, idx) => {
+    const list = appState.candidates.filter(c => c.region === reg);
+    const isCKA = reg === "Кадастр агентлиги", isCDKP = reg === "Давлат кадастрлари палатаси", isTizim = reg === "Тизим ташкилотлари";
+    let kaM = 0, dkpM = 0, kaD = 0, dkpD = 0, comp = 0, cKA = 0, cDKP = 0, tiz = 0;
+    if (isCKA) cKA = list.filter(c => c.recordType === "current").length;
+    else if (isCDKP) cDKP = list.filter(c => c.recordType === "current").length;
+    else if (isTizim) tiz = list.filter(c => c.recordType === "current").length;
+    else { 
+      kaM = list.filter(c => c.recordType === "current" && c.category?.includes("КА ҳудудий")).length; 
+      dkpM = list.filter(c => c.recordType === "current" && c.category?.includes("ДКП ҳудудий")).length; 
+      kaD = list.filter(c => c.recordType === "current" && c.category === "КА туман (шаҳар) бўлими бошлиғи").length; 
+      dkpD = list.filter(c => c.recordType === "current" && c.category === "ДКП туман (шаҳар) филиали бошлиғи").length; 
+      comp = list.filter(c => c.recordType === "current" && c.category === "Комплаенс хизмати ходими").length; 
     }
+    const former = list.filter(c => c.recordType === "former").length, inProc = list.filter(c => c.workflowStage !== "approved").length, appr = list.filter(c => c.workflowStage === "approved").length, sud = list.filter(c => c.sudlanganStatus === "sudlangan").length;
+    const click = (t) => `onclick="openDashboardDetail('${reg}', '${t}')" class="cursor-pointer hover:bg-blue-50 transition"`;
+    let rowClass = (isCKA || isCDKP) ? "bg-purple-50" : isTizim ? "bg-blue-50" : "";
+    html += `<tr class="${rowClass}"><td class="text-center font-bold">${idx + 1}.</td><td class="font-bold">${reg}</td><td class="text-center" ${click("ka_management")}>${kaM}</td><td class="text-center" ${click("dkp_management")}>${dkpM}</td><td class="text-center font-bold" ${click("ka_district")}>${kaD}</td><td class="text-center font-bold" ${click("dkp_district")}>${dkpD}</td><td class="text-center" ${click("compliance")}>${comp}</td><td class="text-center font-bold text-purple-800" ${click("central")}>${cKA + cDKP}</td><td class="text-center font-bold text-blue-800" ${click("tizim")}>${tiz}</td><td class="text-center font-bold text-purple-800" ${click("former")}>${former}</td><td class="text-center font-bold text-amber-700" ${click("in_process")}>${inProc}</td><td class="text-center font-bold text-emerald-700" ${click("approved")}>${appr}</td><td class="text-center font-extrabold text-red-600" ${click("sudlangan")}>${sud}</td><td class="text-center font-extrabold" ${click("all")}>${list.length}</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function openDashboardDetail(region, type) { 
+  switchTab("fototablitsa"); 
+  setTimeout(() => { 
+    const r = document.getElementById("fotoRegionFilter"); 
+    if (r) r.value = region === "ALL" ? "ALL" : region; 
+    if (type === "approved") switchSubTab("approved"); 
+    else if (type === "in_process" || type === "sudlangan") switchSubTab("in_process"); 
+    renderAll(); 
+  }, 100); 
+  if (typeof showToast === "function") showToast(`📊 ${region}`, "info"); 
+}
+
+function getDetailTitle(type) { 
+  const t = { ka_management: "КА раҳбари", dkp_management: "ДКП раҳбари", ka_district: "КА туман", dkp_district: "ДКП туман", compliance: "Комплаенс", central: "Марказ", tizim: "Тизим", former: "Собиқ", in_process: "Жараёнда", approved: "Тасдиқланди", sudlangan: "Судланган", all: "Барча" }; 
+  return t[type] || type; 
+}
+
+function renderFototablitsaTable() {
+  const tbody = document.getElementById("fototablitsaBody"); 
+  if (!tbody) return;
+  const mainTable = document.getElementById("mainFototablitsaTable");
+  if (mainTable) { 
+    const th = mainTable.querySelector("thead"); 
+    if (th) th.innerHTML = `<tr><th style="width:5%;">Т/р</th><th style="width:15%;">Расм</th><th style="width:28%;">Ф.И.Ш.</th><th style="width:30%;">Лавозим</th><th style="width:22%;">Натижа</th></tr>`; 
+  }
+  const regF = document.getElementById("fotoRegionFilter")?.value || "ALL", catF = document.getElementById("fotoCategoryFilter")?.value || "ALL";
+  let wf = []; 
+  if (currentSubTab === "new") wf = ["admin_review"]; 
+  else if (currentSubTab === "in_process") wf = ["boss_review"]; 
+  else if (currentSubTab === "approved") wf = ["approved"];
+  if (currentRole === ROLES.KADR && currentSubTab === "in_process") wf = ["admin_review", "boss_review"];
+  
+  const filtered = appState.candidates.filter(c => c.recordType === "current" && (regF === "ALL" || c.region === regF) && (catF === "ALL" || c.category === catF) && wf.includes(c.workflowStage));
+  
+  if (filtered.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500 font-bold">Ёзувлар топилмади</td></tr>`; 
+    return; 
+  }
+  
+  const groups = {}; 
+  filtered.forEach(c => { 
+    const k = `${c.districtHeading}|||${c.appointType}`; 
+    if (!groups[k]) groups[k] = []; 
+    groups[k].push(c); 
+  });
+  
+  let html = "", count = 1;
+  Object.keys(groups).forEach(k => {
+    const [h, a] = k.split("|||"); 
+    html += `<tr><td colspan="5" class="text-center font-bold py-2 bg-slate-50" style="font-size:14px;"><span class="text-blue-950">${h}</span><span class="text-red-600"> ${a || ""}</span></td></tr>`;
+    groups[k].forEach(c => { 
+      html += renderCandidateRow(c, count++); 
+    });
+  });
+  tbody.innerHTML = html;
+}
+
+function renderCandidateRow(c, count) {
+  const cI = c.createdTime ? `<div class="text-[10px] text-slate-500 mt-0.5">🕐 ${c.createdAt} ${c.createdTime}</div>` : `<div class="text-[10px] text-slate-500 mt-0.5">🕐 ${c.createdAt}</div>`;
+  let tl = "";
+  if (currentRole === ROLES.KORRUPSIYA || currentRole === ROLES.RAHBAR) {
+    const s = []; 
+    if (c.createdTime) s.push(`📥 ${c.createdAt}`); 
+    if (c.sentToBossAt) s.push(`📤 ${c.sentToBossAt}`); 
+    if (c.bossApprovedAt) s.push(`✅ ${c.bossApprovedAt}`);
+    if (s.length > 0) tl = `<div class="mt-2 p-2 rounded bg-slate-50 border border-slate-200 text-[10px] text-left">${s.map(x => `<div>${x}</div>`).join("")}</div>`;
+  }
+  return `<tr><td class="text-center font-bold">${count}.</td><td class="text-center"><img src="${c.photo}" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" /></td><td class="text-center"><div class="font-bold text-sm">${c.fio}</div><div class="mt-1 text-xs">${c.birthDate} йил,<br/>${c.birthPlace}</div><div class="font-mono text-[10px] mt-1">${c.passSeries} ${c.passNum}</div><div class="font-mono font-bold text-[11px]">${c.pinfl}</div>${cI}</td><td class="text-center text-blue-950 text-xs"><div class="font-semibold">${c.category || ""}</div><div class="mt-1">${c.currentJob}</div><div class="mt-2 text-slate-700">${c.jobSince}</div>${tl}</td><td class="text-center align-middle">${renderActionCell(c)}</td></tr>`;
+}
+
+function renderActionCell(c) {
+  const b = getFinalResultBadge(c), isSud = c.sudlanganStatus === "sudlangan";
+  if (currentRole === ROLES.KADR) { 
+    return c.workflowStage === "approved" ? `<div class="space-y-1.5 text-center">${b}<button onclick="openDocModal('${c.id}')" class="w-full py-1.5 rounded-lg bg-blue-700 text-white font-bold text-[11px]">📄 МАЪЛУМОТНОМА</button></div>` : `<div class="space-y-1 text-center">${b}<div class="text-[10px] text-slate-500 italic">Текширилмоқда...</div></div>`; 
+  }
+  if (currentRole === ROLES.KORRUPSIYA) {
+    let st = c.workflowStage === "admin_review" ? `<div class="text-[10px] font-bold text-amber-700">🔍 Коррупцияда</div>` : c.workflowStage === "boss_review" ? `<div class="text-[10px] font-bold text-blue-700">📤 Бошлиқда</div>` : `<div class="text-[10px] font-bold text-emerald-700">✓ Тасдиқланди</div>`;
+    return `<div class="space-y-1.5 w-full">${b} ${st} ${isSud ? `<div class="p-1.5 rounded bg-red-100 text-red-900 font-bold text-[10px]">🚨 СУДЛАНГАН</div>` : `<div class="text-[10px] text-emerald-800">✓ Судланмаган</div>`}<div class="flex flex-col gap-1"><button onclick="openEditorModal('${c.id}')" class="w-full py-1.5 rounded-lg bg-amber-600 text-white font-bold text-[10px]">✍️ Таҳрир</button><div class="flex gap-1"><button onclick="editCandidate('${c.id}')" class="flex-1 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-[10px]">✏️</button><button onclick="confirmDeleteCandidate('${c.id}')" class="flex-1 py-1.5 rounded-lg bg-red-600 text-white font-bold text-[10px]">🗑</button></div><button onclick="openDocModal('${c.id}')" class="w-full py-2 rounded-lg bg-emerald-700 text-white font-extrabold text-[11px]">📄 МАЪЛУМОТНОМА</button></div></div>`;
+  }
+  if (currentRole === ROLES.RAHBAR) {
+    if (c.workflowStage === "admin_review") return `<div class="space-y-1 text-center">${b}<div class="text-[10px] text-slate-500">🔒 Коррупцияда</div></div>`;
+    if (c.workflowStage === "boss_review") return `<div class="space-y-1.5">${b}<button onclick="openDocModal('${c.id}')" class="w-full py-2 rounded-lg bg-emerald-700 text-white font-extrabold text-[10px]">📄 ҲУЖЖАТНИ ОЧИШ</button></div>`;
+    return `<div class="space-y-1.5">${b}<button onclick="openDocModal('${c.id}')" class="w-full py-1.5 rounded-lg bg-blue-700 text-white font-bold text-[10px]">📄 МАЪЛУМОТНОМА</button></div>`;
+  }
+  if (currentRole === ROLES.KUZATUVCHI) {
+    if (c.workflowStage !== "approved") return `<div class="space-y-1 text-center">${b}<div class="text-[10px] text-slate-500">🔒 Ўрганишда</div></div>`;
+    return `<div class="space-y-1.5">${b}<button onclick="openDocModal('${c.id}')" class="w-full py-1.5 rounded-lg bg-purple-700 text-white font-bold text-[10px]">👁 ЎҚИШ</button></div>`;
+  }
+  return `<div class="text-[10px] text-slate-400 italic text-center">—</div>`;
+}
+
+function getFinalResultBadge(c) { 
+  return c.workflowStage === "approved" ? `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[10px]">✓ Ўрганиб чиқилди</span>` : c.workflowStage === "boss_review" ? `<span class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-400 font-bold text-[10px]">📤 Бошлиқда</span>` : `<span class="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400 font-bold text-[10px]">⏳ Ўрганишда</span>`; 
+}
+
+function getFinalResultPlainText(c) { 
+  return c.workflowStage === "approved" ? "Ўрганиб чиқилди" : c.workflowStage === "boss_review" ? "Бошлиқда" : "Ўрганиш жараёнида"; 
+}
+
+function renderFormerTable() {
+  const regF = document.getElementById("formerRegionFilter")?.value || "ALL";
+  const tbody = document.getElementById("formerTableBody"); 
+  if (!tbody) return;
+  const list = appState.candidates.filter(c => c.recordType === "former" && (regF === "ALL" || c.region === regF));
+  if (list.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 font-bold">Собиқ ходимлар рўйхати бўш</td></tr>`; 
+    return; 
+  }
+  tbody.innerHTML = list.map((c, i) => {
+    const cI = c.createdTime ? `<div class="text-[10px] text-slate-500 mt-1">🕐 ${c.createdAt} ${c.createdTime}</div>` : "";
+    return `
+      <tr>
+        <td class="text-center font-bold">${i + 1}.</td>
+        <td class="text-center"><img src="${c.photo}" style="width:100px;height:125px;object-fit:cover;margin:0 auto;border:1px solid #334155;border-radius:4px;" /></td>
+        <td class="text-center"><div class="font-bold text-sm">${c.fio}</div><div class="mt-1 text-xs">${c.birthDate} йил, ${c.birthPlace}</div><div class="font-mono font-bold text-[11px] mt-1">ПИНФЛ: ${c.pinfl}</div><div class="font-mono text-[10px]">${c.passSeries} ${c.passNum}</div>${cI}</td>
+        <td class="text-center text-purple-950 text-xs"><div class="font-bold">${c.region}</div><div class="mt-1">${c.currentJob}</div><div class="mt-1 text-[10px]">${c.jobSince}</div></td>
+        <td class="text-center align-middle">${renderActionCell(c)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderItsTable() {
+  const statusF = document.getElementById("itsFilterStatus")?.value || "ALL";
+  const tbody = document.getElementById("itsTableBody"); 
+  if (!tbody) return;
+  const readOnly = currentRole !== ROLES.KORRUPSIYA;
+  const list = appState.candidates.filter(c => {
+    if (statusF === "UNCHECKED" && c.itsChecked) return false;
+    if (statusF === "SUDLANGAN" && c.sudlanganStatus !== "sudlangan") return false;
     return true;
   });
-}
-
-// =========================================================================
-// ФОТОТАБЛИЦА ЖАДВАЛИ (HR uchun tugmalar bilan)
-// =========================================================================
-function renderFototablitsa() {
-  const tbody = document.getElementById("fototablitsaBody");
-  if (!tbody) return;
-
-  const list = getFilteredCandidates("current", activeSubTab);
-  tbody.innerHTML = "";
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500 font-bold">Ёзувлар топилмади</td></tr>`;
-    return;
+  if (list.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`; 
+    return; 
   }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    
-    // Tugmalarni shakllantirish
-    let actionBtns = "";
-    if (c.workflowStage === "admin_review" || c.workflowStage === "hr_review") {
-      actionBtns = `<button onclick="editCandidate('${c.id}')" class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Tahrirlash</button>`;
-    } else if (c.workflowStage === "boss_review") {
-      actionBtns = `<button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>`;
-    } else if (c.workflowStage === "hr_final") {
-      // HR QAROR QABUL QILISH TUGMALARI
-      actionBtns = `
-        <div class="flex flex-col gap-1 items-center">
-          <button onclick="openDocModal('${c.id}')" class="w-full px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
-          <button onclick="hrHireCandidate('${c.id}')" class="w-full px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[10px] font-bold shadow">Ishga qabul qilish</button>
-          <button onclick="hrRejectCandidate('${c.id}')" class="w-full px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-[10px] font-bold shadow">Bekor qilish</button>
-        </div>
-      `;
-    } else if (c.workflowStage === "hired" || c.workflowStage === "approved") {
-      actionBtns = `<button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>`;
-    } else if (c.workflowStage === "rejected") {
-      actionBtns = `<button onclick="hrHireCandidate('${c.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Qabul qilish</button>`;
-    }
-
-    tr.innerHTML = `
-      <td class="text-center font-bold">${i + 1}</td>
-      <td class="text-center"><img src="${c.photo}" class="w-12 h-16 object-cover mx-auto rounded border shadow-sm" /></td>
-      <td class="text-center">
-        <b>${c.fio}</b><br/>
-        <span class="text-xs text-slate-500">${c.birthDate} й., ${c.birthPlace}</span><br/>
-        <span class="text-xs font-mono">${c.pinfl}</span>
-      </td>
-      <td class="text-center text-xs">
-        ${c.currentJob}<br/>
-        <b>${c.jobSince} дан</b>
-      </td>
-      <td class="text-center">
-        ${getFinalResultPlainText(c)}<br/>
-        <div class="flex justify-center mt-1">
-          ${actionBtns}
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =========================================================================
-// HIRED (ИШГА ҚАБУЛ ҚИЛИНГАНЛАР) ЖАДВАЛИ
-// =========================================================================
-function renderHired() {
-  const tbody = document.getElementById("hiredTableBody");
-  if (!tbody) return;
-
-  const list = appState.candidates.filter(c => (c.workflowStage === "hired" || c.workflowStage === "approved") && c.recordType === "current");
-  tbody.innerHTML = "";
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500 font-bold">Ишга қабул қилинганлар йўқ</td></tr>`;
-    return;
-  }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center font-bold">${i + 1}</td>
-      <td class="text-center"><img src="${c.photo}" class="w-12 h-16 object-cover mx-auto rounded border shadow-sm" /></td>
-      <td class="text-center"><b>${c.fio}</b><br/><span class="text-xs font-mono">${c.pinfl}</span></td>
-      <td class="text-center text-xs">${c.currentJob}</td>
-      <td class="text-center font-bold text-emerald-700">${c.approvedDate || "—"}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =========================================================================
-// FORMER (СОБИҚ ХОДИМЛАР) ЖАДВАЛИ
-// =========================================================================
-function renderFormer() {
-  const tbody = document.getElementById("formerTableBody");
-  if (!tbody) return;
-
-  const list = getFilteredCandidates("former");
-  tbody.innerHTML = "";
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500 font-bold">Ёзувлар топилмади</td></tr>`;
-    return;
-  }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center font-bold">${i + 1}</td>
-      <td class="text-center"><img src="${c.photo}" class="w-12 h-16 object-cover mx-auto rounded border shadow-sm" /></td>
-      <td class="text-center"><b>${c.fio}</b><br/><span class="text-xs font-mono">${c.pinfl}</span></td>
-      <td class="text-center text-xs">${c.currentJob}</td>
-      <td class="text-center">
-        ${getFinalResultPlainText(c)}<br/>
-        <button onclick="openDocModal('${c.id}')" class="mt-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =========================================================================
-// ITS (СУДЛАНГАНЛИК ТЕКШИРУВИ) ЖАДВАЛИ
-// =========================================================================
-function renderItsTable() {
-  const tbody = document.getElementById("itsTableBody");
-  if (!tbody) return;
-
-  const filter = document.getElementById("itsFilterStatus")?.value || "ALL";
-  let list = appState.candidates;
-  
-  if (filter === "UNCHECKED") list = list.filter(c => !c.itsChecked);
-  else if (filter === "SUDLANGAN") list = list.filter(c => c.sudlanganStatus === "sudlangan");
-
-  tbody.innerHTML = "";
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-slate-500 font-bold">Ёзувлар топилмади</td></tr>`;
-    return;
-  }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center font-bold">${i + 1}</td>
-      <td>${c.fio}</td>
-      <td class="text-center">${c.birthDate}</td>
-      <td class="text-center">${c.passSeries}</td>
-      <td class="text-center">${c.passNum}</td>
-      <td class="text-center font-mono">${c.pinfl}</td>
-      <td class="text-center">${c.recordType}</td>
+  tbody.innerHTML = list.map((c, idx) => `
+    <tr>
+      <td class="text-center font-bold">${idx + 1}</td>
+      <td class="font-bold text-xs">${c.fio}</td>
+      <td class="text-center font-mono text-xs">${c.birthDate}</td>
+      <td class="text-center font-mono font-bold text-xs">${c.passSeries}</td>
+      <td class="text-center font-mono font-bold text-xs">${c.passNum}</td>
+      <td class="text-center font-mono font-bold text-xs">${c.pinfl}</td>
+      <td class="text-center text-xs font-bold">${c.recordType === "former" ? `<span class="text-purple-700">Собиқ</span>` : `<span class="text-blue-800">Номзод</span>`}<br/>${c.region}</td>
       <td>
-        <select id="itsSel_${c.id}" class="px-2 py-1 border rounded text-xs w-full mb-1 outline-none focus:ring-1 focus:ring-blue-500">
-          <option value="clean" ${c.sudlanganStatus === 'clean' ? 'selected' : ''}>✓ Тоза</option>
-          <option value="sudlangan" ${c.sudlanganStatus === 'sudlangan' ? 'selected' : ''}>🚨 Судланган</option>
-        </select>
-        <input id="itsTxt_${c.id}" type="text" value="${c.sudlanganText}" class="px-2 py-1 border rounded text-xs w-full outline-none focus:ring-1 focus:ring-blue-500" />
+        ${readOnly ? `<div class="font-bold text-xs ${c.sudlanganStatus === 'sudlangan' ? 'text-red-700' : 'text-emerald-800'}">${c.sudlanganStatus === 'sudlangan' ? '🚨 ' + c.sudlanganText : '✓ ' + c.sudlanganText}</div>` : `
+          <div class="space-y-1">
+            <select id="itsSel_${c.id}" class="w-full px-2 py-1 rounded border border-slate-300 text-[11px] font-bold bg-white text-slate-900"><option value="clean" ${c.sudlanganStatus === 'clean' ? 'selected' : ''}>✓ Судланмаган</option><option value="sudlangan" ${c.sudlanganStatus === 'sudlangan' ? 'selected' : ''}>🚨 СУДЛАНГАН</option></select>
+            <input id="itsTxt_${c.id}" type="text" value="${(c.sudlanganText || "").replace(/"/g, '&quot;')}" placeholder="ЖК моддаси..." class="w-full px-2 py-1 rounded border border-slate-300 text-[11px] text-slate-900" />
+          </div>
+        `}
       </td>
-      <td class="text-center"><button onclick="quickSaveItsRow('${c.id}', true)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow text-xs font-bold transition">Saqlash</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+      <td class="text-center">${readOnly ? getFinalResultBadge(c) : `<div class="space-y-1"><button onclick="quickSaveItsRow('${c.id}', true)" class="w-full py-1 px-2 rounded bg-emerald-700 text-white text-[10px] font-bold">💾 Сақлаш</button><button onclick="openEditorModal('${c.id}')" class="w-full py-1 px-2 rounded bg-amber-600 text-white text-[10px] font-bold">✍️ Хулоса</button></div>`}</td>
+    </tr>
+  `).join("");
 }
 
-// =========================================================================
-// NEGATIVE (СУДЛАНГАНЛАР) ЖАДВАЛИ
-// =========================================================================
-function renderNegative() {
-  const tbody = document.getElementById("negativeTableBody");
+function renderNegativeTable() {
+  const tbody = document.getElementById("negativeTableBody"); 
   if (!tbody) return;
-
   const list = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan");
-  tbody.innerHTML = "";
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-500 font-bold">Судланганлар йўқ</td></tr>`;
-    return;
+  if (list.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Судланганлиги чиққан ходимлар йўқ</td></tr>`; 
+    return; 
   }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center font-bold">${i + 1}</td>
-      <td><b>${c.fio}</b><br/><span class="text-xs text-slate-500">${c.birthDate}</span></td>
-      <td class="font-mono text-xs">${c.passSeries} ${c.passNum} | ${c.pinfl}</td>
-      <td>${c.region}<br/><span class="text-xs text-slate-500">${c.category}</span></td>
-      <td class="text-red-600 font-bold">${c.sudlanganText}</td>
-      <td class="text-center font-bold">${getFinalResultPlainText(c)}</td>
-      <td class="text-center"><button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold shadow-sm">Ma'lumotnoma</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  tbody.innerHTML = list.map((c, idx) => `
+    <tr>
+      <td class="text-center font-bold">${idx + 1}.</td>
+      <td class="font-bold text-xs">${c.fio}<br/><span class="text-[10px] font-normal">${c.birthDate} й. (${c.birthPlace})</span></td>
+      <td class="font-mono text-[11px] font-bold">${c.passSeries} ${c.passNum}<br/>ПИНФЛ: ${c.pinfl}</td>
+      <td class="text-xs font-bold">${c.region}<br/><span class="text-blue-900 text-[10px]">${c.category}</span></td>
+      <td class="font-bold text-red-700 text-xs">🚨 ${c.sudlanganText}</td>
+      <td class="text-center">${getFinalResultBadge(c)}</td>
+      <td class="text-center">${(currentRole === ROLES.KUZATUVCHI && c.workflowStage !== "approved") ? `<span class="text-[10px] font-bold text-slate-500">🔒 Тасдиқлангач</span>` : `<button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-blue-700 text-white text-[10px] font-bold">📄 МАЪЛУМОТНОМА</button>`}</td>
+    </tr>
+  `).join("");
 }
 
-// =========================================================================
-// DATABASE (ЯГОНА БАЗА) ЖАДВАЛИ
-// =========================================================================
-function renderDatabase() {
-  const tbody = document.getElementById("databaseTableBody");
-  if (!tbody) return;
-
-  let list = appState.candidates;
+// 🆕 ЯГОНА БАЗА (12 ОЙ ВА ЙИЛЛАР БЎЙИЧА ФИЛЬТРЛАШ)
+function renderDatabaseTable() {
   const reg = document.getElementById("dbRegionFilter")?.value || "ALL";
   const cat = document.getElementById("dbCategoryFilter")?.value || "ALL";
   const yr = document.getElementById("dbYearFilter")?.value || "ALL";
   const mo = document.getElementById("dbMonthFilter")?.value || "ALL";
   const st = document.getElementById("dbStatusFilter")?.value || "ALL";
-  const q = (document.getElementById("dbSearchInput")?.value || "").toLowerCase();
-
-  if (reg !== "ALL") list = list.filter(c => c.region === reg);
-  if (cat !== "ALL") list = list.filter(c => c.category === cat);
-  if (yr !== "ALL") list = list.filter(c => c.year === yr);
-  if (mo !== "ALL") list = list.filter(c => c.month === mo);
-  if (st === "approved") list = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved");
-  if (st === "in_process") list = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected" && c.workflowStage !== "approved");
-  if (q) list = list.filter(c => c.fio.toLowerCase().includes(q) || c.pinfl.includes(q));
-
-  tbody.innerHTML = "";
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-500 font-bold">Ёзувлар топилмади</td></tr>`;
-    return;
-  }
-
-  list.forEach((c, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center text-xs">${c.reestrNo}<br/><span class="text-slate-500">${c.createdAt}</span></td>
-      <td class="text-center text-xs">${c.region}<br/>(${c.year}/${c.month})</td>
-      <td><b>${c.fio}</b><br/><span class="font-mono text-xs">${c.pinfl}</span></td>
-      <td>${c.category}<br/><span class="text-xs text-slate-500">${c.currentJob}</span></td>
-      <td class="text-center font-bold">${getFinalResultPlainText(c)}</td>
-      <td class="text-center text-xs">${c.workflowStage}</td>
-      <td class="text-center"><button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold shadow-sm">Ma'lumotnoma</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =========================================================================
-// DASHBOARD (СТАТИСТИКА) ЖАДВАЛИ
-// =========================================================================
-function renderDashboard() {
-  const tbody = document.getElementById("dashboardTableBody");
-  if (!tbody) return;
+  const q = document.getElementById("dbSearchInput")?.value.trim().toLowerCase() || "";
   
-  const regions = [...new Set(appState.candidates.map(c => c.region))];
-  tbody.innerHTML = "";
-
-  if (regions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-slate-500 font-bold">Маълумотлар йўқ</td></tr>`;
-    return;
-  }
-
-  regions.forEach((reg, i) => {
-    const list = appState.candidates.filter(c => c.region === reg);
-    
-    const countKaRahbar = list.filter(c => c.category.includes("КА ҳудудий")).length;
-    const countDkpRahbar = list.filter(c => c.category.includes("ДКП ҳудудий")).length;
-    const countKaTuman = list.filter(c => c.category.includes("КА туман")).length;
-    const countDkpTuman = list.filter(c => c.category.includes("ДКП туман")).length;
-    const countKomplayens = list.filter(c => c.category.includes("Комплаенс")).length;
-    const countMarkaziy = list.filter(c => c.category.includes("марказий")).length;
-    const countTizim = list.filter(c => c.category.includes("Тизим")).length;
-    const countSobiq = list.filter(c => c.category.includes("Собиқ")).length;
-    
-    const countInProcess = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected" && c.workflowStage !== "approved").length;
-    const countHired = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
-    const countCriminal = list.filter(c => c.sudlanganStatus === "sudlangan").length;
-    const total = list.length;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center">${i + 1}</td>
-      <td><b>${reg}</b></td>
-      <td class="text-center">${countKaRahbar}</td>
-      <td class="text-center">${countDkpRahbar}</td>
-      <td class="text-center">${countKaTuman}</td>
-      <td class="text-center">${countDkpTuman}</td>
-      <td class="text-center">${countKomplayens}</td>
-      <td class="text-center bg-purple-50">${countMarkaziy}</td>
-      <td class="text-center bg-blue-50">${countTizim}</td>
-      <td class="text-center bg-purple-50">${countSobiq}</td>
-      <td class="text-center">${countInProcess}</td>
-      <td class="text-center text-emerald-700 font-bold">${countHired}</td>
-      <td class="text-center text-red-600 font-bold">${countCriminal}</td>
-      <td class="text-center font-extrabold bg-slate-100">${total}</td>
-    `;
-    tbody.appendChild(tr);
+  const list = appState.candidates.filter(c => {
+    if (reg !== "ALL" && c.region !== reg) return false;
+    if (cat !== "ALL" && c.category !== cat) return false;
+    if (yr !== "ALL" && c.year !== yr) return false;
+    if (mo !== "ALL" && c.month !== mo) return false;
+    if (st === "approved" && c.workflowStage !== "approved") return false;
+    if (st === "in_process" && c.workflowStage === "approved") return false;
+    if (q && !(c.fio.toLowerCase().includes(q) || c.pinfl.includes(q))) return false;
+    return true;
   });
-}
-
-// =========================================================================
-// AUDIT-LOG ЖАДВАЛИ
-// =========================================================================
-function renderAuditLog() {
-  const tbody = document.getElementById("auditTableBody");
+  
+  const tbody = document.getElementById("databaseTableBody");
   if (!tbody) return;
-  const log = loadAuditLog();
-  tbody.innerHTML = "";
-  if (log.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-500 font-bold">Аудит-лог бўш</td></tr>`;
-    return;
+  if (list.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 font-bold">Маълумот топилмади</td></tr>`; 
+    return; 
   }
-  log.slice(0, 100).forEach((item, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="text-center">${i + 1}</td>
-      <td class="text-xs">${item.timestamp}</td>
-      <td>${item.userName || item.user}</td>
-      <td>${item.roleName || item.role}</td>
-      <td>${formatActionName(item.action)}</td>
-      <td class="text-xs text-slate-500">${item.details || ""}</td>
+  
+  tbody.innerHTML = list.map(c => {
+    const canOpenDoc = currentRole === ROLES.KORRUPSIYA || (currentRole === ROLES.RAHBAR && c.workflowStage !== "admin_review") || ((currentRole === ROLES.KADR || currentRole === ROLES.KUZATUVCHI) && c.workflowStage === "approved");
+    return `
+      <tr>
+        <td class="font-mono text-[11px] font-bold">${c.reestrNo}<br/><span class="font-normal">${c.createdAt}</span></td>
+        <td class="font-bold text-[11px]">${c.region}<br/><span class="text-emerald-700">${c.year}-йил, ${c.month}-ой</span></td>
+        <td><div class="font-bold text-xs">${c.fio}</div><div class="font-mono text-[10px] text-slate-600">ПИНФЛ: ${c.pinfl}</div></td>
+        <td class="text-[11px]"><div class="font-bold text-blue-950">${c.category}</div></td>
+        <td class="text-center font-bold text-xs">${getFinalResultPlainText(c)}</td>
+        <td class="text-center">${getFinalResultBadge(c)}</td>
+        <td class="text-center">${canOpenDoc ? `<button onclick="openDocModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-blue-700 text-white text-[10px] font-bold">📄 ҲУЖЖАТ</button>` : `<span class="text-[10px] text-slate-400 font-bold">🔒</span>`}</td>
+      </tr>
     `;
-    tbody.appendChild(tr);
-  });
+  }).join("");
 }
 
-// =========================================================================
-// FOYDALANUVCHILAR ЖАДВАЛИ
-// =========================================================================
 function renderUsersTable() {
-  const tbody = document.getElementById("usersTableBody");
+  const tbody = document.getElementById("usersTableBody"); 
   if (!tbody) return;
-  tbody.innerHTML = "";
-  appState.users.forEach((u, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${u.name}</td>
-      <td>${u.role}</td>
-      <td class="font-mono">${u.login}</td>
-      <td><span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">Faol</span></td>
-      <td><button onclick="deleteUser(${i})" class="text-red-500 font-bold hover:underline">O'chirish</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  if (currentRole !== ROLES.KORRUPSIYA) { 
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500">Рухсат йўқ</td></tr>`; 
+    return; 
+  }
+  tbody.innerHTML = appState.users.map((u, idx) => `
+    <tr>
+      <td class="font-bold text-xs">${u.name}</td>
+      <td class="text-xs font-bold">${ROLE_NAMES[u.role] || u.role}</td>
+      <td class="font-mono text-xs font-bold">${u.login}</td>
+      <td class="text-center text-[10px]">${u.passHash ? '<span class="text-emerald-700 font-bold">🔒 Хеш</span>' : '<span class="text-amber-700 font-bold">⚠️ Очиқ</span>'}</td>
+      <td class="text-center">${u.login === "admin" ? `<span class="text-[10px] text-slate-400">Асосий</span>` : `<button onclick="deleteUser(${idx})" class="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-bold">Ўчириш</button>`}</td>
+    </tr>
+  `).join("");
 }
 
-// =========================================================================
-// ЯКУНИЙ НАТИЖА МАТНИ 
-// =========================================================================
-function getFinalResultPlainText(c) {
-  if (c.workflowStage === "hired" || c.workflowStage === "approved") {
-    return `<span class="text-emerald-700 font-bold">✓ Ишга қабул қилинди</span>`;
-  }
-  if (c.workflowStage === "rejected") {
-    return `<span class="text-red-600 font-bold">❌ Бекор қилинди</span>`;
-  }
-  if (c.workflowStage === "hr_final") {
-    return `<span class="text-amber-600 font-bold">⏳ HR қарори кутилмоқда</span>`;
-  }
-  if (c.workflowStage === "boss_review") {
-    return `<span class="text-amber-600 font-bold">⏳ Бошлиқ тасдиғида</span>`;
-  }
-  return `<span class="text-slate-500 font-bold">⏳ Ўрганиш жараёнида</span>`;
-}
-
-// =========================================================================
-// PAGINATION (САҲИФАЛАШ)
-// =========================================================================
-function applyPagination() {
-  const tableIds = ["fototablitsaBody", "formerTableBody", "hiredTableBody", "databaseTableBody", "itsTableBody", "negativeTableBody"];
-  tableIds.forEach(id => {
-    const tbody = document.getElementById(id);
-    if (!tbody) return;
-    const rows = tbody.querySelectorAll("tr");
-    rows.forEach(row => row.style.display = "");
-  });
-}
-
-// =========================================================================
-// ХУДУДЛАРНИ СЕЛЕКТЛАРГА ТЎЛДИРИШ (populateRegionSelects)
-// =========================================================================
 function populateRegionSelects() {
-  const regions = [
-    "Кадастр агентлиги",
-    "Давлат кадастрлари палатаси",
-    "Тизим ташкилотлари",
-    "Андижон вилояти",
-    "Бухоро вилояти",
-    "Жиззах вилояти",
-    "Қашқадарё вилояти",
-    "Навоий вилояти",
-    "Наманган вилояти",
-    "Самарқанд вилояти",
-    "Сурхондарё вилояти",
-    "Сирдарё вилояти",
-    "Тошкент шаҳри",
-    "Тошкент вилояти",
-    "Фарғона вилояти",
-    "Хоразм вилояти",
-    "Қорақалпоғистон Р."
-  ];
+  const inpReg = document.getElementById("inpRegion");
+  const editReg = document.getElementById("editCandRegion");
+  const fotoReg = document.getElementById("fotoRegionFilter");
+  const formerReg = document.getElementById("formerRegionFilter");
+  const dbReg = document.getElementById("dbRegionFilter");
 
-  const selectIds = ["inpRegion", "fotoRegionFilter", "formerRegionFilter", "dbRegionFilter", "editCandRegion"];
+  const singleOpts = REGIONS_14.map(r => `<option value="${r}">${r}</option>`).join("");
+  const allOpts = `<option value="ALL">Барча ҳудудлар (${REGIONS_14.length} та)</option>` + singleOpts;
 
-  selectIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
+  if (inpReg && inpReg.options.length === 0) inpReg.innerHTML = singleOpts;
+  if (editReg && editReg.options.length === 0) editReg.innerHTML = singleOpts;
+  if (fotoReg && fotoReg.options.length === 0) fotoReg.innerHTML = allOpts;
+  if (formerReg && formerReg.options.length === 0) formerReg.innerHTML = allOpts;
+  if (dbReg && dbReg.options.length === 0) dbReg.innerHTML = allOpts;
 
-    el.innerHTML = "";
-    
-    // Agar filtr bo'lsa, "ALL" varianti
-    if (id !== "inpRegion" && id !== "editCandRegion") {
-        const allOpt = document.createElement("option");
-        allOpt.value = "ALL";
-        allOpt.textContent = "Барча ҳудудлар (17 та)";
-        el.appendChild(allOpt);
-    }
-
-    regions.forEach(reg => {
-      const opt = document.createElement("option");
-      opt.value = reg;
-      opt.textContent = reg;
-      el.appendChild(opt);
-    });
-  });
+  const dateLabel = document.getElementById("fotoCurrentDateLabel");
+  if (dateLabel) { 
+    const now = getNow(); 
+    dateLabel.textContent = `${now.date} йил ҳолатига`; 
+  }
 }
+
+console.log("✅ 07-render.js юкланди (v11.6 — 'Ўрганиб чиқилди' сўзи билан)");
