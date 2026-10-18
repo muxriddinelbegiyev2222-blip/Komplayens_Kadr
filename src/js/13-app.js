@@ -244,10 +244,12 @@ function checkAppHealth() {
 }
 
 // 🆕 KADR VA BOSHQA ROLNIG TIZIMGA KIRISHIDAGI HUQUQLARINI KUCHAYTIRISH
+// Yagona Baza va Sudlanganlar tablarini HR (Kadrlar)ga ham ochish
 const origSwitchRole = window.switchRole;
 window.switchRole = function(role) {
   if (origSwitchRole) origSwitchRole(role);
   
+  // Ruxsatlarni tekshirish va tablarni ochish
   if (role === 'kadr' || role === 'rahbar' || role === 'korrupsiya') {
     const tabDb = document.getElementById('tabBtnDatabase');
     const tabNeg = document.getElementById('tabBtnNegative');
