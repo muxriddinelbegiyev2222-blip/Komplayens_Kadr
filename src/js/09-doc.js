@@ -1,6 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v11.8 FINAL
+// «КОМПЛАЕНС-КАДР» v11.8 FINAL (Тўлиқ тўғирланган)
 // =========================================================================
 
 function openEditorModal(id) {
@@ -36,7 +36,7 @@ function openEditorModal(id) {
   setVal("editPara3", c.para3);
   setVal("editPara4", c.para4);
   
-  // QAT'IY KIRILL QIYMATLARI (bazada lotincha qolgan bo'lsa ham, majburan almashtiradi)
+  // Majburiy Kirillga o'tkazish
   let sn = c.signerName || "";
   let sp = c.signerPosition || "";
   
@@ -54,7 +54,7 @@ function openEditorModal(id) {
   if (returnBlock) {
     if (c.bossReturnReason && c.bossReturnedAt) {
       returnBlock.classList.remove("hidden");
-      returnBlock.innerHTML = `<div class="p-3 rounded-lg bg-red-50 border-2 border-red-400 text-red-900 text-xs"><b>↩️ Охирги қайтариш:</b><br/><b>Вақт:</b> ${c.bossReturnedAt}<br/><b>Сабаб:</b> ${c.bossReturnReason}</div>`;
+      returnBlock.innerHTML = `<div class="p-3 rounded-lg bg-red-50 border-2 border-red-400 text-red-900 text-xs"><b>↩️ Оҳирги қайтариш:</b><br/><b>Вақт:</b> ${c.bossReturnedAt}<br/><b>Сабаб:</b> ${c.bossReturnReason}</div>`;
     } else { returnBlock.classList.add("hidden"); }
   }
 
@@ -116,7 +116,7 @@ function sendToBossForApproval() {
 }
 
 // =========================================================================
-// QR ВЕРИФИКАЦИЯ (Lokal generatsiya - Base64)
+// QR ВЕРИФИКАЦИЯ
 // =========================================================================
 const QR_VERIFY_SECRET = "KOMPLAYENS_KADR_v11.8_2026_VERIFY_SECRET_KEY_9F2A";
 
@@ -170,11 +170,11 @@ function generateBase64Qr(payload) {
 }
 
 // =========================================================================
-// A4 МАЪЛУМОТНОМА HTML (Qat'iy 1 varoq va ustma-ust tushmaydigan qilib)
+// A4 МАЪЛУМОТНОМА HTML (Toza CSS orqali)
 // =========================================================================
 
 function buildOfficialMalumotnomaHtml(c) {
-  // Agar qo'lda tahrirlanib, to'g'ri saqlangan bo'lsa, o'shani qaytaramiz
+  // Eski saqlangan lotincha HTML bo'lsa, uni e'tiborsiz qoldiramiz
   if (c.fullDocHtml && c.fullDocHtml.trim() !== "" && !c.fullDocHtml.includes("I.Zaripov") && !c.fullDocHtml.includes("Korrupsiya bolimi")) {
     return c.fullDocHtml;
   }
@@ -213,21 +213,20 @@ function buildOfficialMalumotnomaHtml(c) {
       </div>`
     : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:10px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
 
-  // A4 chetlarini to'g'rilash uchun maxsus padding (yuqori, o'ng, past, chap)
   return `
-    <div style="font-family:'Times New Roman',Times,serif;color:#000000; padding: 20mm 15mm 20mm 30mm; box-sizing: border-box; min-height: 297mm; width: 210mm; background: white;">
+    <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
       <div style="text-align:center;font-weight:bold;font-size:13pt;line-height:1.3;margin-bottom:12pt;">
         ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>${c.fio} бўйича<br/>МАЪЛУМОТНОМА
       </div>
       
       <div class="malumotnoma-text">
-        <p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">Номзод ${jobSinceText} ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
-        <p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${c.para2}</p>
-        ${p3Parts.map(line => `<p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${line}</p>`).join("")}
-        ${p4Parts.map(line => `<p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${line}</p>`).join("")}
+        <p>Номзод ${jobSinceText} ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
+        <p>${c.para2}</p>
+        ${p3Parts.map(line => `<p>${line}</p>`).join("")}
+        ${p4Parts.map(line => `<p>${line}</p>`).join("")}
       </div>
 
-      <!-- 3 USTUNLI QAT'IY JADVAL (Ustma-ust tushishni oldini oladi) -->
+      <!-- 3 USTUNLI QAT'IY JADVAL -->
       <table style="width:100%; margin-top:20pt; border-collapse:collapse; page-break-inside:avoid;">
         <tr>
           <td style="width:35%; text-align:left; vertical-align:bottom; padding-bottom:10px;">
