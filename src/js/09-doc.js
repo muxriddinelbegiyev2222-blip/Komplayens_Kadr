@@ -1,6 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v11.8 FINAL — тўлиқ тўғирланган
+// «КОМПЛАЕНС-КАДР» v11.8 FINAL
 // =========================================================================
 
 function openEditorModal(id) {
@@ -36,7 +36,7 @@ function openEditorModal(id) {
   setVal("editPara3", c.para3);
   setVal("editPara4", c.para4);
   
-  // 🆕 QAT'IY KIRILL QIYMATLARI (Agar bazada lotincha qolgan bo'lsa ham, majburan Kirillga o'tkazamiz)
+  // QAT'IY KIRILL QIYMATLARI (bazada lotincha qolgan bo'lsa ham, majburan almashtiradi)
   let sn = c.signerName || "";
   let sp = c.signerPosition || "";
   
@@ -86,8 +86,8 @@ function collectEditorFields(c) {
   c.signerPosition = getVal("editSignerPosition") || "Коррупцияга қарши курашиш бўлими бошлиғи";
   c.itsChecked = true;
   
-  // 🆕 Qo'lda o'zgartirilgan bo'lsa, eski lotincha fullDocHtml ni tozalaymiz
-  if (c.fullDocHtml && c.fullDocHtml.includes("I.Zaripov")) {
+  // Eski xato bilan saqlangan bo'lsa, tozalaymiz
+  if (c.fullDocHtml && (c.fullDocHtml.includes("I.Zaripov") || c.fullDocHtml.includes("Korrupsiya bolimi"))) {
     c.fullDocHtml = "";
   }
 }
@@ -174,7 +174,7 @@ function generateBase64Qr(payload) {
 // =========================================================================
 
 function buildOfficialMalumotnomaHtml(c) {
-  // 🆕 Eski lotincha saqlangan HTML bo'lsa, uni ishlatmaymiz
+  // Agar qo'lda tahrirlanib, to'g'ri saqlangan bo'lsa, o'shani qaytaramiz
   if (c.fullDocHtml && c.fullDocHtml.trim() !== "" && !c.fullDocHtml.includes("I.Zaripov") && !c.fullDocHtml.includes("Korrupsiya bolimi")) {
     return c.fullDocHtml;
   }
@@ -213,17 +213,18 @@ function buildOfficialMalumotnomaHtml(c) {
       </div>`
     : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:10px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
 
+  // A4 chetlarini to'g'rilash uchun maxsus padding (yuqori, o'ng, past, chap)
   return `
-    <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
+    <div style="font-family:'Times New Roman',Times,serif;color:#000000; padding: 20mm 15mm 20mm 30mm; box-sizing: border-box; min-height: 297mm; width: 210mm; background: white;">
       <div style="text-align:center;font-weight:bold;font-size:13pt;line-height:1.3;margin-bottom:12pt;">
         ${(c.districtHeading || "").replace(/ лавозимига$/i, "")} лавозимига тавсия этилаётган номзод<br/>${c.fio} бўйича<br/>МАЪЛУМОТНОМА
       </div>
       
       <div class="malumotnoma-text">
-        <p>Номзод ${jobSinceText} ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
-        <p>${c.para2}</p>
-        ${p3Parts.map(line => `<p>${line}</p>`).join("")}
-        ${p4Parts.map(line => `<p>${line}</p>`).join("")}
+        <p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">Номзод ${jobSinceText} ${c.currentJob} лавозимида ишлаб келмоқда. ${c.birthDate} йилда ${c.birthPlace}да туғилган, ${sudHtml}, ${c.eduText}</p>
+        <p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${c.para2}</p>
+        ${p3Parts.map(line => `<p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${line}</p>`).join("")}
+        ${p4Parts.map(line => `<p style="text-indent:1.25cm; text-align:justify; line-height:1.3; font-size:13pt; margin:0 0 6pt 0;">${line}</p>`).join("")}
       </div>
 
       <!-- 3 USTUNLI QAT'IY JADVAL (Ustma-ust tushishni oldini oladi) -->
