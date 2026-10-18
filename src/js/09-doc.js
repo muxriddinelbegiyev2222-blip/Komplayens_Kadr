@@ -162,7 +162,8 @@ function generateBase64Qr(payload) {
     const qr = qrcode(0, 'L');
     qr.addData(payload);
     qr.make();
-    return qr.createDataURL(4, 0); 
+    // 🆕 O'zgarish 1: 4 o'rniga 8 (kattalashtirish) va 0 o'rniga 4 (atrofiga oq joy qo'shish)
+    return qr.createDataURL(8, 4); 
   } catch (e) {
     console.error("QR generation error:", e);
     return "";
@@ -198,21 +199,23 @@ function buildOfficialMalumotnomaHtml(c) {
 
   let qrHtml = "";
   if (c.workflowStage === "approved") {
-            const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
-        const qrPayload = `${baseUrl}?search=${encodeURIComponent(c.reestrNo)}`;
+    const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
+    const qrPayload = `${baseUrl}?search=${encodeURIComponent(c.reestrNo)}`;
     const qrDataUrl = generateBase64Qr(qrPayload);
     if (qrDataUrl) {
-      qrHtml = `<img src="${qrDataUrl}" style="width:90px; height:90px; display:block; margin:5px auto 0 auto;" draggable="true" title="QR Kodni ko'chirish mumkin" />`;
+      // 🆕 O'zgarish 2: Rasm o'lchamini 90px dan 130px ga kattalashtirdik
+      qrHtml = `<img src="${qrDataUrl}" style="width:130px; height:130px; display:block; margin:5px auto 0 auto;" draggable="true" title="QR Kodni ko'chirish mumkin" />`;
     }
   }
 
   const stampHtml = c.workflowStage === "approved"
-    ? `<div style="border:2px solid #047857;color:#047857;padding:6px 10px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">
+    ? // 🆕 O'zgarish 3: Muhr o'lchamini ham biroz kengaytirdik (130px QR kod sig'ishi uchun)
+      `<div style="border:2px solid #047857;color:#047857;padding:8px 12px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:140px; margin:0 auto;">
         ТАСДИҚЛАНДИ<br/>
         <span style="font-size:8pt;font-weight:normal;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
         ${qrHtml}
       </div>`
-    : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:10px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
+    : `<div style="border:1.5px dashed #b45309;color:#b45309;padding:10px;border-radius:6px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:140px; margin:0 auto;">ЎРГАНИШ ЖАРАЁНИДА</div>`;
 
   return `
     <div style="font-family:'Times New Roman',Times,serif;color:#000000;">
