@@ -236,42 +236,36 @@
     <!-- MAIN QISM (Barcha sahifalar) -->
   <main class="w-full flex-1 px-4 py-4 space-y-4 no-print">
 
-    <!-- KPI KARTOCHKALAR -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
-        <span class="text-xs font-bold text-slate-500 uppercase">Жами базада</span>
-        <div class="text-2xl font-extrabold text-slate-900 mt-0.5" id="kpiTotal">0</div>
-        <span class="text-xs text-slate-500">КА бўйича</span>
+        <!-- YANGI KPI CARDS (7 TA KARTOCHKA) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-500 uppercase">Жами базада</span>
+        <div class="text-xl font-extrabold text-slate-900 mt-0.5" id="kpiTotal">0</div>
       </div>
-      
-      <div class="bg-white rounded-xl p-3.5 border border-blue-200 shadow-sm">
-        <span class="text-xs font-bold text-blue-700 uppercase">Амалдаги номзодлар</span>
-        <div class="text-2xl font-extrabold text-blue-700 mt-0.5" id="kpiCurrent">0</div>
-        <span class="text-xs text-slate-500">Фототаблицада</span>
+      <div class="bg-white rounded-xl p-3 border border-blue-200 shadow-sm">
+        <span class="text-[10px] font-bold text-blue-700 uppercase">Амалдаги</span>
+        <div class="text-xl font-extrabold text-blue-700 mt-0.5" id="kpiCurrent">0</div>
       </div>
-      
-      <div class="bg-white rounded-xl p-3.5 border border-purple-200 shadow-sm">
-        <span class="text-xs font-bold text-purple-700 uppercase">Собиқ ходимлар</span>
-        <div class="text-2xl font-extrabold text-purple-700 mt-0.5" id="kpiFormer">0</div>
-        <span class="text-xs text-slate-500">Алоҳида ҳисобда</span>
+      <div class="bg-white rounded-xl p-3 border border-purple-200 shadow-sm">
+        <span class="text-[10px] font-bold text-purple-700 uppercase">Собиқ ходим</span>
+        <div class="text-xl font-extrabold text-purple-700 mt-0.5" id="kpiFormer">0</div>
       </div>
-      
-      <div class="bg-white rounded-xl p-3.5 border border-amber-200 shadow-sm">
-        <span class="text-xs font-bold text-amber-700 uppercase">Ўрганиш жараёнида</span>
-        <div class="text-2xl font-extrabold text-amber-600 mt-0.5" id="kpiInProcess">0</div>
-        <span class="text-xs text-slate-500">Текширилмоқда</span>
+      <div class="bg-white rounded-xl p-3 border border-amber-200 shadow-sm">
+        <span class="text-[10px] font-bold text-amber-700 uppercase">Ўрганишда</span>
+        <div class="text-xl font-extrabold text-amber-600 mt-0.5" id="kpiInProcess">0</div>
       </div>
-      
-      <div class="bg-white rounded-xl p-3.5 border border-emerald-200 shadow-sm">
-        <span class="text-xs font-bold text-emerald-700 uppercase">Тасдиқланди</span>
-        <div class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="kpiApproved">0</div>
-        <span class="text-xs text-slate-500">Ишга қабул қилинди</span>
+      <!-- YANGI NATIJA KARTOCHKASI -->
+      <div class="bg-white rounded-xl p-3 border border-emerald-300 shadow-sm">
+        <span class="text-[10px] font-bold text-emerald-700 uppercase">Ишга қабул</span>
+        <div class="text-xl font-extrabold text-emerald-600 mt-0.5" id="kpiHired">0</div>
       </div>
-      
-      <div class="bg-white rounded-xl p-3.5 border border-red-300 shadow-sm">
-        <span class="text-xs font-bold text-red-700 uppercase">🚨 Судланганлар</span>
-        <div class="text-2xl font-extrabold text-red-600 mt-0.5" id="kpiSudlangan">0</div>
-        <span class="text-xs text-slate-500">Махсус реестрда</span>
+      <div class="bg-white rounded-xl p-3 border border-red-300 shadow-sm">
+        <span class="text-[10px] font-bold text-red-700 uppercase">Бекор қилинди</span>
+        <div class="text-xl font-extrabold text-red-600 mt-0.5" id="kpiRejected">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-3 border border-slate-400 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-700 uppercase">Судланганлар</span>
+        <div class="text-xl font-extrabold text-slate-800 mt-0.5" id="kpiSudlangan">0</div>
       </div>
     </div>
 
@@ -442,18 +436,18 @@
 
         <!-- FOTOTABLITSA JADVALI -->
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <div class="flex flex-wrap gap-2 mb-4">
-            <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
-              🆕 Янги келганлар <span id="subtabNewCount" class="ml-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px]">0</span>
+                    <div class="flex flex-wrap gap-2 mb-4">
+            <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[130px] p-2 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1">
+              🆕 Янги келганлар <span id="subtabNewCount" class="px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px]">0</span>
             </button>
-            <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
-              ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="ml-1 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px]">0</span>
+            <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="subtab-card flex-1 min-w-[130px] p-2 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1">
+              ⏳ Комплаенсда <span id="subtabInProcessCount" class="px-1.5 py-0.5 rounded-full bg-amber-600 text-white text-[10px]">0</span>
             </button>
-            <button id="subtabApproved" onclick="switchSubTab('approved')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
-              ✅ Ишга қабул қилинди <span id="subtabApprovedCount" class="ml-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px]">0</span>
+            <button id="subtabApproved" onclick="switchSubTab('approved')" class="subtab-card flex-1 min-w-[130px] p-2 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1">
+              ✅ Ишга қабул <span id="subtabApprovedCount" class="px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px]">0</span>
             </button>
-            <button id="subtabRejected" onclick="switchSubTab('rejected')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
-              ❌ Бекор қилинди <span id="subtabRejectedCount" class="ml-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px]">0</span>
+            <button id="subtabRejected" onclick="switchSubTab('rejected')" class="subtab-card flex-1 min-w-[130px] p-2 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1">
+              ❌ Бекор қилинди <span id="subtabRejectedCount" class="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px]">0</span>
             </button>
           </div>
           
