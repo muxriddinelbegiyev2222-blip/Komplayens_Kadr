@@ -1,6 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v11.8 FINAL (Тўлиқ тўғирланган)
+// «КОМПЛАЕНС-КАДР» v11.9 FINAL
 // =========================================================================
 
 function openEditorModal(id) {
@@ -36,7 +36,7 @@ function openEditorModal(id) {
   setVal("editPara3", c.para3);
   setVal("editPara4", c.para4);
   
-  // Majburiy Kirillga o'tkazish
+  // 🆕 MAJBURIY KIRILL QIYMATLARI
   let sn = c.signerName || "";
   let sp = c.signerPosition || "";
   
@@ -62,8 +62,14 @@ function openEditorModal(id) {
   if (modal) modal.classList.remove("hidden");
 }
 
-function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val || ""; }
-function closeEditorModal() { document.getElementById("editorModal")?.classList.add("hidden"); }
+function setVal(id, val) { 
+  const el = document.getElementById(id); 
+  if (el) el.value = val || ""; 
+}
+
+function closeEditorModal() { 
+  document.getElementById("editorModal")?.classList.add("hidden"); 
+}
 
 function onSudlanganSelectChange() {
   const sel = document.getElementById("editSudlanganStatus");
@@ -116,9 +122,8 @@ function sendToBossForApproval() {
 }
 
 // =========================================================================
-// QR ВЕРИФИКАЦИЯ
+// QR ВЕРИФИКАЦИЯ (URL orqali skanerlanadi)
 // =========================================================================
-const QR_VERIFY_SECRET = "KOMPLAYENS_KADR_v11.8_2026_VERIFY_SECRET_KEY_9F2A";
 
 function getSignerName(c) { 
   let sn = c?.signerName || "И.Зарипов"; 
@@ -132,29 +137,15 @@ function getSignerPosition(c) {
   return sp;
 }
 
-function getApproverName(c) { return c?.bossApprovedBy || getSignerName(c); }
-
-function qrShortHash(input) {
-  const data = String(input) + "|" + QR_VERIFY_SECRET;
-  let h1 = 2166136261, h2 = 5381;
-  for (let i = 0; i < data.length; i++) {
-    const code = data.charCodeAt(i);
-    h1 ^= code; h1 = Math.imul(h1, 16777619);
-    h2 = ((h2 << 5) + h2) ^ code; h2 = h2 >>> 0;
-  }
-  const hex1 = (h1 >>> 0).toString(16).toUpperCase().padStart(8, "0");
-  const hex2 = (h2 >>> 0).toString(16).toUpperCase().padStart(8, "0");
-  return (hex1 + hex2).substring(0, 8);
+function getApproverName(c) { 
+  return c?.bossApprovedBy || getSignerName(c); 
 }
 
+// 🆕 QR ICHIDA HAVOLA (URL) YASHIRIN
 function buildQrPayload(c) {
-  const approverName = getSignerName(c);
-  const position = getSignerPosition(c);
-  const reestrNo = (c.reestrNo || "").replace(/\|/g, "/");
-  const date = (c.approvedDate || c.createdAt || "").replace(/\|/g, "/");
-  const core = `${reestrNo}|${approverName}|${position}|${date}`;
-  const hash = qrShortHash(core);
-  return `${core}|${hash}`;
+  const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
+  const searchQuery = encodeURIComponent(c.reestrNo);
+  return `${baseUrl}?search=${searchQuery}`;
 }
 
 function generateBase64Qr(payload) {
@@ -170,11 +161,11 @@ function generateBase64Qr(payload) {
 }
 
 // =========================================================================
-// A4 МАЪЛУМОТНОМА HTML (Toza CSS orqali)
+// A4 МАЪЛУМОТНОМА HTML (Qat'iy 1 varoq va ustma-ust tushmaydigan qilib)
 // =========================================================================
 
 function buildOfficialMalumotnomaHtml(c) {
-  // Eski saqlangan lotincha HTML bo'lsa, uni e'tiborsiz qoldiramiz
+  // Agar qo'lda tahrirlanib, to'g'ri saqlangan bo'lsa, o'shani qaytaramiz
   if (c.fullDocHtml && c.fullDocHtml.trim() !== "" && !c.fullDocHtml.includes("I.Zaripov") && !c.fullDocHtml.includes("Korrupsiya bolimi")) {
     return c.fullDocHtml;
   }
@@ -197,15 +188,15 @@ function buildOfficialMalumotnomaHtml(c) {
   }
 
   let qrHtml = "";
-  if (c.workflowStage === "approved") {
+  if (c.workflowStage === "hired" || c.workflowStage === "hr_final") {
     const qrPayload = buildQrPayload(c);
     const qrDataUrl = generateBase64Qr(qrPayload);
     if (qrDataUrl) {
-      qrHtml = `<img src="${qrDataUrl}" style="width:90px; height:90px; display:block; margin:5px auto 0 auto;" draggable="true" title="QR Kodni ko'chirish mumkin" />`;
+      qrHtml = `<img src="${qrDataUrl}" style="width:90px; height:90px; display:block; margin:5px auto 0 auto;" draggable="true" title="Skaner qiling" />`;
     }
   }
 
-  const stampHtml = c.workflowStage === "approved"
+  const stampHtml = (c.workflowStage === "hired" || c.workflowStage === "hr_final")
     ? `<div style="border:2px solid #047857;color:#047857;padding:6px 10px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">
         ТАСДИҚЛАНДИ<br/>
         <span style="font-size:8pt;font-weight:normal;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
@@ -226,7 +217,7 @@ function buildOfficialMalumotnomaHtml(c) {
         ${p4Parts.map(line => `<p>${line}</p>`).join("")}
       </div>
 
-      <!-- 3 USTUNLI QAT'IY JADVAL -->
+      <!-- 3 USTUNLI QAT'IY JADVAL (Ustma-ust tushishni oldini oladi) -->
       <table style="width:100%; margin-top:20pt; border-collapse:collapse; page-break-inside:avoid;">
         <tr>
           <td style="width:35%; text-align:left; vertical-align:bottom; padding-bottom:10px;">
@@ -237,7 +228,7 @@ function buildOfficialMalumotnomaHtml(c) {
           </td>
           <td style="width:35%; text-align:center; vertical-align:bottom; padding-bottom:10px;">
             <div style="font-size:12pt; font-weight:bold; margin-bottom:2px;">${getSignerName(c)}</div>
-            <div style="font-size:9pt; color:#333;">(имзо)</div>
+            <!-- "(imzo)" YOZUVI OLIB TASHLANDI -->
           </td>
         </tr>
       </table>
@@ -249,21 +240,21 @@ function buildOfficialMalumotnomaHtml(c) {
     </div>
   `;
 }
-
 function openDocModal(id) {
   try {
     const c = appState.candidates.find(x => x.id === id);
     if (!c) return alert("Номзод топилмади!");
 
-    if ((currentRole === ROLES.KUZATUVCHI) && c.workflowStage !== "approved") {
+    if ((currentRole === ROLES.KUZATUVCHI) && c.workflowStage !== "hired" && c.workflowStage !== "hr_final") {
       return alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
     }
 
     activeCandidateId = id;
 
+    // 🆕 QORALAMA SUV BELGISI (Watermark)
     const watermark = document.getElementById("watermarkOverlay");
     if (watermark) {
-      if (c.workflowStage !== "approved") {
+      if (c.workflowStage !== "hired" && c.workflowStage !== "hr_final") {
         watermark.classList.remove("hidden");
         watermark.classList.add("flex");
       } else {
@@ -272,10 +263,12 @@ function openDocModal(id) {
       }
     }
 
+    // 🆕 HUJJAT ICHINI TO'LDIRISH
     const content = document.getElementById("a4InnerContent");
     if (content) {
       content.innerHTML = buildOfficialMalumotnomaHtml(c);
-      if (currentRole === ROLES.KADR) {
+      // Kadrlar uchun matnni tahrirlashni bloklash
+      if (currentRole === ROLES.KADR || c.workflowStage === "hired") {
         content.setAttribute("contenteditable", "false");
       } else {
         content.setAttribute("contenteditable", "true");
@@ -285,23 +278,33 @@ function openDocModal(id) {
     const reestrInfo = document.getElementById("docModalReestrInfo");
     if (reestrInfo) reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
 
+    // 🆕 HOLAT BADGE (Status)
     const badge = document.getElementById("docModalStatusBadge");
     if (badge) {
-      if (c.workflowStage === "approved") {
-        badge.textContent = "✓ Ўрганиб чиқилди";
+      if (c.workflowStage === "hired") {
+        badge.textContent = "✓ Ишга қабул қилинди";
         badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+      } else if (c.workflowStage === "hr_final") {
+        badge.textContent = "⏳ Тасдиқлаш жараёнида";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
       } else {
         badge.textContent = "⏳ Ўрганиш жараёнида";
-        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
+        badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-slate-500/20 text-slate-300 border border-slate-400/30";
       }
     }
 
+    // 🆕 TUGMALARNI ROLGA QARAB SHAKLLANTIRISH
     const actionBtns = document.getElementById("docModalActionButtons");
     if (actionBtns) {
       let html = `<button onclick="closeDocModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer ml-2">✕</button>`;
       html = `<button onclick="printCurrentDocA4()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow cursor-pointer">🖨 Chop etish</button>` + html;
 
-      if (currentRole !== ROLES.KADR) {
+      if (currentRole === ROLES.KADR && c.workflowStage === "hr_final") {
+        // KADRLAR UCHUN YAKUNIY QAROR TUGMALARI
+        html = `<button onclick="hrHireCandidate('${c.id}')" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer shadow">✅ Ишга қабул қилиш</button>
+                <button onclick="hrRejectCandidate('${c.id}')" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold cursor-pointer shadow">❌ Бекор қилиш</button>` + html;
+      } else if (currentRole !== ROLES.KADR && c.workflowStage !== "hired") {
+        // KORRUPSIYA VA ADMIN UCHUN TAHRIRLASH TUGMALARI
         html = `<button onclick="saveDirectDocEdits()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer shadow">💾 Saqlash</button>
                 <button onclick="resetDocEdits()" class="px-3.5 py-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer shadow">↩️ Asl holat</button>
                 <button onclick="copyDocText()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">📋 Nusxalash</button>
@@ -310,6 +313,7 @@ function openDocModal(id) {
       actionBtns.innerHTML = html;
     }
 
+    // 🆕 BOSHLIQ PANELI
     const bossPanel = document.getElementById("bossActionPanel");
     const warnBox = document.getElementById("bossSudlanganWarningBox");
     const chk = document.getElementById("chkBossConfirmSudlangan");
@@ -367,20 +371,20 @@ function toggleBossApproveButton() {
   else { btnApprove.disabled = true; btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed"; }
 }
 
+// Boshliq tasdiqlaganda status "hr_final" bo'ladi
 function approveByBoss() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
   if (!hasPermission("approve")) return alert("Рухсат йўқ!");
   const now = getNow();
-  c.workflowStage = "approved";
-  c.approvedDate = now.date;
+  c.workflowStage = "hr_final"; 
   c.bossApprovedAt = now.dateTime;
   c.bossApprovedBy = currentUser?.name || getSignerName(c);
   if (typeof logApproved === "function") logApproved(c, c.bossApprovedBy);
   saveState();
   renderAll();
   openDocModal(c.id);
-  showToast(`✅ «${c.fio}» тасдиқланди!`, "success");
+  showToast(`✅ «${c.fio}» Бошлиқ томонидан тасдиқланди! Энди HR қарори кутилади.`, "success");
 }
 
 function returnToAdminForRevision() {
@@ -390,7 +394,7 @@ function returnToAdminForRevision() {
   const reason = prompt("Қайтариш сабабини киритинг:", c.bossReturnReason || "");
   if (reason === null) return;
   if (!reason.trim()) return alert("Сабабни киритишингиз шарт!");
-  c.workflowStage = "admin_review";
+  c.workflowStage = "hr_review";
   c.bossReturnReason = reason.trim();
   if (typeof logReturned === "function") logReturned(c, reason.trim());
   saveState();
