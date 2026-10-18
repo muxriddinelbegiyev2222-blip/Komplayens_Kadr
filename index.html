@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>«КОМПЛАЕНС-КАДР» v11.8 FINAL — Кадастр агентлиги</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+
+  <link rel="stylesheet" href="src/css/styles.css" />
+  
+  <style>
+    /* Rasmiy A4 hujjat formatlash */
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 0 auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+      padding: 20mm 15mm 20mm 30mm;
+      box-sizing: border-box;
+      color: #000;
+      font-family: 'Times New Roman', Times, serif;
+    }
+    
+    .a4-sheet p {
+      text-indent: 1.25cm;
+      text-align: justify;
+      line-height: 1.3;
+      font-size: 13pt; 
+      margin: 0 0 6pt 0;
+    }
+
+    /* 3D effektli menyu kartochkalari */
+    .nav-card {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      box-shadow: 3px 3px 6px rgba(0,0,0,0.4), -1px -1px 3px rgba(255,255,255,0.05);
+      border: 1px solid #334155;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .nav-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+      border-color: #3b82f6;
+    }
+    
+    .nav-card.active {
+      background: linear-gradient(145deg, #2563eb, #1d4ed8);
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+      border-color: #60a5fa;
+    }
+    
+    .subtab-card {
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -1px -1px 2px rgba(255,255,255,0.8);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+    
+    .subtab-card.active {
+      background: linear-gradient(145deg, #eff6ff, #dbeafe);
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);
+      border-color: #60a5fa;
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-slate-50 transition-colors">
+
+  <!-- LOGIN -->
+  <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-5 text-white border-b border-blue-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">
+            КК
+          </div>
+          <div>
+            <span class="text-xs uppercase tracking-widest text-blue-200 font-bold block">Кадастр агентлиги</span>
+            <h2 class="text-xl font-extrabold tracking-tight">«КОМПЛАЕНС-КАДР» v11.8</h2>
+          </div>
+        </div>
+        <span class="text-xs bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-full font-semibold">⚡ Realtime</span>
+      </div>
+      
+      <div class="p-6 space-y-4 text-slate-800">
+        <div id="loginError" class="hidden p-3 rounded-lg bg-red-50 border border-red-300 text-red-700 text-sm font-bold">
+          Логин ёки парол нотўғри!
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1">Фойдаланувчи логини</label>
+          <input id="loginUsername" type="text" placeholder="Логин" autocomplete="username" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white" />
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1">Махфий парол</label>
+          <input id="loginPassword" type="password" placeholder="Парол" autocomplete="current-password" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white" />
+        </div>
+        <button id="btnLoginSubmit" class="w-full py-3 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-base shadow-lg transition cursor-pointer">
+          🔐 Тизимга кириш
+        </button>
+        <p class="text-xs text-center text-slate-500 pt-2">Логин ва паролни тизим администраторидан олинг</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 no-print shadow-md">
+    <div class="w-full px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">
+          КК
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-extrabold text-base tracking-wide text-white">«КОМПЛАЕНС-КАДР» v11.8</span>
+            <span id="cloudSyncBadge" class="text-xs bg-slate-500/20 text-slate-300 border border-slate-400/40 px-2.5 py-0.5 rounded-full font-bold">
+              <span class="realtime-dot"></span> Уланмоқда...
+            </span>
+            <span id="dDriveStatusBadge" class="text-xs bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded font-semibold">
+              💾 D:\ Baza
+            </span>
+          </div>
+          <p class="text-xs text-slate-300">Кадастр агентлиги — Ягона комплаенс тизими</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="currentClock" class="text-xs font-mono font-bold text-emerald-300 px-2"></span>
+        
+        <div class="flex items-center bg-slate-800 px-4 py-1.5 rounded-xl border border-slate-700">
+          <span id="currentRoleLabel" class="text-xs font-bold text-blue-300">— Тизимга кирилмаган —</span>
+        </div>
+        
+        <button onclick="openGlobalSearch()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white border border-indigo-400 cursor-pointer" title="Global Qidiruv (Ctrl+K)">
+          🔍 Qidiruv
+        </button>
+
+        <div class="relative">
+          <button id="notifBellBtn" onclick="toggleNotificationPanel()" class="relative px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-700 cursor-pointer" title="Уведомлениялар">
+            🔔
+            <span id="notifBadge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center hidden">0</span>
+          </button>
+        </div>
+
+        <button onclick="pullFromSupabase(true)" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-xs font-bold text-white border border-emerald-500 cursor-pointer" title="Онлайн базадан янгилаш">
+          🔄 Синхронлаш
+        </button>
+        
+        <button id="btnLangToggle" onclick="toggleAlphabet()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-emerald-300 border border-slate-700 cursor-pointer">
+          🔤 Кирилл / Лотин
+        </button>
+        
+        <button onclick="showAboutModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-blue-300 border border-slate-700 cursor-pointer" title="Дастур ҳақида">
+          ℹ️
+        </button>
+        
+        <button id="logoutBtn" onclick="doLogout()" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold cursor-pointer">
+          🚪 Чиқиш
+        </button>
+      </div>
+    </div>
+
+    <!-- 3D ASOSIY NAV MENYU -->
+    <div class="bg-slate-900 border-t border-slate-700 px-2 py-2 flex flex-col w-full no-print">
+      <div class="w-full mb-1 flex justify-between items-center px-2">
+        <div id="roleBannerText" class="text-sm font-semibold text-blue-300"></div>
+      </div>
+      
+      <div class="grid grid-cols-4 md:grid-cols-8 gap-2 w-full px-2 pb-1" id="mainNavGrid">
+        <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
+          <span class="text-base">📊</span> Статистика
+        </button>
+        
+        <button id="tabBtnFototablitsa" onclick="switchTab('fototablitsa')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
+          <span class="text-base">🖼️</span> Фототаблица
+        </button>
+        
+        <button id="tabBtnFormer" onclick="switchTab('former')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
+          <span class="text-base">👤</span> Собиқ ходимлар
+        </button>
+        
+        <button id="tabBtnIts" onclick="switchTab('its')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">🔍</span> ИЦ Жадвали
+        </button>
+        
+        <button id="tabBtnNegative" onclick="switchTab('negative')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">⚠️</span> Судланганлар
+        </button>
+        
+        <button id="tabBtnDatabase" onclick="switchTab('database')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">🗂️</span> Ягона База
+        </button>
+        
+        <button id="tabBtnAudit" onclick="switchTab('audit')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">📋</span> Аудит-Лог
+        </button>
+        
+        <button id="tabBtnSettings" onclick="switchTab('settings')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
+          <span class="text-base">💾</span> Созламалар
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTIFICATIONS -->
+  <div id="notificationPanel" class="fixed top-24 right-4 z-[80] bg-white rounded-2xl shadow-2xl border border-slate-200 w-96 max-h-[600px] overflow-hidden hidden">
+    <div class="bg-blue-900 text-white px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span>🔔</span>
+        <span class="font-bold text-sm">Уведомлениялар</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button id="notifSoundBtn" onclick="toggleNotificationSound()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-xs cursor-pointer" title="Товуш">🔔</button>
+        <button onclick="markAllNotificationsAsRead()" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold cursor-pointer" title="Ҳаммасини ўқилди">✓ Ҳаммаси</button>
+        <button onclick="closeNotificationPanel()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-xs cursor-pointer">✕</button>
+      </div>
+    </div>
+    <div id="notificationList" class="overflow-y-auto max-h-[520px] p-3"></div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="w-full flex-1 px-4 py-4 space-y-4 no-print">
+
+    <!-- KPI CARDS -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-500 uppercase">Жами базада</span>
+        <div class="text-2xl font-extrabold text-slate-900 mt-0.5" id="kpiTotal">0</div>
+        <span class="text-xs text-slate-500">КА бўйича</span>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-blue-200 shadow-sm">
+        <span class="text-xs font-bold text-blue-700 uppercase">Амалдаги номзодлар</span>
+        <div class="text-2xl font-extrabold text-blue-700 mt-0.5" id="kpiCurrent">0</div>
+        <span class="text-xs text-slate-500">Фототаблицада</span>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-purple-200 shadow-sm">
+        <span class="text-xs font-bold text-purple-700 uppercase">Собиқ ходимлар</span>
+        <div class="text-2xl font-extrabold text-purple-700 mt-0.5" id="kpiFormer">0</div>
+        <span class="text-xs text-slate-500">Алоҳида ҳисобда</span>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-amber-200 shadow-sm">
+        <span class="text-xs font-bold text-amber-700 uppercase">Ўрганиш жараёнида</span>
+        <div class="text-2xl font-extrabold text-amber-600 mt-0.5" id="kpiInProcess">0</div>
+        <span class="text-xs text-slate-500">Текширилмоқда</span>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-emerald-200 shadow-sm">
+        <span class="text-xs font-bold text-emerald-700 uppercase">Тасдиқланди</span>
+        <div class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="kpiApproved">0</div>
+        <span class="text-xs text-slate-500">Ўрганиб чиқилди</span>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-red-300 shadow-sm">
+        <span class="text-xs font-bold text-red-700 uppercase">🚨 Судланганлар</span>
+        <div class="text-2xl font-extrabold text-red-600 mt-0.5" id="kpiSudlangan">0</div>
+        <span class="text-xs text-slate-500">Махсус реестрда</span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="viewDashboard" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-extrabold">Республика ҳудудлари ва 7 та раҳбарлик йўналиши кесимида статистика</h2>
+            <p class="text-xs text-slate-500">Рақамга босиш орқали аниқ рўйхатга ўтиш мумкин</p>
+          </div>
+          <button onclick="exportDashboardExcel()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">
+            📥 Excel (.xls) юклаб олиш
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="official-table" id="dashboardStatsTable">
+            <thead>
+              <tr>
+                <th style="width:45px;">Т/р</th>
+                <th>Ҳудуд номи</th>
+                <th>КА бошқарма раҳбарияти</th>
+                <th>ДКП бошқарма раҳбарияти</th>
+                <th>КА туман/ш. бўлими бошлиғи</th>
+                <th>ДКП туман/ш. филиали раҳбари</th>
+                <th>Комплаенс ходимлари</th>
+                <th style="background:#f3e8ff !important;">Марказий аппарат</th>
+                <th style="background:#dbeafe !important;">🔷 Тизим ташкилотлари</th>
+                <th style="background:#f3e8ff !important;">👤 Собиқ ходимлар</th>
+                <th>⏳ Ўрганиш жараёнида</th>
+                <th>✓ Ўрганиб чиқилди</th>
+                <th style="background:#fee2e2 !important;">🚨 Судланганлар</th>
+                <th>Жами</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOTOTABLITSA -->
+    <section id="viewFototablitsa" class="space-y-4 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <div id="addCandidatePanel" class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
+          <div class="border-b border-slate-200 pb-3 mb-3">
+            <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900">Янги сўров киритиш</span>
+            <h3 class="text-base font-extrabold mt-1">Номзод ёки Собиқ ходим қўшиш</h3>
+          </div>
+
+          <form id="candidateForm" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold mb-1">1. Сўров тури *</label>
+                <select id="inpRecordType" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                  <option value="current">Амалдаги номзод</option>
+                  <option value="former">👤 Собиқ ходим</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">2. Ҳудуд (17 та) *</label>
+                <select id="inpRegion" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">3. Мақсадли йўналиш (8 та) *</label>
+              <select id="inpCategory" onchange="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                <option value="КА туман (шаҳар) бўлими бошлиғи">1. КА ҳудудий туман (шаҳар) бўлими бошлиғи</option>
+                <option value="ДКП туман (шаҳар) филиали бошлиғи">2. ДКП ҳудудий туман (шаҳар) филиали раҳбари</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи">3. КА ҳудудий бошқармаси бошлиғи</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи">4. ДКП ҳудудий бошқармаси бошлиғи</option>
+                <option value="КА марказий аппарати ходими">5. КА Марказий аппарати ходими</option>
+                <option value="ДКП марказий аппарати ходими">6. ДКП Марказий аппарати ходими</option>
+                <option value="Комплаенс хизмати ходими">7. Коррупцияга қарши курашиш (комплаенс) ходими</option>
+                <option value="Собиқ ходимлар йўналиши">8. Собиқ ходимлар йўналиши</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2" id="districtFieldWrapper">
+              <div class="col-span-2">
+                <label id="inpDistrictLabel" class="block text-xs font-bold mb-1">4. Туман / шаҳар (қисқа) *</label>
+                <input id="inpDistrict" type="text" placeholder="Дўстлик тумани бўлими" oninput="updateHeadingPreview()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Тайинлов *</label>
+                <select id="inpAppointType" class="w-full px-2 py-2 rounded-lg border border-slate-300 text-xs font-bold text-red-700 bg-white">
+                  <option value="(ишга олиш)">(ишга олиш)</option>
+                  <option value="(ротация)">(ротация)</option>
+                  <option value="(захира)">(захира)</option>
+                  <option value="(собиқ ходим)">(собиқ ходим)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-lg bg-blue-50 border-2 border-blue-300">
+              <label class="block text-xs font-bold text-blue-900 mb-1">📝 Тўлиқ сарлавҳа (автоматик — қўлда тузатиш мумкин)</label>
+              <textarea id="inpDistrictHeading" rows="2" placeholder="Автоматик ясалади..." class="w-full px-2.5 py-2 rounded-lg border-2 border-blue-400 bg-white text-xs font-semibold text-slate-900"></textarea>
+              <p class="text-[10px] text-blue-700 mt-1">⚠️ Нотўғри бўлса — <b>қўлда тузатинг</b>.</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div class="col-span-2">
+                <label class="block text-xs font-bold mb-1">5. ПИНФЛ (14 та рақам) *</label>
+                <input id="inpPinfl" type="text" maxlength="14" required placeholder="32601965390015" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Паспорт *</label>
+                <div class="flex gap-1">
+                  <input id="inpPassSeries" type="text" maxlength="2" required placeholder="AD" class="w-11 px-1.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold uppercase text-center text-slate-900" />
+                  <input id="inpPassNum" type="text" maxlength="7" required placeholder="9697422" class="w-full px-1.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold text-slate-900" />
+                </div>
+              </div>
+            </div>
+
+            <div id="pinflDuplicateBox" class="hidden p-2.5 rounded-lg bg-amber-50 border-2 border-amber-400 text-amber-950 text-xs"></div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">6. Ф.И.Ш. (Кириллда тўлиқ) *</label>
+              <input id="inpFio" type="text" required placeholder="Ходиев Адхам Дониёр ўғли" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-900" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold mb-1">7. Туғилган санаси *</label>
+                <input id="inpBirthDate" type="text" required placeholder="26.01.1996" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Туғилган жойи *</label>
+                <input id="inpBirthPlace" type="text" required placeholder="Жиззах вил., Фориш тум." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">8. Эгаллаб турган (ёки собиқ) лавозими *</label>
+              <textarea id="inpCurrentJob" rows="2" required placeholder="Давлат кадастрлари палатаси..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label id="inpJobSinceLabel" class="block text-xs font-bold mb-1">Лавозимга қўйилган вақти *</label>
+                <input id="inpJobSince" type="text" required placeholder="15.01.2026" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+              </div>
+              <div class="col-span-2 mt-1">
+                <label class="block text-xs font-bold mb-1">9. 📷 Расм (3x4)</label>
+                <div id="inpPhotoDropZone" class="photo-drop-zone" ondragover="handlePhotoDragOver(event)" ondragleave="handlePhotoDragLeave(event)" ondrop="handlePhotoDrop(event, 'inpPhotoDropZone')">
+                  <div class="drop-zone-content">
+                    <span class="drop-icon">📷</span>
+                    <span class="drop-text">Расмни бу ерга судраб ташланг</span>
+                    <span class="drop-hint">Ёки Ctrl+V босинг</span>
+                    <button type="button" onclick="event.stopPropagation(); triggerPhotoFileSelect('inpPhotoDropZone')" class="drop-file-btn">📁 Файл танлаш</button>
+                  </div>
+                  <img class="drop-zone-preview hidden" alt="Расм" />
+                  <button type="button" onclick="event.stopPropagation(); clearPhoto('inpPhotoDropZone')" class="drop-zone-clear hidden" title="Ўчириш">✕</button>
+                  <input type="file" id="inpPhotoFile" accept="image/*" onchange="handlePhotoFileInput(event, 'inpPhotoDropZone')" hidden />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-extrabold text-xs shadow-md transition cursor-pointer">
+              ➕ Базага қўшиш ва комплаенсга юбориш
+            </button>
+          </form>
+        </div>
+
+        <div id="fototablitsaContainer" class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
+              🆕 Янги келганлар <span id="subtabNewCount" class="ml-2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px]">0</span>
+            </button>
+            <button id="subtabInProcess" onclick="switchSubTab('in_process')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
+              ⏳ Тасдиқлаш жараёнида <span id="subtabInProcessCount" class="ml-2 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px]">0</span>
+            </button>
+            <button id="subtabApproved" onclick="switchSubTab('approved')" class="subtab-card flex-1 min-w-[150px] p-2.5 rounded-xl text-sm font-bold text-slate-700">
+              ✅ Ўрганиб чиқилди <span id="subtabApprovedCount" class="ml-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px]">0</span>
+            </button>
+          </div>
+          
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-200">
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="text-xs font-extrabold">Ҳудуд:</label>
+              <select id="fotoRegionFilter" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+              <select id="fotoCategoryFilter" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+                <option value="ALL">Барча йўналишлар</option>
+                <option value="КА туман (шаҳар) бўлими бошлиғи">КА туман бўлими бошлиғи</option>
+                <option value="ДКП туман (шаҳар) филиали бошлиғи">ДКП туман филиали бошлиғи</option>
+                <option value="КА ҳудудий бошқармаси бошлиғи">КА бошқарма бошлиғи</option>
+                <option value="ДКП ҳудудий бошқармаси бошлиғи">ДКП бошқарма бошлиғи</option>
+                <option value="КА марказий аппарати ходими">КА марказий аппарати</option>
+                <option value="ДКП марказий аппарати ходими">ДКП марказий аппарати</option>
+                <option value="Комплаенс хизмати ходими">Комплаенс ходими</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="exportFototablitsaWord('current')" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow cursor-pointer">📄 Word</button>
+              <button onclick="exportFototablitsaExcel('current')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📊 Excel</button>
+            </div>
+          </div>
+          
+          <div class="text-center doc-serif mb-3">
+            <p class="text-lg font-bold leading-snug">
+              <span class="text-red-700">Кадастр агентлиги</span>
+              <span class="text-blue-950"> ҳудудий бошқармалари ҳамда туман (шаҳар) бўлими ва филиали раҳбарлиги вакант лавозимларига тавсия этилаётган номзодлар ҳақида</span>
+            </p>
+            <p class="text-lg font-bold text-blue-950 uppercase tracking-wide">МАЪЛУМОТ</p>
+            <p class="text-right text-sm italic font-bold text-blue-900" id="fotoCurrentDateLabel"></p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="official-table" id="mainFototablitsaTable">
+              <thead>
+                <tr>
+                  <th style="width:5%;">Т/р</th>
+                  <th style="width:15%;">Расм</th>
+                  <th style="width:28%;">Ф.И.Ш., туғилган йили ва жойи</th>
+                  <th style="width:30%;">Лавозими ва жараён тарихи</th>
+                  <th style="width:22%;">Якуний натижа</th>
+                </tr>
+              </thead>
+              <tbody id="fototablitsaBody"></tbody>
+            </table>
+            <div id="fototablitsaPagination" class="flex justify-center gap-2 mt-4"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORMER -->
+    <section id="viewFormer" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-purple-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-purple-100 text-purple-900">Алоҳида реестр</span>
+            <h2 class="text-lg font-extrabold mt-1">👤 Собиқ ходимларни комплаенс бўйича ўрганиш</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="formerRegionFilter" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+            <button onclick="openWordImportModal()" class="px-3.5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-extrabold shadow cursor-pointer">📄 Word импорт</button>
+            <button onclick="exportFototablitsaWord('former')" class="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow cursor-pointer">📄 Word</button>
+            <button onclick="exportFototablitsaExcel('former')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📊 Excel</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:5%;">Т/р</th>
+                <th style="width:15%;">Расм</th>
+                <th style="width:30%;">Ф.И.Ш., туғилган сана, ПИНФЛ</th>
+                <th style="width:28%;">Илгари ишлаган лавозими</th>
+                <th style="width:22%;">Якуний натижа</th>
+              </tr>
+            </thead>
+            <tbody id="formerTableBody"></tbody>
+          </table>
+          <div id="formerPagination" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ITS -->
+    <section id="viewIts" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-amber-100 text-amber-900">Коррупция бўлими ва Раҳбарият учун</span>
+            <h2 class="text-lg font-extrabold mt-1">🔍 ИЦ Судланганлик текшируви</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="itsFilterStatus" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча ходимлар</option>
+              <option value="UNCHECKED">Фақат ўрганилмаганлар</option>
+              <option value="SUDLANGAN">🚨 Судланганлиги чиққанлар</option>
+            </select>
+            <button onclick="exportItsExcel('UNCHECKED')" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow cursor-pointer">📥 Ўрганилмаганлар</button>
+            <button onclick="exportItsExcel('ALL')" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📥 Тўлиқ жадвал</button>
+            <button id="btnBulkSendClean" onclick="bulkSendCleanToBoss()" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow cursor-pointer" style="display:none;">⚡ Тоза чиққанларни юбориш</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:45px;">T/R</th>
+                <th>FIO</th>
+                <th style="width:125px;">Tug'ilgan sana</th>
+                <th style="width:110px;">Pasport seriya</th>
+                <th style="width:125px;">Pasport raqam</th>
+                <th style="width:165px;">PINFL</th>
+                <th style="width:110px;">Тури / Ҳудуд</th>
+                <th style="width:310px;">ИЦ натижаси</th>
+                <th style="width:150px;">Амал</th>
+              </tr>
+            </thead>
+            <tbody id="itsTableBody"></tbody>
+          </table>
+          <div id="itsPagination" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEGATIVE -->
+    <section id="viewNegative" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border-2 border-red-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-red-100 text-red-900">Махсус назорат реестри</span>
+            <h2 class="text-lg font-extrabold text-red-700 mt-1">⚠️ Судланганлиги аниқланган ходимлар</h2>
+          </div>
+          <div id="negativeExportWrap" style="display:none;">
+            <button onclick="exportNegativeExcel()" class="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow cursor-pointer">📥 Excel (.xls)</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:45px;">Т/р</th>
+                <th>Ф.И.Ш. ва Туғилган сана</th>
+                <th>Паспорт ва ПИНФЛ</th>
+                <th>Ҳудуд ва Йўналиш</th>
+                <th>Судланганлик моддаси</th>
+                <th>Якуний натижа</th>
+                <th>Ҳужжат</th>
+              </tr>
+            </thead>
+            <tbody id="negativeTableBody"></tbody>
+          </table>
+          <div id="negativePagination" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATABASE -->
+    <section id="viewDatabase" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
+          <div>
+            <h2 class="text-lg font-extrabold">🗂️ Ҳудуд, Йўналиш, Йил ва Ой кесимида Ягона База</h2>
+          </div>
+          <button onclick="exportDatabaseExcel()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📥 Excel (.xls)</button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
+          <div>
+            <label class="block text-xs font-bold mb-1">1. Ҳудуд</label>
+            <select id="dbRegionFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">2. Йўналиш</label>
+            <select id="dbCategoryFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча йўналишлар</option>
+              <option value="КА туман (шаҳар) бўлими бошлиғи">КА туман бўлими бошлиғи</option>
+              <option value="ДКП туман (шаҳар) филиали бошлиғи">ДКП туман филиали бошлиғи</option>
+              <option value="КА ҳудудий бошқармаси бошлиғи">КА бошқарма бошлиғи</option>
+              <option value="ДКП ҳудудий бошқармаси бошлиғи">ДКП бошқарма бошлиғи</option>
+              <option value="КА марказий аппарати ходими">КА марказий аппарати</option>
+              <option value="ДКП марказий аппарати ходими">ДКП марказий аппарати</option>
+              <option value="Комплаенс хизмати ходими">Комплаенс ходими</option>
+              <option value="Собиқ ходимлар йўналиши">👤 Собиқ ходимлар</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">3. Йил</label>
+            <select id="dbYearFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча йиллар</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">4. Ой</label>
+            <select id="dbMonthFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барча ойлар (1-12)</option>
+              <option value="01">01 — Январ</option>
+              <option value="02">02 — Феврал</option>
+              <option value="03">03 — Март</option>
+              <option value="04">04 — Апрел</option>
+              <option value="05">05 — Май</option>
+              <option value="06">06 — Июн</option>
+              <option value="07">07 — Июл</option>
+              <option value="08">08 — Август</option>
+              <option value="09">09 — Сентябр</option>
+              <option value="10">10 — Октябр</option>
+              <option value="11">11 — Ноябр</option>
+              <option value="12">12 — Декабр</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">5. Ҳолати</label>
+            <select id="dbStatusFilter" onchange="renderAll()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white text-slate-900">
+              <option value="ALL">Барчаси</option>
+              <option value="approved">✓ Ўрганиб чиқилди</option>
+              <option value="in_process">⏳ Ўрганиш жараёнида</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">6. Қидирув (Ctrl+K)</label>
+            <input id="dbSearchInput" oninput="renderAll()" type="text" placeholder="ПИНФЛ/Ф.И.Ш..." class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-semibold text-slate-900" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:115px;">Реестр № / Сана</th>
+                <th style="width:130px;">Ҳудуд (Йил / Ой)</th>
+                <th>Ф.И.Ш., Паспорт ва ПИНФЛ</th>
+                <th>Йўналиш ва Лавозим</th>
+                <th style="width:165px;">Якуний натижа</th>
+                <th style="width:155px;">Ҳолати</th>
+                <th style="width:150px;">Ҳужжат</th>
+              </tr>
+            </thead>
+            <tbody id="databaseTableBody"></tbody>
+          </table>
+          <div id="databasePagination" class="flex justify-center gap-2 mt-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUDIT -->
+    <section id="viewAudit" class="space-y-4 hidden">
+      <div class="bg-white rounded-2xl border border-indigo-300 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-indigo-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-900">Коррупция бўлими учун</span>
+            <h2 class="text-lg font-extrabold mt-1">📋 Аудит-Лог — Ким нима ўзгартирди</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="auditSearchInput" type="text" placeholder="Qidiruv (ism, amal)..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-64" oninput="filterAuditLog()" />
+            <button onclick="exportAuditLogExcel()" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow cursor-pointer">📥 Excel</button>
+            <button onclick="clearAuditLog()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow cursor-pointer">🗑 Тозалаш (30 кундан эски)</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="official-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Т/р</th>
+                <th style="width:160px;">Вақт</th>
+                <th style="width:200px;">Фойдаланувчи</th>
+                <th style="width:180px;">Роль</th>
+                <th style="width:180px;">Амал</th>
+                <th>Тафсилот</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="viewSettings" class="space-y-4 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-6 bg-white rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-900">🌐 Realtime + D:\ Диск</span>
+            <span class="text-xs font-extrabold text-emerald-700">⚡ Realtime</span>
+          </div>
+          <h3 class="text-lg font-extrabold">1. Supabase Realtime Кўприк</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">⚡ Realtime ёқилган — барча ўзгаришлар <b>&lt; 1 сонияда</b> барча компьютерларга келади.</p>
+
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-slate-800">
+            <div>
+              <label class="block text-xs font-bold mb-1">1. Supabase Project URL:</label>
+              <input id="inpSupabaseUrl" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">2. Supabase Anon Key:</label>
+              <input id="inpSupabaseKey" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+            </div>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button onclick="saveSupabaseConfig()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow cursor-pointer">🔄 Синхронлаш</button>
+              <button onclick="copySupabaseSql()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold cursor-pointer">📋 SQL нусхалаш</button>
+              <button onclick="reconnectRealtime()" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold cursor-pointer">⚡ Realtime қайта улаш</button>
+            </div>
+          </div>
+
+          <hr class="border-slate-200" />
+
+          <h3 class="text-base font-extrabold">2. D:\Komplayens_Kadr_Baza\ Дискка Улаш</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button onclick="connectDDriveFolder()" class="p-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
+              📂 1. D:\ дискга сақлаш <span class="block font-normal text-emerald-100 mt-0.5">Авто-сақлаш</span>
+            </button>
+            <button onclick="downloadBackupJson()" class="p-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs text-left shadow cursor-pointer">
+              💾 2. Захира (JSON) <span class="block font-normal text-blue-100 mt-0.5">komplayens_kadr_baza.json</span>
+            </button>
+          </div>
+
+          <div class="pt-2 border-t border-slate-200">
+            <label class="text-xs font-bold block mb-1">Захира файлни юклаш:</label>
+            <input type="file" accept=".json" onchange="restoreBackupJson(event)" class="text-xs" />
+          </div>
+        </div>
+
+        <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-amber-100 text-amber-900">🔐 Фақат Коррупция бўлими бошқаради</span>
+          <h3 class="text-lg font-extrabold">Фойдаланувчиларга Логин-Парол яратиш</h3>
+          <p class="text-xs text-slate-500">Парол <b>SHA-256</b> билан хешланиб сақланади.</p>
+
+          <form id="userCreateForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-slate-900">
+            <div>
+              <label class="block text-xs font-bold mb-1">Ф.И.Ш. ва Лавозими *</label>
+              <input id="newUserName" type="text" required placeholder="Алиев Вали" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Роли *</label>
+              <select id="newUserRole" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
+                <option value="kadr">1. Кадрлар (HR)</option>
+                <option value="rahbar">3. Бўлим бошлиғи</option>
+                <option value="kuzatuvchi">4. Кузатувчи</option>
+                <option value="korrupsiya">2. Коррупция бўлими</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Логин *</label>
+              <input id="newUserLogin" type="text" required placeholder="kadr_samarqand" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">Парол * (6+ белги)</label>
+              <input id="newUserPass" type="text" required placeholder="Samarqand2026!" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <button type="submit" class="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold cursor-pointer">➕ Логин яратиш</button>
+            </div>
+          </form>
+
+          <div class="overflow-x-auto">
+            <table class="official-table">
+              <thead>
+                <tr>
+                  <th>Ф.И.Ш.</th>
+                  <th>Роли</th>
+                  <th>Логин</th>
+                  <th>Ҳолат</th>
+                  <th>Амал</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- EDITOR MODAL -->
+  <div id="editorModal" class="fixed inset-0 z-[60] bg-slate-900/80 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
+      <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs uppercase font-bold text-blue-200">Маълумотномани тайёрлаш</span>
+          <h3 class="text-base font-extrabold" id="editorCandidateTitle">Номзод бўйича</h3>
+        </div>
+        <button onclick="closeEditorModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div id="returnReasonBlock" class="hidden"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold mb-1">1. ИЦ Судланганлик *</label>
+            <select id="editSudlanganStatus" onchange="onSudlanganSelectChange()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-extrabold bg-white">
+              <option value="clean">✓ Муқаддам судланмаган</option>
+              <option value="sudlangan">🚨 СУДЛАНГАН</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold mb-1">2. ИЦ маълумоти / ЖК моддаси</label>
+            <input id="editSudlanganText" type="text" placeholder="муқаддам судланмаган" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Маълумоти, ОТМ ва оилавий ҳолати</label>
+            <input id="editEduText" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Якуний натижа</label>
+            <input type="text" disabled value="Тасдиқлангач: «Ўрганиб чиқилди»" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold text-emerald-800" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-indigo-50 p-3.5 rounded-xl border border-indigo-200">
+          <div>
+            <label class="block text-xs font-bold mb-1 text-indigo-900">Tasdiqlovchi F.I.Sh. (Imzo)</label>
+            <input id="editSignerName" type="text" class="w-full px-3 py-2 rounded-lg border border-indigo-300 text-xs font-semibold bg-white" placeholder="И.Зарипов" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1 text-indigo-900">Lavozimi</label>
+            <input id="editSignerPosition" type="text" class="w-full px-3 py-2 rounded-lg border border-indigo-300 text-xs font-semibold bg-white" placeholder="Коррупцияга қарши курашиш бўлими бошлиғи" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">3. Диний эътиқоди ва ДЭО (2-хатбоши)</label>
+          <textarea id="editPara2" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">4. Иш жойидан тавсиф (3–4-хатбошилар)</label>
+          <textarea id="editPara3" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold mb-1">5. Шахсий ва бошқарув фазилатлари (5–6-хатбошилар)</label>
+          <textarea id="editPara4" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
+        </div>
+      </div>
+
+      <div class="bg-slate-100 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <button onclick="saveDraftOnly()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer">💾 Қоралама сақлаш</button>
+        <button onclick="sendToBossForApproval()" class="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer">📤 Бўлим бошлиғига юбориш</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT CANDIDATE MODAL -->
+  <div id="editCandidateModal" class="fixed inset-0 z-[70] bg-slate-900/80 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
+      <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs uppercase font-bold text-blue-200">Ходим маълумотларини таҳрирлаш</span>
+          <h3 class="text-base font-extrabold">Кадрлар хато киритган бўлса, тузатиш</h3>
+        </div>
+        <button onclick="closeEditCandidateModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold mb-1">Ф.И.Ш. (Кириллда тўлиқ) *</label>
+            <input id="editCandFio" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">ПИНФЛ (14 та рақам) *</label>
+            <input id="editCandPinfl" type="text" maxlength="14" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Паспорт (серия + рақам) *</label>
+            <div class="flex gap-1">
+              <input id="editCandPassSeries" type="text" maxlength="2" class="w-14 px-2 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold uppercase text-center bg-white" />
+              <input id="editCandPassNum" type="text" maxlength="7" class="flex-1 px-2 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-white" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Туғилган сана *</label>
+            <input id="editCandBirthDate" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Туғилган жой *</label>
+            <input id="editCandBirthPlace" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Ҳудуд *</label>
+            <select id="editCandRegion" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Йўналиш *</label>
+            <select id="editCandCategory" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
+              <option value="КА туман (шаҳар) бўлими бошлиғи">1. КА туман бўлими бошлиғи</option>
+              <option value="ДКП туман (шаҳар) филиали бошлиғи">2. ДКП туман филиали бошлиғи</option>
+              <option value="КА ҳудудий бошқармаси бошлиғи">3. КА бошқарма бошлиғи</option>
+              <option value="ДКП ҳудудий бошқармаси бошлиғи">4. ДКП бошқарма бошлиғи</option>
+              <option value="КА марказий аппарати ходими">5. КА марказий аппарати</option>
+              <option value="ДКП марказий аппарати ходими">6. ДКП марказий аппарати</option>
+              <option value="Комплаенс хизмати ходими">7. Комплаенс ходими</option>
+              <option value="Собиқ ходимлар йўналиши">8. Собиқ ходимлар</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold mb-1">Тўлиқ сарлавҳа (қўлда тузатиш мумкин) *</label>
+            <textarea id="editCandDistrict" rows="2" placeholder="Кадастр агентлиги ... лавозимига" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold mb-1">Лавозими *</label>
+            <textarea id="editCandCurrentJob" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Лавозимга қўйилган вақти *</label>
+            <input id="editCandJobSince" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Тайинлов тури</label>
+            <select id="editCandAppointType" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold bg-white">
+              <option value="(ишга олиш)">(ишга олиш)</option>
+              <option value="(ротация)">(ротация)</option>
+              <option value="(захира)">(захира)</option>
+              <option value="(собиқ ходим)">(собиқ ходим)</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2 mt-2">
+            <label class="block text-xs font-bold mb-1">📷 Расм (3x4)</label>
+            <div id="editCandPhotoDropZone" class="photo-drop-zone" ondragover="handlePhotoDragOver(event)" ondragleave="handlePhotoDragLeave(event)" ondrop="handlePhotoDrop(event, 'editCandPhotoDropZone')">
+              <div class="drop-zone-content">
+                <span class="drop-icon">📷</span>
+                <span class="drop-text">Расмни бу ерга судраб ташланг</span>
+                <span class="drop-hint">Ёки Ctrl+V босинг</span>
+                <button type="button" onclick="event.stopPropagation(); triggerPhotoFileSelect('editCandPhotoDropZone')" class="drop-file-btn">📁 Файл танлаш</button>
+              </div>
+              <img class="drop-zone-preview hidden" alt="Расм" />
+              <button type="button" onclick="event.stopPropagation(); clearPhoto('editCandPhotoDropZone')" class="drop-zone-clear hidden" title="Ўчириш">✕</button>
+              <input type="file" id="editCandPhotoFile" accept="image/*" onchange="handlePhotoFileInput(event, 'editCandPhotoDropZone')" hidden />
+            </div>
+          </div>
+        </div>
+
+        <div id="editHistoryBlock" class="hidden p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs"></div>
+      </div>
+
+      <div class="bg-slate-100 px-6 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <button onclick="closeEditCandidateModal()" class="px-4 py-2 rounded-xl bg-slate-400 hover:bg-slate-500 text-white text-xs font-bold cursor-pointer">❌ Бекор қилиш</button>
+        <button onclick="saveEditedCandidate()" class="px-5 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-900 text-white text-xs font-extrabold shadow-lg cursor-pointer">💾 Таҳрирни сақлаш</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOC MODAL (Asosiy Hujjat Oynasi) -->
+  <div id="docModal" class="fixed inset-0 z-[80] bg-slate-900/85 overflow-y-auto p-4 md:p-8 hidden">
+    <div class="max-w-[210mm] mx-auto relative">
+      <div class="bg-blue-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-blue-700 shadow-xl no-print">
+        <div class="flex items-center gap-3">
+          <span id="docModalStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">...</span>
+          <span id="docModalReestrInfo" class="text-xs text-slate-300 font-mono"></span>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-2" id="docModalActionButtons">
+          <!-- Tugmalar JS orqali Rolga qarab chiqariladi -->
+        </div>
+      </div>
+      
+      <div id="bossActionPanel" class="bg-white rounded-2xl p-4 mb-4 border-2 border-emerald-500 shadow-lg space-y-3 hidden no-print text-slate-900">
+        <div id="bossSudlanganWarningBox" class="hidden p-4 rounded-xl bg-red-50 border-2 border-red-600 text-red-950 space-y-2 sudlangan-alert-pulse">
+          <div class="flex items-center gap-2 font-extrabold text-sm text-red-700">🚨 ДИҚҚАТ! СУДЛАНГАНЛИК БОР!</div>
+          <p class="text-xs font-bold" id="bossSudlanganWarningText"></p>
+          <label class="flex items-center gap-2 pt-1 cursor-pointer select-none">
+            <input id="chkBossConfirmSudlangan" type="checkbox" onchange="toggleBossApproveButton()" class="w-4 h-4 accent-red-600" />
+            <span class="text-xs font-extrabold text-red-800 underline">Мен ушбу маълумот билан шахсан танишиб чиқдим</span>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-extrabold uppercase text-emerald-800">Бўлим бошлиғи қарори:</span>
+            <p class="text-xs text-slate-600">Тасдиқлаш ёки қайтариш</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="returnToAdminForRevision()" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold cursor-pointer">↩️ Таҳрирга қайтариш</button>
+            <button id="btnBossFinalApprove" onclick="approveByBoss()" class="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-lg cursor-pointer">✅ ТАСДИҚЛАШ</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="a4PrintableSheet" class="a4-sheet">
+        <div id="watermarkOverlay" class="absolute inset-0 hidden items-center justify-center pointer-events-none z-0">
+          <span style="font-size: 100px; font-weight: 900; color: rgba(239, 68, 68, 0.15); transform: rotate(-35deg); letter-spacing: 5px;">QORALAMA</span>
+        </div>
+        <div id="a4InnerContent" class="relative z-10 w-full h-full outline-none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH MODAL (Ctrl+K) -->
+  <div id="globalSearchModal" class="fixed inset-0 z-[90] bg-slate-900/80 flex items-start justify-center pt-24 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+      <input id="globalSearchInput" type="text" placeholder="Ф.И.Ш ёки ПИНФЛ киритинг..." class="w-full px-6 py-4 text-lg font-bold border-b outline-none" oninput="executeGlobalSearch()" />
+      <div id="globalSearchResults" class="max-h-96 overflow-y-auto p-2"></div>
+    </div>
+  </div>
+
+  <!-- HIDDEN FILE INPUTS -->
+  <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackupJson(event)" hidden />
+
+  <!-- JS MODULES -->
+  <script src="src/js/01-config.js"></script>
+  <script src="src/js/02-crypto.js"></script>
+  <script src="src/js/03-audit.js"></script>
+  <script src="src/js/04-supabase.js"></script>
+  <script src="src/js/05-auth.js"></script>
+  <script src="src/js/06-notifications.js"></script>
+  <script src="src/js/07-render.js"></script>
+  <script src="src/js/08-candidates.js"></script>
+  <script src="src/js/09-doc.js"></script>
+  <script src="src/js/10-export.js"></script>
+  <script src="src/js/11-electron.js"></script>
+  <script src="src/js/12-ui.js"></script>
+  <script src="src/js/13-app.js"></script>
+  <script src="src/js/14-import.js"></script>
+  <script src="src/js/15-word-import.js"></script>
+</body>
+</html>
