@@ -62,8 +62,14 @@ function openEditorModal(id) {
   if (modal) modal.classList.remove("hidden");
 }
 
-function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val || ""; }
-function closeEditorModal() { document.getElementById("editorModal")?.classList.add("hidden"); }
+function setVal(id, val) { 
+  const el = document.getElementById(id); 
+  if (el) el.value = val || ""; 
+}
+
+function closeEditorModal() { 
+  document.getElementById("editorModal")?.classList.add("hidden"); 
+}
 
 function onSudlanganSelectChange() {
   const sel = document.getElementById("editSudlanganStatus");
@@ -86,7 +92,6 @@ function collectEditorFields(c) {
   c.signerPosition = getVal("editSignerPosition") || "Коррупцияга қарши курашиш бўлими бошлиғи";
   c.itsChecked = true;
   
-  // Eski xato bilan saqlangan bo'lsa, tozalaymiz
   if (c.fullDocHtml && (c.fullDocHtml.includes("I.Zaripov") || c.fullDocHtml.includes("Korrupsiya bolimi"))) {
     c.fullDocHtml = "";
   }
@@ -132,9 +137,10 @@ function getSignerPosition(c) {
   return sp;
 }
 
-function getApproverName(c) { return c?.bossApprovedBy || getSignerName(c); }
+function getApproverName(c) { 
+  return c?.bossApprovedBy || getSignerName(c); 
+}
 
-// QAYTARILDI: Hech bo'lmasa funksiya o'chib qolmasligi uchun joyida qoldirdik
 function qrShortHash(input) {
   const data = String(input) + "|" + QR_VERIFY_SECRET;
   let h1 = 2166136261, h2 = 5381;
@@ -153,7 +159,7 @@ function buildQrPayload(c) {
   const position = getSignerPosition(c);
   const signer = getSignerName(c);
   
-  // QR kodda chiqadigan matn
+  // QR kodda chiqadigan matn (Havola emas, oddiy matn)
   return `Reestr: ${reestrNo}\nLavozim: ${position}\nImzo: ${signer}\nHolat: TASDIQLANDI`;
 }
 
@@ -175,7 +181,6 @@ function generateBase64Qr(payload) {
 // =========================================================================
 
 function buildOfficialMalumotnomaHtml(c) {
-  // Eski saqlangan lotincha HTML bo'lsa, uni e'tiborsiz qoldiramiz
   if (c.fullDocHtml && c.fullDocHtml.trim() !== "" && !c.fullDocHtml.includes("I.Zaripov") && !c.fullDocHtml.includes("Korrupsiya bolimi")) {
     return c.fullDocHtml;
   }
