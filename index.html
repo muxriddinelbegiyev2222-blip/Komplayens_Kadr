@@ -75,9 +75,10 @@
 
 <body class="min-h-screen flex flex-col bg-slate-50 transition-colors">
 
-  <!-- LOGIN -->
+  <!-- LOGIN OYNASI -->
   <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      
       <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-5 text-white border-b border-blue-500/30 flex items-center justify-between">
         <div class="flex items-center gap-3.5">
           <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-extrabold text-xl text-white">
@@ -111,10 +112,10 @@
     </div>
   </div>
 
-  <!-- HEADER -->
+  <!-- HEADER (Yuqori qism) -->
   <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 no-print shadow-md">
+    
     <div class="w-full px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-      
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center font-extrabold text-blue-200 text-base">
           КК
@@ -176,6 +177,7 @@
       </div>
       
       <div class="grid grid-cols-4 md:grid-cols-9 gap-2 w-full px-2 pb-1" id="mainNavGrid">
+        
         <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1">
           <span class="text-base">📊</span> Статистика
         </button>
@@ -211,11 +213,12 @@
         <button id="tabBtnSettings" onclick="switchTab('settings')" class="nav-card rounded-xl p-2 text-[11px] font-bold text-white flex flex-col items-center justify-center gap-1" style="display:none;">
           <span class="text-base">💾</span> Созламалар
         </button>
+
       </div>
     </div>
   </header>
 
-  <!-- NOTIFICATIONS -->
+  <!-- NOTIFICATIONS PANEL -->
   <div id="notificationPanel" class="fixed top-24 right-4 z-[80] bg-white rounded-2xl shadow-2xl border border-slate-200 w-96 max-h-[600px] overflow-hidden hidden">
     <div class="bg-blue-900 text-white px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -230,11 +233,10 @@
     </div>
     <div id="notificationList" class="overflow-y-auto max-h-[520px] p-3"></div>
   </div>
-
-  <!-- MAIN -->
+    <!-- MAIN QISM (Barcha sahifalar) -->
   <main class="w-full flex-1 px-4 py-4 space-y-4 no-print">
 
-    <!-- KPI CARDS -->
+    <!-- KPI KARTOCHKALAR -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
         <span class="text-xs font-bold text-slate-500 uppercase">Жами базада</span>
@@ -273,7 +275,7 @@
       </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD (STATISTIKA) -->
     <section id="viewDashboard" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -316,6 +318,7 @@
     <section id="viewFototablitsa" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
+        <!-- YANGI NOMZOD QO'SHISH FORMASI -->
         <div id="addCandidatePanel" class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm h-fit">
           <div class="border-b border-slate-200 pb-3 mb-3">
             <span class="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-900">Янги сўров киритиш</span>
@@ -437,6 +440,7 @@
           </form>
         </div>
 
+        <!-- FOTOTABLITSA JADVALI -->
         <div id="fototablitsaContainer" class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex flex-wrap gap-2 mb-4">
             <button id="subtabNew" onclick="switchSubTab('new')" class="subtab-card flex-1 min-w-[120px] p-2.5 rounded-xl text-xs font-bold text-slate-700">
@@ -502,7 +506,7 @@
       </div>
     </section>
 
-    <!-- HIRED (YANGI BO'LIM) -->
+    <!-- HIRED (ISHGA QABUL QILINGANLAR) -->
     <section id="viewHired" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-emerald-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-emerald-200">
@@ -532,7 +536,7 @@
       </div>
     </section>
 
-    <!-- FORMER -->
+    <!-- FORMER (SOBIQ XODIMLAR) -->
     <section id="viewFormer" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-purple-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -566,7 +570,7 @@
       </div>
     </section>
 
-    <!-- ITS -->
+    <!-- ITS (SUDLANGANLIK TEKSHIRUVI) -->
     <section id="viewIts" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -608,7 +612,7 @@
       </div>
     </section>
 
-    <!-- NEGATIVE -->
+    <!-- NEGATIVE (SUDLANGANLAR) -->
     <section id="viewNegative" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border-2 border-red-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-red-200">
@@ -641,7 +645,7 @@
       </div>
     </section>
 
-    <!-- DATABASE -->
+    <!-- DATABASE (YAGONA BAZA) -->
     <section id="viewDatabase" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200">
@@ -733,7 +737,7 @@
       </div>
     </section>
 
-    <!-- AUDIT -->
+    <!-- AUDIT (AUDIT LOG) -->
     <section id="viewAudit" class="space-y-4 hidden">
       <div class="bg-white rounded-2xl border border-indigo-300 p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-indigo-200">
@@ -766,9 +770,10 @@
       </div>
     </section>
 
-    <!-- SETTINGS -->
+    <!-- SETTINGS (SOZLAMALAR) -->
     <section id="viewSettings" class="space-y-4 hidden">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
         <div class="lg:col-span-6 bg-white rounded-2xl border-2 border-emerald-400 p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-900">🌐 Realtime + D:\ Диск</span>
@@ -862,6 +867,7 @@
     </section>
   </main>
 
+  <!-- MODALLAR -->
   <!-- EDITOR MODAL -->
   <div id="editorModal" class="fixed inset-0 z-[60] bg-slate-900/80 flex items-center justify-center p-4 hidden no-print">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden text-slate-900">
@@ -1038,6 +1044,7 @@
   <!-- DOC MODAL (Asosiy Hujjat Oynasi) -->
   <div id="docModal" class="fixed inset-0 z-[80] bg-slate-900/85 overflow-y-auto p-4 md:p-8 hidden">
     <div class="max-w-[210mm] mx-auto relative">
+      
       <div class="bg-blue-900 text-white rounded-2xl px-5 py-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 border border-blue-700 shadow-xl no-print">
         <div class="flex items-center gap-3">
           <span id="docModalStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">...</span>
@@ -1091,7 +1098,7 @@
   <!-- HIDDEN FILE INPUTS -->
   <input type="file" id="restoreFileInput" accept=".json" onchange="restoreBackupJson(event)" hidden />
 
-  <!-- JS MODULES -->
+  <!-- JS MODULES (Yo'llar src/ ga o'zgartirilgan) -->
   <script src="src/js/01-config.js"></script>
   <script src="src/js/02-crypto.js"></script>
   <script src="src/js/03-audit.js"></script>
