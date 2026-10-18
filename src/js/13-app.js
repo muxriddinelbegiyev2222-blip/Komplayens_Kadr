@@ -37,50 +37,6 @@ async function initApp() {
     if (urlInput) urlInput.value = cfg.url;
     if (keyInput) keyInput.value = cfg.key;
 
-    // =========================================================================
-    // 🆕 1. QR KOD TEKSHIRUVI (LOGINDAN OLDIN ISHLAYDI)
-    // =========================================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchQuery = urlParams.get('search');
-
-    if (searchQuery) {
-      // Login oynasini yashirish
-      const loginOverlay = document.getElementById("loginOverlay");
-      if (loginOverlay) loginOverlay.classList.add("hidden");
-
-      if (typeof showToast === "function") {
-        showToast("⏳ QR код орқали маълумот текширилмоқда...", "info");
-      }
-
-      // Yangi qurilma bo'lgani uchun ma'lumotlarni Supabase'dan yuklash
-      if (typeof pullFromSupabase === "function") {
-        await pullFromSupabase(false);
-      }
-
-      // Kerakli nomzodni topish
-      const foundCand = appState.candidates.find(c => 
-        c.reestrNo === searchQuery || c.pinfl === searchQuery
-      );
-
-      if (foundCand) {
-        // Hujjatni ochish
-        if (typeof openDocModal === "function") {
-          openDocModal(foundCand.id);
-        }
-        // URL dan ?search=... qismini tozalash
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else {
-        alert("⚠️ Ушбу QR код бўйича маълумот топилмади. Илтимос, тизимга логин билан киринг.");
-        if (typeof showLoginScreen === "function") showLoginScreen();
-      }
-      
-      // QR tekshiruvi tugagach, initApp shu yerda to'xtaydi
-      return; 
-    }
-
-    // =========================================================================
-    // 2. ODDIY ISHLASH TARTIBI (Agar QR kod bo'lmasa, hammasi avvalgidek)
-    // =========================================================================
     const hasSession = checkSession();
 
     if (typeof initRealtime === "function") {
