@@ -1,6 +1,6 @@
 // =========================================================================
-// 08-CANDIDATES.JS — CRUD + Image Resize + Full Date
-// «КОМПЛАЕНС-КАДР» v11.7
+// 08-CANDIDATES.JS — CRUD + HR Logic (Hire / Reject)
+// «КОМПЛАЕНС-КАДР» v11.9
 // =========================================================================
 
 let currentPhotoDataUrl = null;
@@ -39,11 +39,8 @@ async function loadPhotoFromFile(file, zoneId) {
           if (typeof showToast === "function") showToast("⏳ Расм юкланмоқда...", "info");
           if (typeof uploadPhotoToSupabase === "function") {
             const url = await uploadPhotoToSupabase(blob, file.name);
-            if (url) { showPhotoPreview(url, zoneId); if (typeof showToast === "function") showToast("✅ Расм юкланди", "success"); } 
-            else { if (typeof showToast === "function") showToast("❌ Расм юклашда хато", "error"); }
-          } else {
-            showPhotoPreview(canvas.toDataURL("image/jpeg", 0.7), zoneId);
-          }
+            if (url) { showPhotoPreview(url, zoneId); } else { showPhotoPreview(canvas.toDataURL("image/jpeg", 0.7), zoneId); }
+          } else { showPhotoPreview(canvas.toDataURL("image/jpeg", 0.7), zoneId); }
           resolve();
         }, "image/jpeg", 0.8);
       };
@@ -81,7 +78,7 @@ async function loadPhotoFromUrl(url, zoneId) {
       reader.onload = (ev) => { showPhotoPreview(ev.target.result, zoneId); resolve(); };
       reader.readAsDataURL(blob);
     });
-  } catch (e) { showToast("❌ Расмни юклаб бўлмади. Файлни танланг.", "warning"); }
+  } catch (e) { showToast("❌ Расмни юклаб бўлмади.", "warning"); }
 }
 function showPhotoPreview(dataUrl, zoneId) {
   const zone = document.getElementById(zoneId);
@@ -102,10 +99,7 @@ function clearPhoto(zoneId) {
   zone.querySelector(".drop-zone-clear").classList.add("hidden");
 }
 function triggerPhotoFileSelect(zoneId) { const id = zoneId === "editCandPhotoDropZone" ? "editCandPhotoFile" : "inpPhotoFile"; document.getElementById(id)?.click(); }
-async function handlePhotoFileInput(e, zoneId) {
-  const file = e.target.files?.[0]; if (!file) return;
-  await loadPhotoFromFile(file, zoneId); e.target.value = "";
-}
+async function handlePhotoFileInput(e, zoneId) { const file = e.target.files?.[0]; if (!file) return; await loadPhotoFromFile(file, zoneId); e.target.value = ""; }
 function setupPhotoPasteListener() {
   document.addEventListener("paste", (e) => {
     const editModal = document.getElementById("editCandidateModal");
@@ -258,7 +252,6 @@ function handleCandidateFormSubmit(e) {
   fio = cleanText(latToCyr(fio)); birthPlace = cleanText(latToCyr(birthPlace)); currentJob = cleanText(latToCyr(currentJob)); 
   jobSince = jobSince.replace(/[^\d.]/g, "");
 
-  // 🆕 AVTOMATIK MATN GENERATSIYASI
   const autoPara2 = `У миллати ўзбек, маълумоти олий, оилали. Диний эътиқодига кўра ислом динига амал қилади. ДЭО (дарҳақиқат, экстремистик оқимларга) аъзо эмас.`;
   const autoPara3 = `Ҳозирда ${region} ${currentJob} лавозимида фаолият кўрсатиб келмоқда. Ўз вазифаларини бажаришда меҳнат интизомига қатъий риоя қилади, ўз ишига масъулиятли ва ташаббускор.`;
   const autoPara4 = `Шахсий ва бошқарув фазилатларига кўра, жамоада ўзаро ҳурмат ва ҳамжиҳатлик муҳитини ярата олади. Вазифаларни бажаришда тадбиркор ва изланувчан, юқори натижаларга эришишга интилади.`;
@@ -266,7 +259,8 @@ function handleCandidateFormSubmit(e) {
   let photoDataUrl = currentPhotoDataUrl || makeAvatarSvg(((fio.split(" ")[0] || "Х")[0] + (fio.split(" ")[1] || "А")[0]).toUpperCase(), "#4a6fa5");
   const now = getNow(); const num = String(appState.candidates.length + 1).padStart(2, "0"); const prefix = recordType === "former" ? "ККБ-СХ-" : "ККБ-"; const reestrNo = `${prefix}${now.year}/${now.month}-${num}`; const heading = getFinalHeading();
   
-  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "admin_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: autoPara2, para3: autoPara3, para4: autoPara4, signerName: "I.Zaripov", signerPosition: "Korrupsiya bolimi boshlig'i", fullDocHtml: "", korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
+  // YANGI HOLAT: workflowStage: "hr_review" (O'rganish jarayonida)
+  const newCand = { id: "CAND-" + Date.now(), reestrNo, createdAt: now.date, createdTime: now.time, createdBy: currentUser?.login || "unknown", createdByName: currentUser?.name || "", year: now.year, month: now.month, recordType, region, category, districtHeading: heading, appointType, fio, birthDate, birthPlace, passSeries, passNum, pinfl, currentJob, jobSince, photo: photoDataUrl, itsChecked: false, sudlanganStatus: "clean", sudlanganText: "муқаддам судланмаган", workflowStage: "hr_review", eduText: "миллати ўзбек, оилали, маълумоти олий.", para2: autoPara2, para3: autoPara3, para4: autoPara4, signerName: "И.Зарипов", signerPosition: "Коррупцияга қарши курашиш бўлими бошлиғи", fullDocHtml: "", korrupsiyaViewedAt: "", sentToBossAt: "", sentToBossTime: "", sentToBossBy: "", sentToBossByName: "", bossViewedAt: "", bossApprovedAt: "", bossApprovedBy: "", bossReturnedAt: "", bossReturnReason: "", approvedDate: "", lastEditedAt: "", lastEditedBy: "", editHistory: [] };
   
   appState.candidates.unshift(newCand); if (typeof logCandidateAdded === "function") logCandidateAdded(newCand); if (typeof addNotification === "function") addNotification({ type: "new_candidate", candidateId: newCand.id, candidateName: newCand.fio, message: "🆕 Янги ходим киритилди", detail: `${newCand.region} | ${newCand.category}`, forRoles: [ROLES.KORRUPSIYA, ROLES.RAHBAR] });
   
@@ -287,8 +281,6 @@ function setValueIfExists(id, val) { const el = document.getElementById(id); if 
 function saveEditedCandidate() {
   if (!hasPermission("edit_candidate")) return alert("Рухсат йўқ!"); const c = appState.candidates.find(x => x.id === activeCandidateId); if (!c) return;
   let nFio = document.getElementById("editCandFio").value.trim(); const nPinfl = document.getElementById("editCandPinfl").value.trim(); const nPs = document.getElementById("editCandPassSeries").value.trim().toUpperCase(); const nPn = document.getElementById("editCandPassNum").value.trim(); const nBd = document.getElementById("editCandBirthDate").value.trim(); let nBp = document.getElementById("editCandBirthPlace").value.trim(); let nCj = document.getElementById("editCandCurrentJob").value.trim(); let nJs = document.getElementById("editCandJobSince").value.trim(); const nDist = document.getElementById("editCandDistrict").value.trim(); const nReg = document.getElementById("editCandRegion").value; const nCat = document.getElementById("editCandCategory").value; const nApp = document.getElementById("editCandAppointType").value;
-  const nSignerName = document.getElementById("editSignerName").value.trim();
-  const nSignerPosition = document.getElementById("editSignerPosition").value.trim();
   
   nFio = cleanText(latToCyr(nFio)); nBp = cleanText(latToCyr(nBp)); nCj = cleanText(latToCyr(nCj)); nJs = nJs.replace(/[^\d.]/g, "");
   
@@ -296,13 +288,12 @@ function saveEditedCandidate() {
   const dup = appState.candidates.find(x => x.pinfl === nPinfl && x.id !== c.id); if (dup) return alert(`⚠️ ПИНФЛ бошқа номзодда: ${dup.fio}`);
   
   const changes = []; const now = getNow(); const ed = currentUser?.login || "unknown"; const edN = currentUser?.name || "";
-  [{f:"Ф.И.Ш.",o:c.fio,n:nFio},{f:"ПИНФЛ",o:c.pinfl,n:nPinfl},{f:"Лавозим",o:c.currentJob,n:nCj},{f:"Иш вақти",o:c.jobSince,n:nJs},{f:"Ҳудуд",o:c.region,n:nReg},{f:"Сарлавҳа",o:c.districtHeading,n:nDist},{f:"Tasdiqlovchi",o:c.signerName,n:nSignerName}].forEach(x => { if (x.o !== x.n) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: x.f, oldValue: x.o, newValue: x.n}); });
+  [{f:"Ф.И.Ш.",o:c.fio,n:nFio},{f:"ПИНФЛ",o:c.pinfl,n:nPinfl},{f:"Лавозим",o:c.currentJob,n:nCj},{f:"Иш вақти",o:c.jobSince,n:nJs},{f:"Ҳудуд",o:c.region,n:nReg},{f:"Сарлавҳа",o:c.districtHeading,n:nDist}].forEach(x => { if (x.o !== x.n) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: x.f, oldValue: x.o, newValue: x.n}); });
   if (currentEditPhotoDataUrl && currentEditPhotoDataUrl !== c.photo) changes.push({at: now.dateTime, by: `${edN} (${ed})`, field: "Расм", oldValue: "[эски]", newValue: "[янги]"});
   
   if (changes.length === 0) return alert("Ўзгариш йўқ.");
   
   c.fio = nFio; c.pinfl = nPinfl; c.passSeries = nPs; c.passNum = nPn; c.birthDate = nBd; c.birthPlace = nBp; c.currentJob = nCj; c.jobSince = nJs; c.region = nReg; c.category = nCat; c.appointType = nApp; c.districtHeading = nDist; if (currentEditPhotoDataUrl) c.photo = currentEditPhotoDataUrl;
-  c.signerName = nSignerName; c.signerPosition = nSignerPosition;
   c.editHistory = (c.editHistory || []).concat(changes); c.lastEditedAt = now.dateTime; c.lastEditedBy = ed;
   if (typeof addAuditLog === "function") addAuditLog("CANDIDATE_EDITED", `${c.id} | ${c.fio}`);
   
@@ -326,8 +317,41 @@ function quickSaveItsRow(id, notify = false) {
 
 function bulkSendCleanToBoss() {
   if (!hasPermission("send_to_boss")) return alert("Рухсат йўқ!"); let count = 0;
-  appState.candidates.forEach(c => { if (c.workflowStage === "admin_review" && c.sudlanganStatus === "clean" && c.itsChecked) { if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); c.workflowStage = "boss_review"; count++; } });
+  appState.candidates.forEach(c => { if (c.workflowStage === "hr_review" && c.sudlanganStatus === "clean" && c.itsChecked) { if (typeof logSentToBoss === "function") logSentToBoss(c, "Бўлим бошлиғи"); c.workflowStage = "boss_review"; count++; } });
   if (count === 0) return showToast("Тоза чиққан номзод йўқ", "warning"); saveState(); renderAll(); showToast(`📤 ${count} нафар юборилди`, "success");
+}
+
+// =========================================================================
+// YANGI MANTIQ: HR FINAL DECISION (HIRE / REJECT)
+// =========================================================================
+
+function hrHireCandidate(id) {
+  if (!hasPermission("approve")) return alert("Рухсат йўқ!");
+  const c = appState.candidates.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`«${c.fio}» ни ишга қабул қилишни тасдиқлайсизми?`)) return;
+  
+  c.workflowStage = "hired";
+  c.approvedDate = getNow().date; 
+  if (typeof logApproved === "function") logApproved(c, "HR Final Decision");
+  saveState();
+  renderAll();
+  closeDocModal();
+  showToast(`✅ «${c.fio}» ишга қабул қилинди!`, "success");
+}
+
+function hrRejectCandidate(id) {
+  if (!hasPermission("approve")) return alert("Рухсат йўқ!");
+  const c = appState.candidates.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`«${c.fio}» ни бекор қилишни тасдиқлайсизми?`)) return;
+  
+  c.workflowStage = "rejected";
+  if (typeof addAuditLog === "function") addAuditLog("CANDIDATE_REJECTED", `${c.id} | ${c.fio}`);
+  saveState();
+  renderAll();
+  closeDocModal();
+  showToast(`❌ «${c.fio}» бекор қилинди.`, "warning");
 }
 
 function deleteUser(idx) {
