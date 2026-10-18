@@ -198,7 +198,8 @@ function buildOfficialMalumotnomaHtml(c) {
 
   let qrHtml = "";
   if (c.workflowStage === "approved") {
-    const qrPayload = buildQrPayload(c);
+            const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
+        const qrPayload = `${baseUrl}?search=${encodeURIComponent(c.reestrNo)}`;
     const qrDataUrl = generateBase64Qr(qrPayload);
     if (qrDataUrl) {
       qrHtml = `<img src="${qrDataUrl}" style="width:90px; height:90px; display:block; margin:5px auto 0 auto;" draggable="true" title="QR Kodni ko'chirish mumkin" />`;
