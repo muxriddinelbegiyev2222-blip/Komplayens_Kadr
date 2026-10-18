@@ -1,6 +1,6 @@
 // =========================================================================
 // 09-DOC.JS — A4 Маълумотнома, Таҳрир, Тасдиқлаш, QR КОД
-// «КОМПЛАЕНС-КАДР» v11.9 FINAL
+// «КОМПЛАЕНС-КАДР» v12.0 FINAL (Тўлиқ тикланди)
 // =========================================================================
 
 function openEditorModal(id) {
@@ -36,7 +36,7 @@ function openEditorModal(id) {
   setVal("editPara3", c.para3);
   setVal("editPara4", c.para4);
   
-  // 🆕 MAJBURIY KIRILL QIYMATLARI
+  // QAT'IY KIRILL QIYMATLARI
   let sn = c.signerName || "";
   let sp = c.signerPosition || "";
   
@@ -141,7 +141,6 @@ function getApproverName(c) {
   return c?.bossApprovedBy || getSignerName(c); 
 }
 
-// 🆕 QR ICHIDA HAVOLA (URL) YASHIRIN
 function buildQrPayload(c) {
   const baseUrl = "https://muxriddinelbegiyev2222-blip.github.io/Komplayens_Kadr/";
   const searchQuery = encodeURIComponent(c.reestrNo);
@@ -165,7 +164,6 @@ function generateBase64Qr(payload) {
 // =========================================================================
 
 function buildOfficialMalumotnomaHtml(c) {
-  // Agar qo'lda tahrirlanib, to'g'ri saqlangan bo'lsa, o'shani qaytaramiz
   if (c.fullDocHtml && c.fullDocHtml.trim() !== "" && !c.fullDocHtml.includes("I.Zaripov") && !c.fullDocHtml.includes("Korrupsiya bolimi")) {
     return c.fullDocHtml;
   }
@@ -188,7 +186,7 @@ function buildOfficialMalumotnomaHtml(c) {
   }
 
   let qrHtml = "";
-  if (c.workflowStage === "hired" || c.workflowStage === "hr_final") {
+  if (c.workflowStage === "hired" || c.workflowStage === "hr_final" || c.workflowStage === "approved") {
     const qrPayload = buildQrPayload(c);
     const qrDataUrl = generateBase64Qr(qrPayload);
     if (qrDataUrl) {
@@ -196,7 +194,7 @@ function buildOfficialMalumotnomaHtml(c) {
     }
   }
 
-  const stampHtml = (c.workflowStage === "hired" || c.workflowStage === "hr_final")
+  const stampHtml = (c.workflowStage === "hired" || c.workflowStage === "hr_final" || c.workflowStage === "approved")
     ? `<div style="border:2px solid #047857;color:#047857;padding:6px 10px;border-radius:8px;font-size:10pt;font-weight:bold;text-align:center; page-break-inside:avoid; width:120px; margin:0 auto;">
         ТАСДИҚЛАНДИ<br/>
         <span style="font-size:8pt;font-weight:normal;">Ўрганиб чиқилди • ${c.approvedDate || c.createdAt}</span>
@@ -217,7 +215,6 @@ function buildOfficialMalumotnomaHtml(c) {
         ${p4Parts.map(line => `<p>${line}</p>`).join("")}
       </div>
 
-      <!-- 3 USTUNLI QAT'IY JADVAL (Ustma-ust tushishni oldini oladi) -->
       <table style="width:100%; margin-top:20pt; border-collapse:collapse; page-break-inside:avoid;">
         <tr>
           <td style="width:35%; text-align:left; vertical-align:bottom; padding-bottom:10px;">
@@ -228,7 +225,6 @@ function buildOfficialMalumotnomaHtml(c) {
           </td>
           <td style="width:35%; text-align:center; vertical-align:bottom; padding-bottom:10px;">
             <div style="font-size:12pt; font-weight:bold; margin-bottom:2px;">${getSignerName(c)}</div>
-            <!-- "(imzo)" YOZUVI OLIB TASHLANDI -->
           </td>
         </tr>
       </table>
@@ -240,21 +236,21 @@ function buildOfficialMalumotnomaHtml(c) {
     </div>
   `;
 }
+
 function openDocModal(id) {
   try {
     const c = appState.candidates.find(x => x.id === id);
     if (!c) return alert("Номзод топилмади!");
 
-    if ((currentRole === ROLES.KUZATUVCHI) && c.workflowStage !== "hired" && c.workflowStage !== "hr_final") {
+    if (currentRole === ROLES.KUZATUVCHI && c.workflowStage !== "hired" && c.workflowStage !== "approved" && c.workflowStage !== "hr_final") {
       return alert("Ушбу номзод ҳали «Ўрганиш жараёнида». Бўлим бошлиғи тасдиқлагандан сўнг Маълумотнома очилади.");
     }
 
     activeCandidateId = id;
 
-    // 🆕 QORALAMA SUV BELGISI (Watermark)
     const watermark = document.getElementById("watermarkOverlay");
     if (watermark) {
-      if (c.workflowStage !== "hired" && c.workflowStage !== "hr_final") {
+      if (c.workflowStage !== "hired" && c.workflowStage !== "approved") {
         watermark.classList.remove("hidden");
         watermark.classList.add("flex");
       } else {
@@ -263,11 +259,9 @@ function openDocModal(id) {
       }
     }
 
-    // 🆕 HUJJAT ICHINI TO'LDIRISH
     const content = document.getElementById("a4InnerContent");
     if (content) {
       content.innerHTML = buildOfficialMalumotnomaHtml(c);
-      // Kadrlar uchun matnni tahrirlashni bloklash
       if (currentRole === ROLES.KADR || c.workflowStage === "hired") {
         content.setAttribute("contenteditable", "false");
       } else {
@@ -278,14 +272,13 @@ function openDocModal(id) {
     const reestrInfo = document.getElementById("docModalReestrInfo");
     if (reestrInfo) reestrInfo.textContent = `Реестр: ${c.reestrNo} | ПИНФЛ: ${c.pinfl}`;
 
-    // 🆕 HOLAT BADGE (Status)
     const badge = document.getElementById("docModalStatusBadge");
     if (badge) {
-      if (c.workflowStage === "hired") {
+      if (c.workflowStage === "hired" || c.workflowStage === "approved") {
         badge.textContent = "✓ Ишга қабул қилинди";
         badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
       } else if (c.workflowStage === "hr_final") {
-        badge.textContent = "⏳ Тасдиқлаш жараёнида";
+        badge.textContent = "⏳ HR қарори кутилмоқда";
         badge.className = "px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-400/30";
       } else {
         badge.textContent = "⏳ Ўрганиш жараёнида";
@@ -293,18 +286,15 @@ function openDocModal(id) {
       }
     }
 
-    // 🆕 TUGMALARNI ROLGA QARAB SHAKLLANTIRISH
     const actionBtns = document.getElementById("docModalActionButtons");
     if (actionBtns) {
       let html = `<button onclick="closeDocModal()" class="w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-base flex items-center justify-center cursor-pointer ml-2">✕</button>`;
       html = `<button onclick="printCurrentDocA4()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-extrabold shadow cursor-pointer">🖨 Chop etish</button>` + html;
 
       if (currentRole === ROLES.KADR && c.workflowStage === "hr_final") {
-        // KADRLAR UCHUN YAKUNIY QAROR TUGMALARI
         html = `<button onclick="hrHireCandidate('${c.id}')" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer shadow">✅ Ишга қабул қилиш</button>
                 <button onclick="hrRejectCandidate('${c.id}')" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold cursor-pointer shadow">❌ Бекор қилиш</button>` + html;
       } else if (currentRole !== ROLES.KADR && c.workflowStage !== "hired") {
-        // KORRUPSIYA VA ADMIN UCHUN TAHRIRLASH TUGMALARI
         html = `<button onclick="saveDirectDocEdits()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer shadow">💾 Saqlash</button>
                 <button onclick="resetDocEdits()" class="px-3.5 py-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer shadow">↩️ Asl holat</button>
                 <button onclick="copyDocText()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">📋 Nusxalash</button>
@@ -313,7 +303,6 @@ function openDocModal(id) {
       actionBtns.innerHTML = html;
     }
 
-    // 🆕 BOSHLIQ PANELI
     const bossPanel = document.getElementById("bossActionPanel");
     const warnBox = document.getElementById("bossSudlanganWarningBox");
     const chk = document.getElementById("chkBossConfirmSudlangan");
@@ -371,13 +360,12 @@ function toggleBossApproveButton() {
   else { btnApprove.disabled = true; btnApprove.className = "px-5 py-2.5 rounded-xl bg-slate-400 text-white text-xs font-extrabold cursor-not-allowed"; }
 }
 
-// Boshliq tasdiqlaganda status "hr_final" bo'ladi
 function approveByBoss() {
   const c = appState.candidates.find(x => x.id === activeCandidateId);
   if (!c) return;
   if (!hasPermission("approve")) return alert("Рухсат йўқ!");
   const now = getNow();
-  c.workflowStage = "hr_final"; 
+  c.workflowStage = "hr_final"; // Boshliq tasdiqlagach HR ga o'tadi
   c.bossApprovedAt = now.dateTime;
   c.bossApprovedBy = currentUser?.name || getSignerName(c);
   if (typeof logApproved === "function") logApproved(c, c.bossApprovedBy);
