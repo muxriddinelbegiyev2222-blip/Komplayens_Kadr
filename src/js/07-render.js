@@ -1,6 +1,6 @@
 // =========================================================================
 // 07-RENDER.JS — Жадвалларни, KPI ва Статистикани экранга чиқариш
-// «КОМПЛАЕНС-КАДР» v11.9 FINAL
+// «КОМПЛАЕНС-КАДР» v12.0 FINAL
 // =========================================================================
 
 let activeSubTab = "new"; // new, in_process, approved, rejected
@@ -17,7 +17,6 @@ function renderAll() {
   if (typeof renderAuditLog === "function") renderAuditLog();
   if (typeof renderUsersTable === "function") renderUsersTable();
   if (typeof updateSubTabCounts === "function") updateSubTabCounts();
-  if (typeof applyPagination === "function") applyPagination();
   
   // 3D Menyularni aktiv qilish
   const activeTab = typeof activeMainTab !== 'undefined' ? activeMainTab : 'fototablitsa';
@@ -33,24 +32,25 @@ function renderKPI() {
   const current = appState.candidates.filter(c => c.recordType === "current").length;
   const former = appState.candidates.filter(c => c.recordType === "former").length;
   
-  // O'rganish jarayonida (admin_review, boss_review, hr_final)
   const inProcess = appState.candidates.filter(c => 
     c.workflowStage === "admin_review" || 
+    c.workflowStage === "hr_review" || 
     c.workflowStage === "boss_review" || 
     c.workflowStage === "hr_final"
   ).length;
   
-  // Ishga qabul qilinganlar
-  const approved = appState.candidates.filter(c => c.workflowStage === "hired").length;
-  
-  // Sudlanganlar
+  const hired = appState.candidates.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
+  const rejected = appState.candidates.filter(c => c.workflowStage === "rejected").length;
   const sudlangan = appState.candidates.filter(c => c.sudlanganStatus === "sudlangan").length;
 
   if (document.getElementById("kpiTotal")) document.getElementById("kpiTotal").textContent = total;
   if (document.getElementById("kpiCurrent")) document.getElementById("kpiCurrent").textContent = current;
   if (document.getElementById("kpiFormer")) document.getElementById("kpiFormer").textContent = former;
   if (document.getElementById("kpiInProcess")) document.getElementById("kpiInProcess").textContent = inProcess;
-  if (document.getElementById("kpiApproved")) document.getElementById("kpiApproved").textContent = approved;
+  
+  // Yangi kartochkalar uchun
+  if (document.getElementById("kpiHired")) document.getElementById("kpiHired").textContent = hired;
+  if (document.getElementById("kpiRejected")) document.getElementById("kpiRejected").textContent = rejected;
   if (document.getElementById("kpiSudlangan")) document.getElementById("kpiSudlangan").textContent = sudlangan;
 }
 
@@ -60,9 +60,9 @@ function renderKPI() {
 function updateSubTabCounts() {
   const list = appState.candidates.filter(c => c.recordType === "current");
   
-  const countNew = list.filter(c => c.workflowStage === "admin_review").length;
+  const countNew = list.filter(c => c.workflowStage === "admin_review" || c.workflowStage === "hr_review").length;
   const countInProcess = list.filter(c => c.workflowStage === "boss_review" || c.workflowStage === "hr_final").length;
-  const countApproved = list.filter(c => c.workflowStage === "hired").length;
+  const countApproved = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
   const countRejected = list.filter(c => c.workflowStage === "rejected").length;
 
   if (document.getElementById("subtabNewCount")) document.getElementById("subtabNewCount").textContent = countNew;
@@ -87,9 +87,9 @@ function getFilteredCandidates(recordType, stageFilter = null) {
     if (recordType === "current" && cat !== "ALL" && c.category !== cat) return false;
     
     if (stageFilter) {
-      if (stageFilter === "new" && c.workflowStage !== "admin_review") return false;
+      if (stageFilter === "new" && c.workflowStage !== "admin_review" && c.workflowStage !== "hr_review") return false;
       if (stageFilter === "in_process" && c.workflowStage !== "boss_review" && c.workflowStage !== "hr_final") return false;
-      if (stageFilter === "approved" && c.workflowStage !== "hired") return false;
+      if (stageFilter === "approved" && c.workflowStage !== "hired" && c.workflowStage !== "approved") return false;
       if (stageFilter === "rejected" && c.workflowStage !== "rejected") return false;
     }
     return true;
@@ -97,7 +97,7 @@ function getFilteredCandidates(recordType, stageFilter = null) {
 }
 
 // =========================================================================
-// ФОТОТАБЛИЦА ЖАДВАЛИ
+// ФОТОТАБЛИЦА ЖАДВАЛИ (Tugmalar bilan)
 // =========================================================================
 function renderFototablitsa() {
   const tbody = document.getElementById("fototablitsaBody");
@@ -114,22 +114,31 @@ function renderFototablitsa() {
   list.forEach((c, i) => {
     const tr = document.createElement("tr");
     
-    // Tugmalarni shakllantirish
+    // 🆕 TUGMALARNI SHAKLLANTIRISH (Qizil chizilgan joylar uchun)
     let actionBtns = "";
-    if (c.workflowStage === "admin_review") {
+    
+    if (c.workflowStage === "admin_review" || c.workflowStage === "hr_review") {
+      actionBtns = `<button onclick="editCandidate('${c.id}')" class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Tahrirlash</button>`;
+    } 
+    else if (c.workflowStage === "boss_review") {
+      actionBtns = `<button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>`;
+    } 
+    else if (c.workflowStage === "hr_final") {
+      // Komplayens va Boshliq tasdiqlagach, HR ga qaror qabul qilish tugmalari chiqadi
       actionBtns = `
-        <button onclick="editCandidate('${c.id}')" class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Tahrirlash</button>
+        <div class="flex flex-col gap-1 items-center">
+          <button onclick="openDocModal('${c.id}')" class="w-full px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
+          <button onclick="hrHireCandidate('${c.id}')" class="w-full px-2 py-1 bg-emerald-500 text-white rounded text-[10px] font-bold shadow">Ishga qabul qilish</button>
+          <button onclick="hrRejectCandidate('${c.id}')" class="w-full px-2 py-1 bg-red-500 text-white rounded text-[10px] font-bold shadow">Bekor qilish</button>
+        </div>
       `;
-    } else if (c.workflowStage === "boss_review" || c.workflowStage === "hr_final") {
+    } 
+    else if (c.workflowStage === "hired" || c.workflowStage === "approved") {
       actionBtns = `
         <button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
       `;
-    } else if (c.workflowStage === "hired") {
-      actionBtns = `
-        <button onclick="hrRejectCandidate('${c.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">Bekor qilish</button>
-        <button onclick="openDocModal('${c.id}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">Ma'lumotnoma</button>
-      `;
-    } else if (c.workflowStage === "rejected") {
+    } 
+    else if (c.workflowStage === "rejected") {
       actionBtns = `
         <button onclick="hrHireCandidate('${c.id}')" class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Qabul qilish</button>
       `;
@@ -149,7 +158,7 @@ function renderFototablitsa() {
       </td>
       <td class="text-center">
         ${getFinalResultPlainText(c)}<br/>
-        <div class="flex justify-center gap-1 mt-1 flex-wrap">
+        <div class="flex justify-center mt-1">
           ${actionBtns}
         </div>
       </td>
@@ -165,7 +174,7 @@ function renderHired() {
   const tbody = document.getElementById("hiredTableBody");
   if (!tbody) return;
 
-  const list = appState.candidates.filter(c => c.workflowStage === "hired" && c.recordType === "current");
+  const list = appState.candidates.filter(c => (c.workflowStage === "hired" || c.workflowStage === "approved") && c.recordType === "current");
   tbody.innerHTML = "";
 
   if (list.length === 0) {
@@ -308,8 +317,8 @@ function renderDatabase() {
   if (cat !== "ALL") list = list.filter(c => c.category === cat);
   if (yr !== "ALL") list = list.filter(c => c.year === yr);
   if (mo !== "ALL") list = list.filter(c => c.month === mo);
-  if (st === "approved") list = list.filter(c => c.workflowStage === "hired");
-  if (st === "in_process") list = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected");
+  if (st === "approved") list = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved");
+  if (st === "in_process") list = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected" && c.workflowStage !== "approved");
   if (q) list = list.filter(c => c.fio.toLowerCase().includes(q) || c.pinfl.includes(q));
 
   tbody.innerHTML = "";
@@ -340,7 +349,6 @@ function renderDashboard() {
   const tbody = document.getElementById("dashboardTableBody");
   if (!tbody) return;
   
-  // Statistikani hududlar va yo'nalishlar bo'yicha hisoblash
   const regions = [...new Set(appState.candidates.map(c => c.region))];
   tbody.innerHTML = "";
 
@@ -361,8 +369,8 @@ function renderDashboard() {
     const countTizim = list.filter(c => c.category.includes("Тизим")).length;
     const countSobiq = list.filter(c => c.category.includes("Собиқ")).length;
     
-    const countInProcess = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected").length;
-    const countHired = list.filter(c => c.workflowStage === "hired").length;
+    const countInProcess = list.filter(c => c.workflowStage !== "hired" && c.workflowStage !== "rejected" && c.workflowStage !== "approved").length;
+    const countHired = list.filter(c => c.workflowStage === "hired" || c.workflowStage === "approved").length;
     const countCriminal = list.filter(c => c.sudlanganStatus === "sudlangan").length;
     const total = list.length;
 
@@ -434,29 +442,20 @@ function renderUsersTable() {
 }
 
 // =========================================================================
-// ЯКУНИЙ НАТИЖА МАТНИ
+// ЯКУНИЙ НАТИЖА МАТНИ 
 // =========================================================================
 function getFinalResultPlainText(c) {
-  if (c.workflowStage === "hired") return `<span class="text-emerald-700 font-bold">✓ Ишга қабул қилинди</span>`;
-  if (c.workflowStage === "rejected") return `<span class="text-red-600 font-bold">❌ Бекор қилинди</span>`;
-  if (c.workflowStage === "hr_final") return `<span class="text-amber-600 font-bold">⏳ HR қарори кутилмоқда</span>`;
-  if (c.workflowStage === "boss_review") return `<span class="text-amber-600 font-bold">⏳ Бошлиқ тасдиғида</span>`;
+  if (c.workflowStage === "hired" || c.workflowStage === "approved") {
+    return `<span class="text-emerald-700 font-bold">✓ Ишга қабул қилинди</span>`;
+  }
+  if (c.workflowStage === "rejected") {
+    return `<span class="text-red-600 font-bold">❌ Бекор қилинди</span>`;
+  }
+  if (c.workflowStage === "hr_final") {
+    return `<span class="text-amber-600 font-bold">⏳ HR қарори кутилмоқда</span>`;
+  }
+  if (c.workflowStage === "boss_review") {
+    return `<span class="text-amber-600 font-bold">⏳ Бошлиқ тасдиғида</span>`;
+  }
   return `<span class="text-slate-500 font-bold">⏳ Ўрганиш жараёнида</span>`;
-}
-
-// =========================================================================
-// PAGINATION (САҲИФАЛАШ)
-// =========================================================================
-function applyPagination() {
-  const tableIds = ["fototablitsaBody", "formerTableBody", "hiredTableBody", "databaseTableBody", "itsTableBody", "negativeTableBody"];
-  
-  tableIds.forEach(id => {
-    const tbody = document.getElementById(id);
-    if (!tbody) return;
-    
-    // Agar pagination logikasi to'liq bo'lmasa, shunchaki hamma qatorlarni ko'rsatamiz
-    // Bu joy kelajakda 20/50 tadan qilib cheklash uchun ishlatiladi.
-    const rows = tbody.querySelectorAll("tr");
-    rows.forEach(row => row.style.display = "");
-  });
 }
